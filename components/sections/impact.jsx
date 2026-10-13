@@ -1,0 +1,68 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { MoveUpRight, Sparkles } from "lucide-react";
+import SectionHeading from "@/components/ui/section-heading";
+
+gsap.registerPlugin(ScrollTrigger);
+
+const tones = ["from-orange-700 via-stone-800 to-stone-950", "from-amber-600 via-stone-800 to-stone-950", "from-rose-700 via-stone-800 to-stone-950", "from-orange-500 via-stone-800 to-stone-950"];
+
+const ImpactCard = ({ title, text, tag, image, tone, offset }) => (
+  <article
+    data-impact-card
+    className={`group relative aspect-7/9 w-[95%] shrink-0 snap-center overflow-hidden rounded-xl sm:w-[40%] lg:w-[25%] ${offset ? "sm:mt-20" : ""}`}
+  >
+    <div className={`absolute inset-0 bg-linear-to-b ${tone} transition-all duration-300 max-md:grayscale md:group-hover:grayscale`}>
+      {image?.url && <img src={image.url} alt="" className="size-full object-cover" />}
+    </div>
+    <div className="absolute left-0 top-0 z-20 p-5 transition-all duration-500 md:opacity-0 md:group-hover:opacity-100">
+      <span className="flex items-center gap-2 rounded-full border border-white/20 bg-linear-to-r from-[#FF6900] to-[#F54900] px-4 py-2 font-medium">
+        {tag}
+        <Sparkles className="size-4" />
+      </span>
+    </div>
+    <div className="absolute bottom-0 left-0 z-20 flex min-h-[50%] w-full bg-linear-to-b from-transparent to-accent pt-10 transition-all duration-500 group-hover:translate-y-0 md:translate-y-full">
+      <div className="mt-auto h-max p-8 pt-10">
+        <h3 className="text-2xl font-medium max-md:mb-2 md:text-3xl">{title}</h3>
+        <p className="text-white/90">{text}</p>
+      </div>
+    </div>
+    <span className="absolute right-5 top-5 z-20 rounded-full border border-white/40 bg-[#010101] p-[1em] backdrop-blur-md transition-all duration-300 ease-out group-hover:rotate-45 md:p-4">
+      <MoveUpRight className="size-[2em] md:size-8" />
+    </span>
+  </article>
+);
+
+const Impact = ({ impactCards }) => {
+  const trackRef = useRef(null);
+
+  useEffect(() => {
+    const mm = gsap.matchMedia();
+    mm.add("(min-width: 1024px)", () => {
+      gsap.to(trackRef.current.querySelectorAll("[data-impact-card]"), {
+        x: "-150%",
+        ease: "none",
+        scrollTrigger: { trigger: trackRef.current, start: "top 40%", end: "bottom 30%", scrub: true },
+      });
+    });
+    return () => mm.revert();
+  }, []);
+
+  return (
+    <section className="flex w-full flex-col items-center overflow-hidden bg-black py-10">
+      <SectionHeading tag="Impact" title="How we help learners move faster and further" />
+      <div ref={trackRef} className="flex w-full snap-x snap-mandatory items-start gap-8 overflow-x-auto px-6 [scrollbar-width:none] lg:overflow-visible">
+        <div className="w-[40%] shrink-0 max-md:hidden sm:w-[25%]" />
+        {impactCards.map((card, i) => (
+          <ImpactCard key={card.title} {...card} tone={tones[i % tones.length]} offset={i % 2 === 1} />
+        ))}
+        <div className="shrink-0 max-md:hidden sm:w-10" />
+      </div>
+    </section>
+  );
+};
+
+export default Impact;

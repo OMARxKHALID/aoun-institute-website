@@ -1,0 +1,96 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Phone } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
+import RollText from "@/components/ui/roll-text";
+import BrandLogo from "@/components/ui/brand-logo";
+
+const navLinks = [
+  { label: "Home", href: "/" },
+  { label: "Courses", href: "/courses" },
+  { label: "About", href: "/about" },
+  { label: "Contact", href: "/contact" },
+];
+
+const Navbar = ({ brand }) => {
+  const [open, setOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const pathname = usePathname();
+  const { data: session } = authClient.useSession();
+
+  useEffect(() => {
+    let last = window.scrollY;
+    const handleScroll = () => {
+      const y = window.scrollY;
+      setHidden(y > last && y > 120);
+      last = y;
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const isActive = (href) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
+  const account = session ? { label: session.user.role === "ADMIN" ? "Admin" : "Dashboard", href: session.user.role === "ADMIN" ? "/admin" : "/dashboard" } : { label: "Sign In", href: "/login" };
+
+  const handleToggle = () => setOpen((v) => !v);
+
+  return (
+    <header
+      className={`fixed left-1/2 top-0 z-50 w-full -translate-x-1/2 backdrop-blur-sm transition-transform duration-300 ${hidden && !open ? "-translate-y-full" : "translate-y-0"}`}
+    >
+      <div className="flex h-32 items-center justify-between px-10 lg:px-20">
+        <BrandLogo brand={brand} />
+
+        <div className="hidden min-[880px]:block">
+          <div className="rounded-lg bg-linear-to-l from-white/30 via-transparent to-white/30 p-[.5px]">
+            <nav className="flex gap-10 rounded-lg bg-[#0C0C0C] px-8 py-4 tracking-wide text-white/70 lg:text-[1.12rem]">
+              {navLinks.map(({ label, href }) => (
+                <Link key={label} href={href} className={`group ${isActive(href) ? "text-white" : ""}`}>
+                  <RollText hoverClass="text-accent">{label}</RollText>
+                </Link>
+              ))}
+            </nav>
+          </div>
+        </div>
+
+        <div className="hidden items-center justify-end gap-3.5 min-[880px]:flex">
+          <Link href="/contact" className="flex items-center gap-2 rounded-full border border-accent bg-[#4B1E0E] px-4 py-2">
+            <Phone className="size-4" />
+            <span>Request Call</span>
+          </Link>
+          <Link href={account.href} className="group rounded-lg px-4 py-2 transition hover:bg-accent">
+            <RollText className="text-lg font-light">{account.label}</RollText>
+          </Link>
+        </div>
+
+        <div className="flex items-center gap-3.5 min-[880px]:hidden">
+          <Link href="/contact" aria-label="Request call" className="flex size-10 items-center justify-center rounded-full border border-accent bg-[#4B1E0E] active:scale-95">
+            <Phone className="size-4" />
+          </Link>
+          <button onClick={handleToggle} aria-label="Toggle menu" aria-expanded={open} className="relative flex size-8 items-center justify-center">
+            <span className={`absolute block h-[2px] w-7 rounded bg-white transition-transform duration-300 ${open ? "rotate-45" : "-translate-y-1.5"}`} />
+            <span className={`absolute block h-[2px] w-7 rounded bg-white transition-transform duration-300 ${open ? "-rotate-45" : "translate-y-1.5"}`} />
+          </button>
+        </div>
+      </div>
+
+      {open && (
+        <nav className="flex flex-col gap-1 border-t border-white/10 bg-black/95 px-10 pb-8 pt-4 text-2xl min-[880px]:hidden">
+          {navLinks.map(({ label, href }) => (
+            <Link key={label} href={href} onClick={handleToggle} className={`border-b border-white/10 py-4 ${isActive(href) ? "text-accent" : "text-white/80"}`}>
+              {label}
+            </Link>
+          ))}
+          <Link href={account.href} onClick={handleToggle} className="mt-6 rounded-full border border-white/20 py-3 text-center text-xl">
+            {account.label}
+          </Link>
+        </nav>
+      )}
+    </header>
+  );
+};
+
+export default Navbar;
