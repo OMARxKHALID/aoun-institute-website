@@ -109,7 +109,7 @@ Progress staleness: structural course edits bump `contentVersion`; an older `cou
 8. Admin students/orders/announcements/analytics, notifications, polish, README
 
 ## Panel design
-Student `/dashboard` and admin `/admin` follow the layout specs in `docs/design-refs/README.md` (one reference per panel), using the site's own black/orange/cream design system. Shared shell: `components/ui/panel-shell.jsx`, `panel-nav.jsx`, `panel-header.jsx`; every panel page folder gets a `loading.js` (re-export of `panel-skeleton`) so per-user data stays inside a Suspense boundary.
+Dark mode only. Student `/dashboard` and admin `/admin` both follow the "Welcome back" (Eduplex-style) dashboard layout described in `docs/design-refs/README.md`, in the site's own black/orange/cream design system; the second reference only adds student content blocks. Shared shell: `components/ui/panel-shell.jsx`, `panel-nav.jsx`, `panel-header.jsx`; every panel page folder gets a `loading.js` (re-export of `panel-skeleton`) so per-user data stays inside a Suspense boundary.
 
 ## Conventions
 - Zero comments; `const` arrow functions only; event handlers prefixed `handle`; early returns; kebab-case filenames; Tailwind only; ES modules.

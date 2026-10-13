@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, LayoutDashboard, Menu, PanelLeftClose, PanelLeftOpen, Settings, X } from "lucide-react";
+import { ArrowUpRight, ChevronLeft, LayoutDashboard, Menu, Settings, X } from "lucide-react";
 import SignOutButton from "@/features/auth/components/sign-out-button";
 
 const navs = {
@@ -47,8 +47,23 @@ const PanelNav = ({ panel, brand }) => {
     setCollapsed(readCollapsed());
   }, []);
 
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKey = (e) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("keydown", handleKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
   const isActive = (href) => (href === root ? pathname === root : pathname.startsWith(href));
-  const handleToggle = () => setOpen((v) => !v);
+  const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
   const handleCollapse = () =>
     setCollapsed((v) => {
@@ -59,34 +74,48 @@ const PanelNav = ({ panel, brand }) => {
   const hideWhenCollapsed = collapsed ? "lg:hidden" : "";
 
   return (
-    <div className={`transition-[width] duration-300 lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)] lg:shrink-0 ${collapsed ? "lg:w-20" : "lg:w-72"}`}>
-      <div className="flex items-center justify-between rounded-2xl bg-[#0C0C0C] px-5 py-4 lg:hidden">
-        <Link href={root} className="font-machina text-xl">
-          {brand.name}
-        </Link>
-        <button type="button" onClick={handleToggle} aria-label="Toggle navigation" aria-expanded={open} className="rounded-lg p-2 hover:bg-white/5">
-          {open ? <X className="size-6" /> : <Menu className="size-6" />}
+    <div className={`relative transition-[width] duration-300 lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)] lg:shrink-0 ${collapsed ? "lg:w-20" : "lg:w-72"}`}>
+      <div className="flex items-center justify-between rounded-2xl bg-[#0C0C0C] px-4 py-3 lg:hidden">
+        <button type="button" onClick={handleOpen} aria-label="Open navigation" aria-expanded={open} aria-controls="panel-sidebar" className="rounded-xl p-2 hover:bg-white/5">
+          <Menu className="size-6" />
         </button>
+        <Link href={root} className="font-machina text-xl">
+          {brand.shortName || brand.name}
+        </Link>
+        <span className="size-10" />
       </div>
 
-      <aside
-        className={`${open ? "flex" : "hidden"} mt-2 flex-col gap-6 rounded-3xl border border-white/5 bg-[#0C0C0C] p-5 lg:mt-0 lg:flex lg:h-full ${collapsed ? "lg:items-center lg:px-3 lg:py-6" : "lg:p-6"}`}
+      <div
+        onClick={handleClose}
+        aria-hidden="true"
+        className={`fixed inset-0 z-40 bg-black/70 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${open ? "opacity-100" : "pointer-events-none opacity-0"}`}
+      />
+
+      <button
+        type="button"
+        onClick={handleCollapse}
+        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        aria-expanded={!collapsed}
+        title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        className="absolute -right-3 top-9 z-10 hidden size-7 place-items-center rounded-full border border-[#302C2A] bg-[#0C0C0C] text-white/60 shadow-lg transition hover:border-accent hover:text-accent lg:grid"
       >
-        <div className="hidden w-full items-center gap-3 lg:flex">
-          <Link href="/" aria-label={brand.name} className={`flex min-w-0 items-center gap-3 ${collapsed ? "lg:hidden" : ""}`}>
+        <ChevronLeft className={`size-4 transition-transform duration-300 ${collapsed ? "rotate-180" : ""}`} />
+      </button>
+
+      <aside
+        id="panel-sidebar"
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col gap-6 overflow-y-auto border-r border-white/5 bg-[#0C0C0C] p-5 transition-transform duration-300 lg:static lg:z-auto lg:h-full lg:w-auto lg:max-w-none lg:translate-x-0 lg:rounded-3xl lg:border ${
+          open ? "translate-x-0" : "-translate-x-full"
+        } ${collapsed ? "lg:items-center lg:px-3 lg:py-6" : "lg:p-6"}`}
+      >
+        <div className="flex items-center gap-3">
+          <Link href="/" aria-label={brand.name} className={`flex min-w-0 flex-1 items-center gap-3 ${collapsed ? "lg:justify-center" : ""}`}>
             <span className="grid size-10 shrink-0 place-items-center rounded-full bg-white font-machina text-xl font-bold text-black">{brand.name?.[0]}</span>
-            <span className="truncate font-machina text-2xl leading-none">{brand.shortName || brand.name}</span>
+            <span className={`truncate font-machina text-2xl leading-none ${hideWhenCollapsed}`}>{brand.shortName || brand.name}</span>
+            {panel === "admin" && <span className={`ml-auto rounded-full bg-accent/15 px-2 py-0.5 text-xs uppercase tracking-wider text-accent ${hideWhenCollapsed}`}>Admin</span>}
           </Link>
-          {panel === "admin" && !collapsed && <span className="rounded-full bg-accent/15 px-2 py-0.5 text-xs uppercase tracking-wider text-accent">Admin</span>}
-          <button
-            type="button"
-            onClick={handleCollapse}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            aria-expanded={!collapsed}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className={`grid size-10 shrink-0 place-items-center rounded-xl text-white/60 transition hover:bg-white/5 hover:text-white ${collapsed ? "mx-auto" : "ml-auto"}`}
-          >
-            {collapsed ? <PanelLeftOpen className="size-5" /> : <PanelLeftClose className="size-5" />}
+          <button type="button" onClick={handleClose} aria-label="Close navigation" className="rounded-xl p-2 text-white/60 hover:bg-white/5 hover:text-white lg:hidden">
+            <X className="size-5" />
           </button>
         </div>
 
@@ -97,7 +126,6 @@ const PanelNav = ({ panel, brand }) => {
               <Link
                 key={href}
                 href={href}
-                onClick={handleClose}
                 title={collapsed ? label : undefined}
                 aria-label={label}
                 aria-current={active ? "page" : undefined}
@@ -113,7 +141,7 @@ const PanelNav = ({ panel, brand }) => {
         </nav>
 
         <div className="mt-auto flex w-full flex-col gap-3">
-          <Link href={promo.href} onClick={handleClose} className={`group relative overflow-hidden rounded-2xl bg-[#FFF3EF] p-5 text-black ${hideWhenCollapsed}`}>
+          <Link href={promo.href} className={`group relative overflow-hidden rounded-2xl bg-[#FFF3EF] p-5 text-black ${hideWhenCollapsed}`}>
             <span className="absolute right-4 top-4 grid size-9 place-items-center rounded-full bg-black text-white transition-transform group-hover:rotate-45">
               <ArrowUpRight className="size-4" />
             </span>
