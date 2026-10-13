@@ -8,7 +8,8 @@
     "start": "next start",
     "seed": "bun scripts/seed.js",
     "cloudinary:presets": "bun scripts/cloudinary-presets.js",
-    "test": "bun test"
+    "test": "bun test",
+    "db": "bun scripts/dev-db.js"
   },
   "dependencies": {
     "@better-auth/mongo-adapter": "1.7.7",
@@ -32,6 +33,7 @@
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
+    "mongodb-memory-server": "11.3.0",
     "tailwindcss": "^4"
   },
   "packageManager": "bun@1.4.2",

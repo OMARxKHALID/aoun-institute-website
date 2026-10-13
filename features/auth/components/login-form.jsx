@@ -11,19 +11,20 @@ import Field from "@/components/ui/field";
 import Button from "@/components/ui/button";
 import FormAlert from "@/components/ui/form-alert";
 
-const safeNext = (next) => (next?.startsWith("/") && !next.startsWith("//") ? next : "/dashboard");
+const safeNext = (next) => (next?.startsWith("/") && !next.startsWith("//") ? next : null);
 
 const LoginForm = () => {
   const router = useRouter();
-  const next = safeNext(useSearchParams().get("next"));
+  const requested = safeNext(useSearchParams().get("next"));
+  const next = requested ?? "/dashboard";
   const [unverified, setUnverified] = useState(null);
   const [resent, setResent] = useState(false);
   const { register, handleSubmit, setError, formState } = useForm({ resolver: zodResolver(loginSchema) });
 
   const handleLogin = async (values) => {
     setUnverified(null);
-    const { error } = await authClient.signIn.email({ ...values, callbackURL: next });
-    if (!error) return router.push(next);
+    const { data, error } = await authClient.signIn.email(values);
+    if (!error) return router.push(requested ?? (data?.user?.role === "ADMIN" ? "/admin" : "/dashboard"));
     if (error.code === "EMAIL_NOT_VERIFIED") return setUnverified(values.email);
     setError("root", { message: error.message ?? "Invalid email or password" });
   };

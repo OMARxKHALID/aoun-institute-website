@@ -4,8 +4,19 @@ import { CldUploadWidget } from "next-cloudinary";
 import { ImagePlus, X } from "lucide-react";
 import { UPLOAD_RULES } from "@/lib/upload-rules";
 
+const cloudConfigured = Boolean(process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME && process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY);
+
 const ImageUpload = ({ kind, value, onChange, label, aspect }) => {
   const rule = UPLOAD_RULES[kind];
+
+  if (!cloudConfigured) {
+    return (
+      <div className="flex flex-col gap-2 text-left">
+        <span className="text-base text-white/70">{label}</span>
+        <p className="rounded-xl border border-dashed border-white/20 p-3 text-sm text-white/50">Image uploads need Cloudinary keys in .env.local.</p>
+      </div>
+    );
+  }
 
   const handleSuccess = ({ info }) => onChange({ url: info.secure_url, publicId: info.public_id });
   const handleRemove = () => onChange(null);

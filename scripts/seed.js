@@ -56,7 +56,7 @@ const ensureUser = async ({ email, password, name, role }) => {
   await users.updateOne({ email }, { $set: { role, emailVerified: true } });
 };
 
-await ensureUser({ email: process.env.SEED_ADMIN_EMAIL, password: process.env.SEED_ADMIN_PASSWORD, name: "Institute Owner", role: "ADMIN" });
+await ensureUser({ email: process.env.SEED_ADMIN_EMAIL, password: process.env.SEED_ADMIN_PASSWORD, name: "Aoun", role: "ADMIN" });
 if (process.env.SEED_STUDENT_EMAIL && process.env.SEED_STUDENT_PASSWORD) {
   await ensureUser({ email: process.env.SEED_STUDENT_EMAIL, password: process.env.SEED_STUDENT_PASSWORD, name: "Test Student", role: "STUDENT" });
 }

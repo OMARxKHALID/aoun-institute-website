@@ -5,6 +5,13 @@ import { defaultSiteSettings } from "@/features/site-settings/defaults";
 
 export const SITE_SETTINGS_TAG = "site-settings";
 
+const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+
+const mergeDefaults = (defaults, value) => {
+  if (!isPlainObject(defaults) || !isPlainObject(value)) return value ?? defaults;
+  return Object.fromEntries(Object.keys({ ...defaults, ...value }).map((key) => [key, mergeDefaults(defaults[key], value[key])]));
+};
+
 export const getSiteSettings = async () => {
   "use cache";
   cacheTag(SITE_SETTINGS_TAG);
@@ -13,5 +20,5 @@ export const getSiteSettings = async () => {
   const doc = await SiteSettings.findById("site").lean();
   if (!doc) return defaultSiteSettings;
   const { _id, __v, createdAt, updatedAt, ...settings } = doc;
-  return JSON.parse(JSON.stringify(settings));
+  return mergeDefaults(defaultSiteSettings, JSON.parse(JSON.stringify(settings), (key, value) => (key === "_id" ? undefined : value)));
 };
