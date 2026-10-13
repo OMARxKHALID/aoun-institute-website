@@ -1,23 +1,30 @@
 import Link from "next/link";
-import { Settings } from "lucide-react";
+import { ArrowUpRight, Settings } from "lucide-react";
 import { requireAdmin } from "@/lib/dal";
+import PanelHeader from "@/components/ui/panel-header";
+
+const shortcuts = [{ title: "Site Settings", text: "Brand, contact, homepage content, SEO, payment details", href: "/admin/settings", icon: Settings }];
 
 const AdminPage = async () => {
   const user = await requireAdmin();
   return (
-    <div className="flex flex-col gap-8 p-6 lg:p-10">
-      <div>
-        <p className="text-white/50">Signed in as {user.email}</p>
-        <h1 className="font-machina text-4xl md:text-5xl">Admin</h1>
+    <>
+      <PanelHeader title={`Welcome back, ${user.name.split(" ")[0]} 👋`} subtitle="Manage your institute from one place." />
+      <div className="grid gap-5 p-5 sm:grid-cols-2 lg:p-8 xl:grid-cols-3">
+        {shortcuts.map(({ title, text, href, icon: Icon }) => (
+          <Link key={href} href={href} className="group relative flex flex-col gap-4 rounded-3xl border border-[#302C2A] bg-[#0C0C0C] p-6 transition hover:border-accent">
+            <ArrowUpRight className="absolute right-5 top-5 size-5 text-white/40 transition group-hover:rotate-45 group-hover:text-accent" />
+            <span className="grid size-12 place-items-center rounded-2xl bg-accent/15 text-accent">
+              <Icon className="size-6" />
+            </span>
+            <div>
+              <p className="text-xl font-medium">{title}</p>
+              <p className="mt-1 text-white/55">{text}</p>
+            </div>
+          </Link>
+        ))}
       </div>
-      <Link href="/admin/settings" className="flex max-w-md items-center gap-4 rounded-2xl border border-[#302C2A] p-6 transition hover:border-accent">
-        <Settings className="size-8 text-accent" />
-        <div>
-          <p className="text-xl font-medium">Site Settings</p>
-          <p className="text-white/60">Brand, contact, homepage content, SEO, payment details</p>
-        </div>
-      </Link>
-    </div>
+    </>
   );
 };
 
