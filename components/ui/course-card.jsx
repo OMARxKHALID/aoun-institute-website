@@ -5,7 +5,7 @@ import { formatDuration, formatPrice } from "@/lib/format";
 const CourseCard = ({ slug, title, subtitle, category, level, thumbnail, price, discountPrice, currency, estimatedDuration, lessons, enrolled }) => (
   <Link href={enrolled ? `/dashboard/courses/${slug}` : `/courses/${slug}`} className="group flex flex-col overflow-hidden rounded-2xl border border-[#302C2A] bg-[#0C0C0C] transition-colors hover:border-accent">
     <div className="relative aspect-video overflow-hidden bg-[linear-gradient(135deg,#f97316,#7c2d12_55%,#1c1917)]">
-      {thumbnail?.url && <img src={thumbnail.url} alt="" className="size-full object-cover transition-transform duration-500 group-hover:scale-105" />}
+      {thumbnail?.url && <img src={thumbnail.url} alt="" loading="lazy" decoding="async" className="size-full object-cover transition-transform duration-500 group-hover:scale-105" />}
       {category && <span className="absolute left-4 top-4 rounded-full bg-black/70 px-3 py-1 text-sm backdrop-blur-sm">{category}</span>}
       {enrolled && <span className="absolute bottom-4 left-4 rounded-full bg-green-500/90 px-3 py-1 text-xs font-semibold text-black">Enrolled</span>}
       <span className="absolute right-4 top-4 rounded-full border border-white/40 bg-[#010101] p-3 transition-transform duration-300 group-hover:rotate-45">

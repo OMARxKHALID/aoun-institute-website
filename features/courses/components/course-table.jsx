@@ -31,7 +31,7 @@ const baseColumns = helper.columns([
     cell: ({ row }) => (
       <Link href={`/admin/courses/${row.original.id}`} className="flex items-center gap-3 hover:text-accent">
         <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-accent/15 text-accent">
-          {row.original.thumbnail?.url ? <img src={row.original.thumbnail.url} alt="" className="size-full object-cover" /> : <BookOpen className="size-5" />}
+          {row.original.thumbnail?.url ? <img src={row.original.thumbnail.url} alt="" loading="lazy" decoding="async" className="size-full object-cover" /> : <BookOpen className="size-5" />}
         </span>
         <span>
           <span className="block font-medium">{row.original.title}</span>

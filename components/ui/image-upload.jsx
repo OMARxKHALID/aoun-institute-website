@@ -26,8 +26,8 @@ const ImageUpload = ({ kind, value, onChange, label, aspect }) => {
   return (
     <div className="flex flex-col gap-2 text-left">
       <span className="text-base text-white/70">{label}</span>
-      <div className="flex items-center gap-4">
-        <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-xl border border-[#302C2A] bg-[#0C0C0C]">
+      <div className="flex flex-wrap items-center gap-4">
+        <div style={{ aspectRatio: !isDocument && aspect ? aspect : 1 }} className="grid h-20 max-w-40 shrink-0 place-items-center overflow-hidden rounded-xl border border-[#302C2A] bg-[#0C0C0C]">
           {value?.url && !isDocument ? <img src={value.url} alt="" className="size-full object-cover" /> : isDocument ? <FileText className={`size-6 ${value?.url ? "text-accent" : "text-white/30"}`} /> : <ImagePlus className="size-6 text-white/30" />}
         </div>
         <CldUploadWidget

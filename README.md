@@ -9,12 +9,11 @@ Stack: Next.js 16 (App Router, Cache Components), React 19, Tailwind CSS 4, Mong
 ```bash
 bun install
 cp .env.example .env.local
-bun run db
 bun run seed
 bun dev
 ```
 
-- `bun run db` starts a local MongoDB replica set on port 27018 (data in `.mongo-data/`). Point `MONGODB_URI` at it, or at MongoDB Atlas.
+- With `MONGODB_URI=mongodb://127.0.0.1:27018/aoun-institute?replicaSet=rs0`, `bun dev` starts a local MongoDB replica set (data in `.mongo-data/`) together with Next.js and restarts it if it stops. With an Atlas URI it just runs Next.js. `bun run db` starts the database on its own (needed once before `bun run seed` or `bun run demo`).
 - `bun run seed` creates the admin and a test student from the `SEED_*` variables, the default site settings and a demo course. It is safe to run again.
 - Open http://localhost:3000. Admins land on `/admin`, students on `/dashboard`.
 

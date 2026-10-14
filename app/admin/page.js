@@ -38,7 +38,7 @@ const AdminPage = async () => {
                 {data.topCourses.map((c) => (
                   <Link key={c.id} href={`/admin/courses/${c.id}`} className="flex min-w-0 items-center gap-3 rounded-2xl border border-white/5 bg-[#070707] p-4 transition hover:border-accent/50">
                     <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-accent/15 text-accent">
-                      {c.thumbnail?.url ? <img src={c.thumbnail.url} alt="" className="size-full object-cover" /> : <BookOpen className="size-5" />}
+                      {c.thumbnail?.url ? <img src={c.thumbnail.url} alt="" loading="lazy" decoding="async" className="size-full object-cover" /> : <BookOpen className="size-5" />}
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate font-medium">{c.title}</span>

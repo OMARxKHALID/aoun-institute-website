@@ -69,7 +69,7 @@ const CheckoutPage = async ({ params }) => {
         {body()}
         <aside className="flex flex-col gap-4 rounded-3xl border border-[#302C2A] bg-[#0C0C0C] p-6 lg:sticky lg:top-36">
           <div className="aspect-video overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#f97316,#7c2d12_55%,#1c1917)]">
-            {course.thumbnail?.url && <img src={course.thumbnail.url} alt="" className="size-full object-cover" />}
+            {course.thumbnail?.url && <img src={course.thumbnail.url} alt="" loading="lazy" decoding="async" className="size-full object-cover" />}
           </div>
           <Link href={`/courses/${course.slug}`} className="font-machina text-2xl leading-tight hover:text-accent">
             {course.title}

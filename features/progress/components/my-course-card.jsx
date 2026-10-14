@@ -7,7 +7,7 @@ import { btn } from "@/lib/ui";
 const MyCourseCard = ({ course }) => (
   <article className="flex min-w-0 flex-col overflow-hidden rounded-3xl border border-[#302C2A] bg-[#0C0C0C]">
     <Link href={`/dashboard/courses/${course.slug}`} className="relative aspect-video bg-[linear-gradient(135deg,#f97316,#7c2d12_55%,#1c1917)]">
-      {course.thumbnail?.url && <img src={course.thumbnail.url} alt="" className="size-full object-cover" />}
+      {course.thumbnail?.url && <img src={course.thumbnail.url} alt="" loading="lazy" decoding="async" className="size-full object-cover" />}
       {course.eligible && (
         <span className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-black/70 px-3 py-1 text-xs text-green-300 backdrop-blur-sm">
           <Award className="size-3.5" /> Completed
