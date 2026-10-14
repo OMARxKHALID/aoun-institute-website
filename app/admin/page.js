@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, Award, BookOpen, ChevronRight, Clock, Receipt, Users, Wallet } from "lucide-react";
+import { Award, BookOpen, ChevronRight, Clock, Receipt, Users, Wallet } from "lucide-react";
 import { getAdminDashboard } from "@/features/analytics/queries";
 import PanelHeader from "@/components/ui/panel-header";
 import PanelCard from "@/components/ui/panel-card";
@@ -116,13 +116,6 @@ const AdminPage = async () => {
         </div>
 
         <aside className="grid min-w-0 content-start gap-5 md:grid-cols-2 xl:grid-cols-1">
-          <Link href="/" className="group relative flex flex-col gap-2 overflow-hidden rounded-3xl bg-[#FFF3EF] p-6 text-black md:col-span-2 xl:col-span-1">
-            <span className="absolute right-5 top-5 grid size-10 place-items-center rounded-full bg-black text-white transition-transform group-hover:rotate-45">
-              <ArrowUpRight className="size-5" />
-            </span>
-            <p className="font-machina text-2xl">Your website</p>
-            <p className="pr-10 text-sm text-black/60">See the public site the way students see it.</p>
-          </Link>
           <PanelCard>
             <MiniCalendar marked={data.salesDays} />
             <p className="text-xs text-white/40">Highlighted days had approved payments.</p>
