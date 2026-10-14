@@ -15,7 +15,7 @@ const AdminCoursesPage = async ({ searchParams }) => {
           <Plus className="size-4" /> New course
         </Link>
       </PanelHeader>
-      <div className="flex flex-col gap-4 p-5 lg:p-8">
+      <div className="flex flex-col gap-4 p-4 sm:p-5 lg:p-8">
         <Link href="/admin/courses/new" className="flex items-center justify-center gap-2 rounded-full bg-linear-to-b from-[#E8602E] to-[#A8401A] px-5 py-3 font-medium sm:hidden">
           <Plus className="size-4" /> New course
         </Link>

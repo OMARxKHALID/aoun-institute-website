@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, Play } from "lucide-react";
 import { startAttempt } from "@/features/quizzes/student-actions";
 import FormAlert from "@/components/ui/form-alert";
+import { btn } from "@/lib/ui";
 
 const StartQuizButton = ({ quizId, label }) => {
   const router = useRouter();
@@ -25,7 +26,7 @@ const StartQuizButton = ({ quizId, label }) => {
   return (
     <div className="flex flex-col items-start gap-3">
       <FormAlert>{error}</FormAlert>
-      <button type="button" onClick={handleStart} disabled={busy} className="flex items-center gap-2 rounded-2xl bg-linear-to-b from-[#E8602E] to-[#A8401A] px-6 py-3 font-semibold disabled:opacity-60">
+      <button type="button" onClick={handleStart} disabled={busy} className={btn.primary}>
         {busy ? <Loader2 className="size-5 animate-spin" /> : <Play className="size-5" />} {label}
       </button>
     </div>

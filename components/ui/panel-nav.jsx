@@ -3,31 +3,56 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, Award, BookOpen, ChevronLeft, FileQuestion, LayoutDashboard, Megaphone, Menu, Receipt, Settings, Users, X } from "lucide-react";
+import { ArrowUpRight, Award, BookOpen, ChevronLeft, Compass, FileQuestion, Inbox, LayoutDashboard, LifeBuoy, Megaphone, Menu, Receipt, Settings, TrendingUp, Users, X } from "lucide-react";
 import SignOutButton from "@/features/auth/components/sign-out-button";
 import { railLabel } from "@/lib/ui";
 
 const navs = {
   student: {
-    items: [
-      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { label: "My Courses", href: "/dashboard/courses", icon: BookOpen },
-      { label: "Quizzes", href: "/dashboard/quizzes", icon: FileQuestion },
-      { label: "Certificates", href: "/dashboard/certificates", icon: Award },
-      { label: "Orders", href: "/dashboard/orders", icon: Receipt },
-      { label: "Settings", href: "/dashboard/settings", icon: Settings },
+    groups: [
+      {
+        label: "Learning",
+        items: [
+          { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+          { label: "My Courses", href: "/dashboard/courses", icon: BookOpen },
+          { label: "Explore", href: "/dashboard/explore", icon: Compass },
+          { label: "Quizzes", href: "/dashboard/quizzes", icon: FileQuestion },
+          { label: "Progress", href: "/dashboard/progress", icon: TrendingUp },
+          { label: "Certificates", href: "/dashboard/certificates", icon: Award },
+        ],
+      },
+      {
+        label: "Account",
+        items: [
+          { label: "Announcements", href: "/dashboard/announcements", icon: Megaphone },
+          { label: "Orders", href: "/dashboard/orders", icon: Receipt },
+          { label: "Settings", href: "/dashboard/settings", icon: Settings },
+          { label: "Help & Support", href: "/dashboard/support", icon: LifeBuoy },
+        ],
+      },
     ],
-    promo: { title: "Keep learning", text: "Explore new courses and level up your skills.", href: "/courses", cta: "Browse courses" },
+    promo: { title: "Keep learning", text: "Explore new courses and level up your skills.", href: "/dashboard/explore", cta: "Browse courses" },
   },
   admin: {
-    items: [
-      { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
-      { label: "Courses", href: "/admin/courses", icon: BookOpen },
-      { label: "Students", href: "/admin/students", icon: Users },
-      { label: "Orders", href: "/admin/orders", icon: Receipt },
-      { label: "Certificates", href: "/admin/certificates", icon: Award },
-      { label: "Announcements", href: "/admin/announcements", icon: Megaphone },
-      { label: "Site Settings", href: "/admin/settings", icon: Settings },
+    groups: [
+      { label: "Overview", items: [{ label: "Dashboard", href: "/admin", icon: LayoutDashboard }] },
+      {
+        label: "Content",
+        items: [
+          { label: "Courses", href: "/admin/courses", icon: BookOpen },
+          { label: "Announcements", href: "/admin/announcements", icon: Megaphone },
+        ],
+      },
+      {
+        label: "People & sales",
+        items: [
+          { label: "Students", href: "/admin/students", icon: Users },
+          { label: "Orders", href: "/admin/orders", icon: Receipt },
+          { label: "Certificates", href: "/admin/certificates", icon: Award },
+          { label: "Messages", href: "/admin/messages", icon: Inbox },
+        ],
+      },
+      { label: "Website", items: [{ label: "Site Settings", href: "/admin/settings", icon: Settings }] },
     ],
     promo: { title: "Your website", text: "See the public site the way students see it.", href: "/", cta: "View site" },
   },
@@ -49,29 +74,37 @@ const writeCollapsed = (value) => {
   } catch {}
 };
 
-const NavList = ({ items, activeHref, collapsed }) => {
-  const root = items[0].href;
-  const isActive = (href) => activeHref != null && (href === root ? activeHref === root : activeHref.startsWith(href));
+const NavList = ({ groups, activeHref, collapsed }) => {
+  const root = groups[0].items[0].href;
+  const isActive = (href) => activeHref != null && (href === root ? activeHref === root : activeHref === href || activeHref.startsWith(`${href}/`));
   return (
-    <nav className="flex w-full flex-col gap-1.5">
-      {items.map(({ label, href, icon: Icon }) => {
-        const active = isActive(href);
-        return (
-          <Link
-            key={href}
-            href={href}
-            title={collapsed ? label : undefined}
-            aria-label={label}
-            aria-current={active ? "page" : undefined}
-            className={`flex items-center rounded-full px-[17px] py-3 transition-colors ${
-              active ? "bg-linear-to-b from-[#E8602E] to-[#A8401A] font-medium text-white shadow-[0_0_24px_rgba(232,96,46,0.35)]" : "text-white/65 hover:bg-white/5 hover:text-white"
-            }`}
-          >
-            <Icon className="size-5 shrink-0" />
-            <span className={railLabel(collapsed)}>{label}</span>
-          </Link>
-        );
-      })}
+    <nav className="flex w-full flex-col gap-4">
+      {groups.map((group) => (
+        <div key={group.label} className="flex flex-col gap-1">
+          <p className={`relative h-5 whitespace-nowrap px-[17px] text-[11px] font-medium uppercase tracking-[0.14em] text-white/35 transition-opacity duration-300 ${collapsed ? "lg:text-transparent" : ""}`}>
+            {group.label}
+            <span aria-hidden="true" className={`absolute inset-x-4 top-1/2 hidden h-px bg-white/10 ${collapsed ? "lg:block" : ""}`} />
+          </p>
+          {group.items.map(({ label, href, icon: Icon }) => {
+            const active = isActive(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                title={collapsed ? label : undefined}
+                aria-label={label}
+                aria-current={active ? "page" : undefined}
+                className={`flex items-center rounded-full px-[17px] py-2.5 transition-colors ${
+                  active ? "bg-linear-to-b from-[#E8602E] to-[#A8401A] font-medium text-white shadow-[0_0_24px_rgba(232,96,46,0.35)]" : "text-white/65 hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                <Icon className="size-5 shrink-0" />
+                <span className={railLabel(collapsed)}>{label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      ))}
     </nav>
   );
 };
@@ -90,8 +123,8 @@ const PanelNav = ({ panel, brand }) => {
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [ready, setReady] = useState(false);
-  const { items, promo } = navs[panel];
-  const root = items[0].href;
+  const { groups, promo } = navs[panel];
+  const root = groups[0].items[0].href;
 
   useEffect(() => {
     setCollapsed(readCollapsed());
@@ -168,12 +201,12 @@ const PanelNav = ({ panel, brand }) => {
           </button>
         </div>
 
-        <Suspense fallback={<NavList items={items} activeHref={null} collapsed={collapsed} />}>
-          <ActiveNavList items={items} collapsed={collapsed} onNavigate={handleClose} />
+        <Suspense fallback={<NavList groups={groups} activeHref={null} collapsed={collapsed} />}>
+          <ActiveNavList groups={groups} collapsed={collapsed} onNavigate={handleClose} />
         </Suspense>
 
         <div className="mt-auto flex w-full flex-col gap-3">
-          <div className={`grid grid-rows-[1fr] opacity-100 transition-[grid-template-rows,opacity] duration-300 ease-out ${collapsed ? "lg:pointer-events-none lg:grid-rows-[0fr] lg:opacity-0" : ""}`}>
+          <div className={`grid grid-rows-[1fr] opacity-100 transition-[grid-template-rows,opacity] duration-300 ease-out [@media(max-height:860px)]:hidden ${collapsed ? "lg:pointer-events-none lg:grid-rows-[0fr] lg:opacity-0" : ""}`}>
             <div className="min-h-0 overflow-hidden">
               <Link href={promo.href} tabIndex={collapsed ? -1 : undefined} className="group relative block w-[246px] max-w-full overflow-hidden rounded-2xl bg-[#FFF3EF] p-5 text-black lg:w-[262px]">
                 <span className="absolute right-4 top-4 grid size-9 place-items-center rounded-full bg-black text-white transition-transform group-hover:rotate-45">

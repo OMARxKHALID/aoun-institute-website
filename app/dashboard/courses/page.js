@@ -1,7 +1,8 @@
-import Link from "next/link";
+import { BookOpen } from "lucide-react";
 import { getMyCourses } from "@/features/progress/queries";
 import MyCourseCard from "@/features/progress/components/my-course-card";
 import PanelHeader from "@/components/ui/panel-header";
+import EmptyState from "@/components/ui/empty-state";
 
 export const metadata = { title: "My Courses" };
 
@@ -18,12 +19,7 @@ const MyCoursesPage = async () => {
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-start gap-4 rounded-3xl border border-[#302C2A] bg-[#0C0C0C] p-6 sm:p-8">
-            <p className="text-white/60">You have not enrolled in any course yet.</p>
-            <Link href="/courses" className="rounded-full bg-white px-5 py-2.5 font-medium text-black hover:bg-accent hover:text-white">
-              Browse courses
-            </Link>
-          </div>
+          <EmptyState boxed icon={BookOpen} title="No courses yet" text="You have not enrolled in any course yet. Explore the catalog to get started." action={{ href: "/dashboard/explore", label: "Explore courses" }} />
         )}
       </div>
     </>

@@ -7,6 +7,7 @@ import LessonPlayer, { CompleteButton } from "@/features/progress/components/les
 import PanelHeader from "@/components/ui/panel-header";
 import PanelCard from "@/components/ui/panel-card";
 import ProgressBar from "@/components/ui/progress-bar";
+import { btn } from "@/lib/ui";
 
 export const metadata = { title: "Lesson" };
 
@@ -29,7 +30,7 @@ const LessonPage = async ({ params }) => {
                 <Lock className="size-8 text-accent" />
                 <p>Finish the previous lesson to unlock this one.</p>
                 {prev && (
-                  <Link href={`${base}/lessons/${prev.id}`} className="rounded-full bg-accent px-5 py-2 text-white">
+                  <Link href={`${base}/lessons/${prev.id}`} className={btn.primary}>
                     Go to previous lesson
                   </Link>
                 )}
@@ -44,7 +45,7 @@ const LessonPage = async ({ params }) => {
             {lesson.status === "in_progress" && <span className="text-sm text-white/45">{lesson.percent}% watched</span>}
             <div className="ml-auto flex gap-2">
               {prev && (
-                <Link href={`${base}/lessons/${prev.id}`} aria-label={`Previous: ${prev.title}`} className="flex items-center gap-1.5 rounded-full border border-[#302C2A] px-4 py-2 text-sm hover:border-accent">
+                <Link href={`${base}/lessons/${prev.id}`} aria-label={`Previous: ${prev.title}`} className={btn.outline}>
                   <ArrowLeft className="size-4" /> <span className="hidden sm:inline">Previous</span>
                 </Link>
               )}
@@ -76,7 +77,7 @@ const LessonPage = async ({ params }) => {
                   </p>
                 </div>
                 {lesson.quiz.status !== "locked" && (
-                  <Link href={`/dashboard/quizzes/${lesson.quiz.id}`} className="rounded-full bg-white px-4 py-2 text-sm font-medium text-black hover:bg-accent hover:text-white">
+                  <Link href={`/dashboard/quizzes/${lesson.quiz.id}`} className={btn.secondary}>
                     {lesson.quiz.status === "passed" ? "View quiz" : "Take quiz"}
                   </Link>
                 )}

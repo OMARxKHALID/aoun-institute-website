@@ -38,7 +38,7 @@ const ResetPasswordForm = () => {
       <FormAlert>{formState.errors.root?.message}</FormAlert>
       <Field label="New password" type="password" autoComplete="new-password" error={formState.errors.password?.message} {...register("password")} />
       <Field label="Confirm password" type="password" autoComplete="new-password" error={formState.errors.confirm?.message} {...register("confirm")} />
-      <Button type="submit" loading={formState.isSubmitting}>
+      <Button size="lg" type="submit" loading={formState.isSubmitting}>
         Save New Password
       </Button>
     </form>

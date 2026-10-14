@@ -1,5 +1,5 @@
 import PanelSkeleton from "@/components/ui/panel-skeleton";
 
-const AdminLoading = () => <PanelSkeleton />;
+const Loading = () => <PanelSkeleton variant="list" />;
 
-export default AdminLoading;
+export default Loading;

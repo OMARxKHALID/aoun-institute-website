@@ -26,6 +26,9 @@ const statusTone = {
   unverified: "gray",
   revoked: "red",
   in_progress: "accent",
+  new: "accent",
+  read: "gray",
+  archived: "gray",
 };
 
 const StatusPill = ({ status, label, tone }) => (

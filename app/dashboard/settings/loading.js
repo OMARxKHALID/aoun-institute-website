@@ -1,5 +1,5 @@
 import PanelSkeleton from "@/components/ui/panel-skeleton";
 
-const DashboardLoading = () => <PanelSkeleton />;
+const Loading = () => <PanelSkeleton variant="form" />;
 
-export default DashboardLoading;
+export default Loading;

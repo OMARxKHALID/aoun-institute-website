@@ -2,8 +2,10 @@ import Link from "next/link";
 import { Award, Download, ExternalLink } from "lucide-react";
 import { getMyCertificates } from "@/features/certificates/queries";
 import PanelHeader from "@/components/ui/panel-header";
+import EmptyState from "@/components/ui/empty-state";
 import StatusPill from "@/components/ui/status-pill";
 import { formatDate } from "@/lib/format";
+import { btn } from "@/lib/ui";
 
 export const metadata = { title: "Certificates" };
 
@@ -30,10 +32,10 @@ const CertificatesPage = async () => {
                 <p className="select-all rounded-xl bg-[#070707] px-3 py-2 font-mono text-sm text-white/70">{c.code}</p>
                 {c.status === "VALID" ? (
                   <div className="mt-auto flex flex-wrap gap-2">
-                    <a href={`/api/certificates/${c.code}/pdf`} className="flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium">
+                    <a href={`/api/certificates/${c.code}/pdf`} className={btn.primary}>
                       <Download className="size-4" /> PDF
                     </a>
-                    <Link href={`/verify/${c.code}`} className="flex items-center gap-2 rounded-full border border-[#302C2A] px-4 py-2 text-sm hover:border-accent">
+                    <Link href={`/verify/${c.code}`} className={btn.outline}>
                       <ExternalLink className="size-4" /> Public link
                     </Link>
                   </div>
@@ -44,13 +46,7 @@ const CertificatesPage = async () => {
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-start gap-3 rounded-3xl border border-[#302C2A] bg-[#0C0C0C] p-6 sm:p-8">
-            <Award className="size-8 text-accent" />
-            <p className="text-white/60">Finish a course to earn your first certificate.</p>
-            <Link href="/dashboard/courses" className="rounded-full bg-white px-5 py-2.5 font-medium text-black hover:bg-accent hover:text-white">
-              Go to my courses
-            </Link>
-          </div>
+          <EmptyState boxed icon={Award} title="No certificates yet" text="Finish a course and pass its quizzes to earn your first certificate." action={{ href: "/dashboard/courses", label: "Go to my courses" }} />
         )}
       </div>
     </>

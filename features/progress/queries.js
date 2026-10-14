@@ -9,6 +9,8 @@ import CourseProgress from "@/features/progress/models/course-progress";
 import ActivityLog from "@/features/progress/models/activity-log";
 import Certificate from "@/features/certificates/model";
 import Order from "@/features/payments/models/order";
+import Quiz from "@/features/quizzes/models/quiz";
+import QuizAttempt from "@/features/quizzes/models/quiz-attempt";
 import { buildOutline, findLessonInOutline, recomputeProgress } from "@/features/progress/service";
 
 const plain = (value) => JSON.parse(JSON.stringify(value));
@@ -146,5 +148,49 @@ export const getStudentLesson = async (slug, lessonId) => {
     stats: result.stats,
     ...found,
     lesson: { ...found.lesson, description: lesson?.description ?? "", attachments: lesson?.attachments ?? [] },
+  });
+};
+
+export const getLearningReport = async () => {
+  const user = await requireUser();
+  const courses = await getMyCourses();
+  const since = new Date(Date.now() - 84 * 86400000);
+  const [attempts, watch] = await Promise.all([
+    QuizAttempt.find({ userId: user.id, status: { $ne: "in_progress" } }, "quizId courseId percent passed submittedAt attemptNo").sort({ submittedAt: -1 }).limit(50).lean(),
+    ActivityLog.find({ userId: user.id, type: "lesson_viewed" }, "meta").lean(),
+  ]);
+  const quizzes = await Quiz.find({ _id: { $in: attempts.map((a) => a.quizId) } }, "title").lean();
+  const quizTitles = new Map(quizzes.map((q) => [String(q._id), q.title]));
+  const courseTitles = new Map(courses.map((c) => [c.id, c.title]));
+  const seconds = new Map(watch.map((w) => [w.meta.day, w.meta.seconds]));
+  const weeks = Array.from({ length: 12 }, (_, i) => {
+    const end = new Date(Date.now() - (11 - i) * 7 * 86400000);
+    const total = Array.from({ length: 7 }, (_, d) => seconds.get(dayKey(new Date(end.getTime() - d * 86400000))) ?? 0).reduce((a, b) => a + b, 0);
+    return { key: dayKey(end), label: end.toLocaleDateString("en-GB", { day: "numeric", month: "short" }), value: Math.round(total / 60) };
+  });
+  let streak = 0;
+  for (let d = seconds.has(dayKey(new Date())) ? 0 : 1; seconds.has(dayKey(new Date(Date.now() - d * 86400000))); d += 1) streak += 1;
+  const days = [...seconds.keys()].sort();
+  let best = 0;
+  let run = 0;
+  days.forEach((day, i) => {
+    run = i && new Date(day) - new Date(days[i - 1]) === 86400000 ? run + 1 : 1;
+    best = Math.max(best, run);
+  });
+  const bestByQuiz = new Map();
+  attempts.forEach((a) => bestByQuiz.set(String(a.quizId), Math.max(bestByQuiz.get(String(a.quizId)) ?? 0, a.percent ?? 0)));
+  return plain({
+    courses,
+    weeks,
+    streak,
+    bestStreak: best,
+    activeDays: days.filter((d) => d >= dayKey(since)).length,
+    totals: {
+      minutes: Math.round([...seconds.values()].reduce((a, b) => a + b, 0) / 60),
+      lessons: courses.reduce((sum, c) => sum + c.completedLessons, 0),
+      quizzesPassed: new Set(attempts.filter((a) => a.passed).map((a) => String(a.quizId))).size,
+      averageScore: bestByQuiz.size ? Math.round([...bestByQuiz.values()].reduce((a, b) => a + b, 0) / bestByQuiz.size) : null,
+    },
+    attempts: attempts.slice(0, 10).map((a) => ({ id: String(a._id), quiz: quizTitles.get(String(a.quizId)) ?? "Quiz", course: courseTitles.get(String(a.courseId)) ?? "", percent: a.percent, passed: a.passed, submittedAt: a.submittedAt, attemptNo: a.attemptNo })),
   });
 };

@@ -13,7 +13,7 @@ const GoogleButton = ({ callbackURL = "/dashboard" }) => {
   };
 
   return (
-    <Button type="button" variant="outline" loading={loading} onClick={handleGoogle} className="w-full">
+    <Button type="button" size="lg" variant="outline" loading={loading} onClick={handleGoogle} className="w-full">
       Continue with Google
     </Button>
   );

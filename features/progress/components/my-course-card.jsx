@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Award, BookOpen, PlayCircle } from "lucide-react";
 import ProgressBar from "@/components/ui/progress-bar";
 import { formatDuration } from "@/lib/format";
+import { btn } from "@/lib/ui";
 
 const MyCourseCard = ({ course }) => (
   <article className="flex min-w-0 flex-col overflow-hidden rounded-3xl border border-[#302C2A] bg-[#0C0C0C]">
@@ -27,7 +28,7 @@ const MyCourseCard = ({ course }) => (
       </div>
       <Link
         href={course.lastLesson ? `/dashboard/courses/${course.slug}/lessons/${course.lastLesson.id}` : `/dashboard/courses/${course.slug}`}
-        className="mt-auto flex items-center justify-center gap-2 rounded-2xl bg-linear-to-b from-[#E8602E] to-[#A8401A] px-4 py-2.5 font-medium"
+        className={`mt-auto ${btn.primary}`}
       >
         <PlayCircle className="size-4" /> {course.percent ? "Continue" : "Start course"}
       </Link>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { createColumnHelper } from "@tanstack/react-table";
 import DataTable from "@/components/ui/data-table";
 import StatusPill from "@/components/ui/status-pill";
+import { btn } from "@/lib/ui";
 
 const helper = createColumnHelper();
 
@@ -34,7 +35,7 @@ const columns = helper.columns([
     header: "",
     cell: ({ row }) =>
       row.original.status === "locked" ? null : (
-        <Link href={`/dashboard/quizzes/${row.original.id}`} className="rounded-full bg-white/5 px-4 py-1.5 text-sm hover:bg-accent">
+        <Link href={`/dashboard/quizzes/${row.original.id}`} className={btn.outline}>
           {row.original.status === "available" ? "Start" : "Open"}
         </Link>
       ),

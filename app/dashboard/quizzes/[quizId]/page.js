@@ -8,6 +8,7 @@ import PanelCard from "@/components/ui/panel-card";
 import StatCard from "@/components/ui/stat-card";
 import StatusPill from "@/components/ui/status-pill";
 import { formatDate } from "@/lib/format";
+import { btn } from "@/lib/ui";
 
 export const metadata = { title: "Quiz" };
 
@@ -49,7 +50,7 @@ const QuizPage = async ({ params }) => {
           ) : null}
           {quiz.timeLimitSec > 0 && canStart && !open && <p className="text-sm text-white/50">The timer starts when you press start and keeps running if you leave the page.</p>}
           {open ? (
-            <Link href={`/dashboard/quizzes/attempts/${open.id}`} className="self-start rounded-2xl bg-linear-to-b from-[#E8602E] to-[#A8401A] px-6 py-3 font-semibold">
+            <Link href={`/dashboard/quizzes/attempts/${open.id}`} className={`self-start ${btn.primary}`}>
               Resume attempt
             </Link>
           ) : (

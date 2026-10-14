@@ -5,6 +5,7 @@ import { getAttemptView } from "@/features/quizzes/queries";
 import QuizTaker from "@/features/quizzes/components/quiz-taker";
 import PanelHeader from "@/components/ui/panel-header";
 import PanelCard from "@/components/ui/panel-card";
+import { btn } from "@/lib/ui";
 
 export const metadata = { title: "Quiz Attempt" };
 
@@ -38,7 +39,7 @@ const AttemptPage = async ({ params }) => {
               {attempt.status === "expired" && " · submitted when time ran out"}
             </p>
           </div>
-          <Link href={`/dashboard/courses/${course.slug}`} className="rounded-full bg-white px-5 py-2.5 font-medium text-black hover:bg-accent hover:text-white">
+          <Link href={`/dashboard/courses/${course.slug}`} className={btn.secondary}>
             Back to course
           </Link>
         </div>

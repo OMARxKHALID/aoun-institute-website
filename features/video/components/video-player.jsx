@@ -7,6 +7,7 @@ import MuxPlayer from "@mux/mux-player-react/lazy";
 import { Loader2, Lock, MonitorX } from "lucide-react";
 import { claimStream, streamHeartbeat } from "@/features/video/actions";
 import { saveProgress } from "@/features/progress/actions";
+import { btn } from "@/lib/ui";
 
 const HEARTBEAT_MS = 30_000;
 const SAVE_MS = 15_000;
@@ -152,7 +153,7 @@ const VideoPlayer = ({ lessonId, title, onComplete }) => {
       <Notice icon={Lock}>
         <p>{messages[data?.reason] ?? "Could not load this video."}</p>
         {data?.reason === "login" && (
-          <Link href="/login" className="rounded-full bg-accent px-5 py-2 text-white">
+          <Link href="/login" className={btn.primary}>
             Sign in
           </Link>
         )}
@@ -192,7 +193,7 @@ const VideoPlayer = ({ lessonId, title, onComplete }) => {
           <div className="flex flex-col items-center gap-3">
             <MonitorX className="size-8 text-accent" />
             <p className="max-w-sm text-white/80">Your account is playing a video on another device or tab. Only one stream is allowed at a time.</p>
-            <button type="button" onClick={handleResume} className="rounded-full bg-accent px-5 py-2 text-white">
+            <button type="button" onClick={handleResume} className={btn.primary}>
               Watch here instead
             </button>
           </div>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, CheckCircle2, Circle, Clock, Loader2, Send, Square, SquareCheck } from "lucide-react";
 import { saveAnswers, submitAttempt } from "@/features/quizzes/student-actions";
 import FormAlert from "@/components/ui/form-alert";
+import { btn } from "@/lib/ui";
 
 const toPayload = (answers) => Object.entries(answers).map(([questionId, selected]) => ({ questionId, selected }));
 
@@ -176,10 +177,10 @@ const QuizTaker = ({ attempt, quiz, questions }) => {
 
       {one && (
         <div className="flex justify-between gap-3">
-          <button type="button" onClick={() => setIndex((i) => i - 1)} disabled={index === 0} className="flex items-center gap-2 rounded-full border border-[#302C2A] px-4 py-2 text-sm disabled:opacity-30">
+          <button type="button" onClick={() => setIndex((i) => i - 1)} disabled={index === 0} className={btn.outline}>
             <ArrowLeft className="size-4" /> Previous
           </button>
-          <button type="button" onClick={() => setIndex((i) => i + 1)} disabled={index === questions.length - 1} className="flex items-center gap-2 rounded-full border border-[#302C2A] px-4 py-2 text-sm disabled:opacity-30">
+          <button type="button" onClick={() => setIndex((i) => i + 1)} disabled={index === questions.length - 1} className={btn.outline}>
             Next <ArrowRight className="size-4" />
           </button>
         </div>

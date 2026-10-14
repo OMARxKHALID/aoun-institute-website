@@ -10,7 +10,7 @@ const BarChart = ({ data, format = (v) => v, label }) => {
             style={{ height: `${Math.max(4, (d.value / max) * 100)}%` }}
             className={`w-full max-w-10 rounded-xl transition-all ${i === peak && d.value ? "bg-linear-to-b from-[#E8602E] to-[#A8401A] shadow-[0_0_20px_rgba(232,96,46,0.35)]" : "bg-white/10 group-hover:bg-white/20"}`}
           />
-          <span className="text-xs text-white/45">{d.label}</span>
+          <span className="text-center text-[10px] leading-tight text-white/45 sm:text-xs">{d.label}</span>
         </div>
       ))}
     </div>

@@ -4,6 +4,7 @@ import { getStudentOverview } from "@/features/progress/queries";
 import { getMyAnnouncements } from "@/features/announcements/queries";
 import AnnouncementList from "@/features/announcements/components/announcement-list";
 import PanelHeader from "@/components/ui/panel-header";
+import EmptyState from "@/components/ui/empty-state";
 import PanelCard from "@/components/ui/panel-card";
 import StatCard from "@/components/ui/stat-card";
 import ProgressBar from "@/components/ui/progress-bar";
@@ -43,16 +44,7 @@ const DashboardPage = async () => {
               <Receipt className="size-5 shrink-0" /> Your payment is under review. You will get access as soon as it is approved.
             </Link>
           )}
-          <div className="flex flex-col items-start gap-4 rounded-3xl border border-[#302C2A] bg-[#0C0C0C] p-6 sm:p-8">
-            <span className="grid size-14 place-items-center rounded-2xl bg-accent/15 text-accent">
-              <BookOpen className="size-7" />
-            </span>
-            <h2 className="text-2xl font-medium">No courses yet</h2>
-            <p className="max-w-xl text-white/60">Browse the catalog to start your first course. Progress, quizzes and certificates will appear here.</p>
-            <Link href="/courses" className="rounded-full bg-white px-5 py-2.5 font-medium text-black transition hover:bg-accent hover:text-white">
-              Browse courses
-            </Link>
-          </div>
+          <EmptyState boxed icon={BookOpen} title="No courses yet" text="Browse the catalog to start your first course. Progress, quizzes and certificates will appear here." action={{ href: "/dashboard/explore", label: "Explore courses" }} />
         </div>
       </>
     );
@@ -147,7 +139,7 @@ const DashboardPage = async () => {
         </div>
 
         <aside className="grid min-w-0 content-start gap-5 md:grid-cols-2 xl:grid-cols-1">
-          <Link href="/courses" className="group relative flex flex-col gap-2 overflow-hidden rounded-3xl bg-[#FFF3EF] p-6 text-black md:col-span-2 xl:col-span-1">
+          <Link href="/dashboard/explore" className="group relative flex flex-col gap-2 overflow-hidden rounded-3xl bg-[#FFF3EF] p-6 text-black md:col-span-2 xl:col-span-1">
             <span className="absolute right-5 top-5 grid size-10 place-items-center rounded-full bg-black text-white transition-transform group-hover:rotate-45">
               <ArrowUpRight className="size-5" />
             </span>

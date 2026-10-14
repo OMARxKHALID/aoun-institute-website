@@ -9,6 +9,7 @@ import PanelHeader from "@/components/ui/panel-header";
 import PanelCard from "@/components/ui/panel-card";
 import ProgressBar from "@/components/ui/progress-bar";
 import { formatDuration } from "@/lib/format";
+import { btn } from "@/lib/ui";
 
 export const metadata = { title: "Course" };
 
@@ -69,10 +70,10 @@ const StudentCoursePage = async ({ params }) => {
                   <Award className="size-5" /> You earned your certificate
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  <a href={`/api/certificates/${certificate}/pdf`} className="rounded-full bg-accent px-4 py-2 text-sm font-medium">
+                  <a href={`/api/certificates/${certificate}/pdf`} className={btn.primary}>
                     Download PDF
                   </a>
-                  <Link href={`/verify/${certificate}`} className="rounded-full border border-[#302C2A] px-4 py-2 text-sm hover:border-accent">
+                  <Link href={`/verify/${certificate}`} className={btn.outline}>
                     Public link
                   </Link>
                 </div>

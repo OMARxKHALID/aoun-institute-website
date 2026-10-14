@@ -6,6 +6,7 @@ import PanelHeader from "@/components/ui/panel-header";
 import PanelCard from "@/components/ui/panel-card";
 import StatCard from "@/components/ui/stat-card";
 import ProgressBar from "@/components/ui/progress-bar";
+import { btn } from "@/lib/ui";
 
 export const metadata = { title: "Quiz Results" };
 
@@ -15,7 +16,7 @@ const QuizResultsPage = async ({ params }) => {
   if (!data) notFound();
   const { quiz, course, stats, perQuestion, rows } = data;
   const exportLink = (
-    <a href={`/api/admin/quiz-results/${quiz.id}`} className="flex items-center justify-center gap-2 rounded-full border border-[#302C2A] px-4 py-2.5 text-sm hover:border-accent">
+    <a href={`/api/admin/quiz-results/${quiz.id}`} className={btn.outline}>
       <Download className="size-4 text-accent" /> Export CSV
     </a>
   );

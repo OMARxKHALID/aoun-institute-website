@@ -1,1 +1,5 @@
-export { default } from "@/components/ui/panel-skeleton";
+import PanelSkeleton from "@/components/ui/panel-skeleton";
+
+const Loading = () => <PanelSkeleton variant="editor" />;
+
+export default Loading;

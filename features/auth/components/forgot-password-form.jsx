@@ -23,7 +23,7 @@ const ForgotPasswordForm = () => {
   return (
     <form onSubmit={handleSubmit(handleRequest)} noValidate className="grid gap-5 rounded-3xl border border-[#302C2A] bg-black/60 p-6 text-left backdrop-blur-sm md:p-10">
       <Field label="Email" type="email" autoComplete="email" error={formState.errors.email?.message} {...register("email")} />
-      <Button type="submit" loading={formState.isSubmitting}>
+      <Button size="lg" type="submit" loading={formState.isSubmitting}>
         Send Reset Link
       </Button>
     </form>

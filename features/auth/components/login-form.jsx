@@ -56,7 +56,7 @@ const LoginForm = () => {
       <Link href="/forgot-password" className="-mt-2 justify-self-end text-sm text-white/60 hover:text-accent">
         Forgot password?
       </Link>
-      <Button type="submit" loading={formState.isSubmitting}>
+      <Button size="lg" type="submit" loading={formState.isSubmitting}>
         Sign In
       </Button>
     </form>

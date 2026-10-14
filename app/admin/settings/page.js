@@ -9,7 +9,7 @@ const AdminSettingsPage = async () => {
   return (
     <>
       <PanelHeader title="Site Settings" subtitle="Brand, contact, homepage content, SEO and payment details" />
-      <div className="p-5 lg:p-8">
+      <div className="p-4 sm:p-5 lg:p-8">
         <SettingsForm settings={settings} />
       </div>
     </>

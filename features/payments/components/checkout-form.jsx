@@ -37,7 +37,7 @@ export const FreeEnrollButton = ({ courseId }) => {
   return (
     <div className="flex flex-col gap-3">
       <FormAlert>{error}</FormAlert>
-      <Button type="button" loading={busy} onClick={handleEnroll} className="self-start">
+      <Button size="lg" type="button" loading={busy} onClick={handleEnroll} className="self-start">
         Enroll for free
       </Button>
     </div>
@@ -109,7 +109,7 @@ const CheckoutForm = ({ courseId, payment }) => {
         <Field label="Note (optional)" rows={2} error={errors.note?.message} {...register("note")} />
       </div>
 
-      <Button type="submit" loading={isSubmitting} className="self-start">
+      <Button size="lg" type="submit" loading={isSubmitting} className="self-start">
         Submit payment for review
       </Button>
     </form>
