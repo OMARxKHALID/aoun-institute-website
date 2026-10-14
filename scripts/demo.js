@@ -86,6 +86,13 @@ await col("siteSettings").updateOne(
   {
     $set: {
       ...defaultSiteSettings,
+      socials: [
+        { label: "Instagram", url: "https://instagram.com" },
+        { label: "LinkedIn", url: "https://linkedin.com" },
+        { label: "YouTube", url: "https://youtube.com" },
+        { label: "Facebook", url: "https://facebook.com" },
+        { label: "X", url: "https://x.com" },
+      ],
       payment: {
         ...defaultSiteSettings.payment,
         bank: { bankName: "Meezan Bank", accountTitle: "Aoun Institute (Demo)", accountNumber: "0101 0000 1234 5678", iban: "PK00 MEZN 0001 0100 0012 3456" },
