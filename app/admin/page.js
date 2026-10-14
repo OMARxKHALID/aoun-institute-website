@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { ArrowUpRight, BookOpen, Settings } from "lucide-react";
+import { ArrowUpRight, BookOpen, Receipt, Settings } from "lucide-react";
 import { requireAdmin } from "@/lib/dal";
 import PanelHeader from "@/components/ui/panel-header";
 
 const shortcuts = [
   { title: "Courses", text: "Create courses, build the syllabus, manage lessons", href: "/admin/courses", icon: BookOpen },
+  { title: "Orders", text: "Review payments and enroll students", href: "/admin/orders", icon: Receipt },
   { title: "Site Settings", text: "Brand, contact, homepage content, SEO, payment details", href: "/admin/settings", icon: Settings },
 ];
 

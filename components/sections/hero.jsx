@@ -69,7 +69,7 @@ const Hero = ({ hero, stats }) => (
           <br />
           Learning
         </h3>
-        <Link href="/request-callback" className="absolute bottom-5 left-5 z-10 rounded-xl border-[0.5px] border-white/40 px-7 py-4 text-2xl font-thin text-accent backdrop-blur-3xl">
+        <Link href="/contact" className="absolute bottom-5 left-5 z-10 rounded-xl border-[0.5px] border-white/40 px-7 py-4 text-2xl font-thin text-accent backdrop-blur-3xl">
           Get in touch →
         </Link>
       </div>

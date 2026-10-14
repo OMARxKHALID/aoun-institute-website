@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, BookOpen, ChevronLeft, LayoutDashboard, Menu, Settings, X } from "lucide-react";
+import { ArrowUpRight, BookOpen, ChevronLeft, LayoutDashboard, Menu, Receipt, Settings, X } from "lucide-react";
 import SignOutButton from "@/features/auth/components/sign-out-button";
 
 const navs = {
@@ -15,6 +15,7 @@ const navs = {
     items: [
       { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
       { label: "Courses", href: "/admin/courses", icon: BookOpen },
+      { label: "Orders", href: "/admin/orders", icon: Receipt },
       { label: "Site Settings", href: "/admin/settings", icon: Settings },
     ],
     promo: { title: "Your website", text: "See the public site the way students see it.", href: "/", cta: "View site" },

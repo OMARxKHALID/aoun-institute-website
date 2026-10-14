@@ -9,7 +9,7 @@ const BrandLogo = ({ brand, href = "/" }) => {
       ) : (
         <span className="grid size-10 shrink-0 place-items-center rounded-full bg-white font-machina text-xl font-bold text-black">{first?.[0]}</span>
       )}
-      <span className="border-l border-white/40 pl-3 font-machina text-[1.35rem] leading-tight">
+      <span className="border-l border-current/40 pl-3 font-machina text-[1.35rem] leading-tight">
         {first}
         <br />
         {rest.join(" ")}

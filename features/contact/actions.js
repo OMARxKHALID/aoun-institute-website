@@ -3,12 +3,11 @@
 import { connectDB } from "@/lib/db";
 import { parse, fail } from "@/lib/validate";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
-import { sendEmail } from "@/lib/email";
+import { escapeHtml, sendEmail } from "@/lib/email";
 import ContactMessage from "@/features/contact/model";
 import { contactSchema } from "@/features/contact/schemas";
 import { getSiteSettings } from "@/features/site-settings/queries";
 
-const escape = (value = "") => value.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 export const sendContactMessage = async (input) => {
   const result = parse(contactSchema, input);
@@ -23,7 +22,7 @@ export const sendContactMessage = async (input) => {
     await sendEmail({
       to: contact.email,
       subject: `New message: ${topic}`,
-      html: `<p><b>${escape(name)}</b> (${escape(email)} ${escape(phone)})</p><p>${escape(message).replace(/\n/g, "<br>")}</p>`,
+      html: `<p><b>${escapeHtml(name)}</b> (${escapeHtml(email)} ${escapeHtml(phone)})</p><p>${escapeHtml(message).replace(/\n/g, "<br>")}</p>`,
     }).catch((error) => console.error(error));
   }
   return { ok: true };

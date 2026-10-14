@@ -41,16 +41,15 @@ Rejected: pdf-lib (abandoned), @dnd-kit (stale/pre-1.0; native drag + keyboard b
 ```
 app/
   layout.js · globals.css · not-found.js · providers.jsx
-  (site)/      layout.js, page.js, courses/, courses/[slug]/, about/, contact/, faq/, verify/, verify/[code]/,
+  (site)/      layout.js, page.js, courses/, courses/[slug]/, checkout/[slug]/, about/, contact/, faq/, verify/, verify/[code]/,
                privacy-policy/, terms-and-conditions/, pricing-and-refund/
   (auth)/      layout.js, login/, register/, forgot-password/, reset-password/, verify-email/
-  checkout/[slug]/
   dashboard/   layout.js, page.js, courses/, courses/[slug]/, courses/[slug]/lessons/[lessonId]/,
                quizzes/, quizzes/[quizId]/, quizzes/attempts/[attemptId]/, certificates/, orders/, settings/
   admin/       layout.js, page.js, courses/, courses/new/, courses/[id]/, courses/[id]/quizzes/[quizId]/,
                quizzes/[id]/results/, students/, students/[id]/, orders/, certificates/, announcements/, settings/
-  api/auth/[...all]/route.js · api/webhooks/{video,payments}/[provider]/route.js · api/progress/route.js
-  api/certificates/[code]/pdf/route.js · api/admin/{students,orders,quiz-results}/route.js
+  api/auth/[...all]/route.js · api/webhooks/mux/route.js · api/lessons/[lessonId]/playback/route.js · api/progress/route.js
+  api/certificates/[code]/pdf/route.js · api/admin/orders/[id]/receipt/route.js · api/admin/{students,quiz-results}/route.js
 features/<name>/   model(s).js · schemas.js · actions.js · queries.js · components/ · (providers/, store.js, *.test.js)
   auth · site-settings · courses · video · payments · enrollments · progress · quizzes ·
   certificates · announcements · students · analytics · profile
@@ -64,7 +63,7 @@ hooks/ · scripts/seed.js · proxy.js · .env.example
 - **Reads:** Server Components call feature `queries.js` (guarded by `lib/dal.js`). Public catalog/settings use `'use cache'` + `cacheTag(...)`; admin mutations call `updateTag(...)` so students see changes instantly.
 - **Client reads (TanStack Query):** through route handlers under `app/api/...`, never Server Actions in `queryFn`.
 - **Mutations:** Server Actions in `features/*/actions.js`: `requireUser`/`requireAdmin` first, Zod parse, return `{ ok: true, data }` or `{ ok: false, errors }` (field errors for RHF `setError`).
-- **Session:** `auth.api.getSession({ headers: await headers() })` in `lib/dal.js`; request-time reads sit behind `<Suspense>`.
+- **Session:** `lib/dal.js` calls `await connection()` then `auth.api.getSession({ headers: await headers() })` (session checks read the clock, which partial prefetching flags otherwise); request-time reads sit behind `<Suspense>` or a page with `instant = false`.
 - **DB:** always `await connectDB()` before Mongoose queries. Node runtime only (no edge).
 
 ## MongoDB collections
@@ -96,6 +95,9 @@ Progress staleness: structural course edits bump `contentVersion`; an older `cou
 - Lesson quizzes: a quiz the teacher attaches to a lesson (`quiz.lessonId`) stays locked until the student completes that lesson's video; the server checks `lessonProgress.completedAt` before starting an attempt (section/course quizzes follow sequential unlock).
 - Quizzes graded only on the server; student queries never select `isCorrect`/`explanation`; attempts have server `expiresAt`; attempt limits and ownership enforced server-side.
 - Video: enrollment (or free preview) checked before minting Mux tokens; tokens per view with `exp` = duration + buffer; domain/UA playback restriction; DRM; moving watermark (name + email + short id); one stream per account.
+- Video flow: admin uploads straight to Mux (UpChunk to a direct-upload URL, `passthrough` = lessonId). Lesson status syncs from the Mux API (`features/video/sync.js`), triggered by the webhook and by the admin page polling, so dev works without a public webhook. Env: `MUX_TOKEN_ID/SECRET`, `MUX_SIGNING_KEY`, `MUX_PRIVATE_KEY`, `MUX_WEBHOOK_SECRET`, `MUX_DRM_CONFIGURATION_ID` (signed-only without it), `MUX_PLAYBACK_RESTRICTION_ID`.
+- One stream: player claims `playbackSessions` on play and heartbeats every 30s; another device claiming the slot pauses the first player. Client-enforced on top of server state (a modified client can ignore it; tokens still expire).
+- Payments: student submits method + transaction ID (+ optional private receipt); one PENDING order per course; admin approve → `PAID` + enrollment; reject → `FAILED` with reason, student can resubmit (same reference reopens their rejected order). Free courses enroll directly.
 - Uploads: server-signed Cloudinary params; after upload the server re-checks format/size via Admin API and deletes invalid assets; old asset destroyed on replace; receipts use `authenticated` delivery.
 - Honest limits (README): no website can block screenshots; DRM blacks out recordings only where hardware DRM exists (not desktop Chrome/Firefox).
 

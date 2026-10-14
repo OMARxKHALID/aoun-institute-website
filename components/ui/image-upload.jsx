@@ -18,7 +18,8 @@ const ImageUpload = ({ kind, value, onChange, label, aspect }) => {
     );
   }
 
-  const isDocument = rule.formats.includes("pdf") && rule.formats.length === 1;
+  const isPrivate = rule.type === "authenticated";
+  const isDocument = isPrivate || (rule.formats.includes("pdf") && rule.formats.length === 1);
   const handleSuccess = ({ info }) => onChange({ url: info.secure_url, publicId: info.public_id, name: `${info.original_filename}.${info.format}` });
   const handleRemove = () => onChange(null);
 
@@ -56,7 +57,8 @@ const ImageUpload = ({ kind, value, onChange, label, aspect }) => {
           </button>
         )}
       </div>
-      {isDocument && value?.name && (
+      {isPrivate && value?.name && <p className="truncate text-sm text-accent">{value.name}</p>}
+      {isDocument && !isPrivate && value?.name && (
         <a href={value.url} target="_blank" rel="noopener noreferrer" className="truncate text-sm text-accent hover:underline">
           {value.name}
         </a>

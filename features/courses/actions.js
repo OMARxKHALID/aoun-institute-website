@@ -1,11 +1,13 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { Types, isValidObjectId } from "mongoose";
+import { isValidObjectId } from "mongoose";
 import { connectDB } from "@/lib/db";
 import { requireAdmin } from "@/lib/dal";
 import { fail, parse } from "@/lib/validate";
 import { destroyAsset, verifyUpload } from "@/lib/cloudinary";
+import { recomputeCourse } from "@/features/courses/recompute";
+import { deleteVideo } from "@/features/video/mux";
 import Course from "@/features/courses/models/course";
 import Section from "@/features/courses/models/section";
 import Lesson from "@/features/courses/models/lesson";
@@ -23,11 +25,7 @@ const invalidate = (courseId) => {
 };
 
 const touchCourse = async (courseId) => {
-  const [{ total = 0 } = {}] = await Lesson.aggregate([
-    { $match: { courseId: new Types.ObjectId(String(courseId)), status: "published" } },
-    { $group: { _id: null, total: { $sum: "$durationSec" } } },
-  ]);
-  await Course.updateOne({ _id: courseId }, { $inc: { contentVersion: 1 }, $set: { estimatedDuration: total } });
+  await recomputeCourse(courseId);
   invalidate(courseId);
 };
 
@@ -111,7 +109,7 @@ export const deleteCourse = async (id) => {
   const course = await loadCourse(id);
   if (!course) return fail("Course not found");
   if (await Enrollment.exists({ courseId: id })) return fail("Students are enrolled in this course. Set it to draft instead of deleting.");
-  const [lessons, quizzes] = await Promise.all([Lesson.find({ courseId: id }, "attachments").lean(), Quiz.find({ courseId: id }, "_id").lean()]);
+  const [lessons, quizzes] = await Promise.all([Lesson.find({ courseId: id }, "attachments video").lean(), Quiz.find({ courseId: id }, "_id").lean()]);
   await Promise.all([
     Question.deleteMany({ quizId: { $in: quizzes.map((q) => q._id) } }),
     Quiz.deleteMany({ courseId: id }),
@@ -122,6 +120,7 @@ export const deleteCourse = async (id) => {
   await Promise.all([
     destroyRemoved("thumbnail", [], [course.thumbnail?.publicId && course.thumbnail]),
     destroyRemoved("document", [], [course.syllabusFile?.publicId && course.syllabusFile, ...course.attachments, ...lessons.flatMap((l) => l.attachments)]),
+    ...lessons.map((l) => deleteVideo(l.video)),
   ]);
   invalidate(id);
   return { ok: true };
@@ -156,7 +155,7 @@ export const deleteSection = async (sectionId) => {
   await connectDB();
   const section = await Section.findById(sectionId);
   if (!section) return fail("Section not found");
-  const [lessons, quizzes] = await Promise.all([Lesson.find({ sectionId }, "_id attachments").lean(), Quiz.find({ sectionId }, "_id").lean()]);
+  const [lessons, quizzes] = await Promise.all([Lesson.find({ sectionId }, "_id attachments video").lean(), Quiz.find({ sectionId }, "_id").lean()]);
   await Promise.all([
     LessonProgress.deleteMany({ lessonId: { $in: lessons.map((l) => l._id) } }),
     Question.deleteMany({ quizId: { $in: quizzes.map((q) => q._id) } }),
@@ -164,7 +163,7 @@ export const deleteSection = async (sectionId) => {
     Lesson.deleteMany({ sectionId }),
     Section.deleteOne({ _id: sectionId }),
   ]);
-  await destroyRemoved("document", [], lessons.flatMap((l) => l.attachments));
+  await Promise.all([destroyRemoved("document", [], lessons.flatMap((l) => l.attachments)), ...lessons.map((l) => deleteVideo(l.video))]);
   await touchCourse(section.courseId);
   return { ok: true };
 };
@@ -193,6 +192,7 @@ export const updateLesson = async (lessonId, input) => {
   if (!lesson) return fail("Lesson not found");
   const rejected = await verifyNew("document", result.data.attachments, lesson.attachments);
   if (rejected) return fail(rejected.error, "attachments");
+  if (lesson.video?.provider === "mux" && lesson.video.status === "ready" && lesson.durationSec) result.data.durationSec = lesson.durationSec;
   const structural = lesson.status !== result.data.status || lesson.durationSec !== result.data.durationSec;
   await Lesson.updateOne({ _id: lessonId }, { $set: result.data }, { runValidators: true });
   await destroyRemoved("document", result.data.attachments, lesson.attachments);
@@ -208,7 +208,7 @@ export const deleteLesson = async (lessonId) => {
   const lesson = await Lesson.findById(lessonId);
   if (!lesson) return fail("Lesson not found");
   await Promise.all([Lesson.deleteOne({ _id: lessonId }), LessonProgress.deleteMany({ lessonId })]);
-  await destroyRemoved("document", [], lesson.attachments);
+  await Promise.all([destroyRemoved("document", [], lesson.attachments), deleteVideo(lesson.video)]);
   await touchCourse(lesson.courseId);
   return { ok: true };
 };

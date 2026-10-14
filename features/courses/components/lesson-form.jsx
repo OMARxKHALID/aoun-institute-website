@@ -11,6 +11,7 @@ import Button from "@/components/ui/button";
 import Checkbox from "@/components/ui/checkbox";
 import FormAlert from "@/components/ui/form-alert";
 import AttachmentsField from "@/components/ui/attachments-field";
+import LessonVideoField from "@/features/video/components/lesson-video-field";
 
 const toMinutes = (seconds) => Math.round((seconds ?? 0) / 60);
 
@@ -47,8 +48,11 @@ const LessonForm = ({ lesson, onDone }) => {
       </div>
       <Field label="Lesson title" error={errors.title?.message} {...register("title")} />
       <Field label="Status" options={["draft", "published"]} error={errors.status?.message} {...register("status")} />
+      <div className="md:col-span-2">
+        <LessonVideoField lessonId={lesson.id} video={lesson.video} />
+      </div>
       <Field label="Description" rows={4} className="md:col-span-2" error={errors.description?.message} {...register("description")} />
-      <Field label="Duration (minutes)" type="number" min="0" step="1" error={errors.durationMin?.message ?? errors.durationSec?.message} {...register("durationMin", { valueAsNumber: true })} />
+      <Field label="Duration (minutes, auto-filled for uploads)" type="number" min="0" step="1" error={errors.durationMin?.message ?? errors.durationSec?.message} {...register("durationMin", { valueAsNumber: true })} />
       <Checkbox label="Free preview" hint="Anyone can watch this lesson before buying." {...register("isFreePreview")} />
       <div className="md:col-span-2">
         <Controller control={control} name="attachments" render={({ field }) => <AttachmentsField value={field.value} onChange={field.onChange} error={errors.attachments?.message} />} />

@@ -9,15 +9,16 @@ import Comparison from "@/components/sections/comparison";
 import Faq from "@/components/sections/faq";
 import Cta from "@/components/sections/cta";
 import { getSiteSettings } from "@/features/site-settings/queries";
+import { getCatalog } from "@/features/courses/queries";
 
 const Home = async () => {
-  const { brand, hero, home } = await getSiteSettings();
+  const [{ brand, hero, home }, courses] = await Promise.all([getSiteSettings(), getCatalog()]);
   return (
     <main className="relative isolate">
       <Hero hero={hero} stats={home.stats} />
       <LogoMarquee partners={home.partners} />
       <Impact impactCards={home.impactCards} />
-      <Courses />
+      <Courses courses={courses} />
       <Testimonials testimonials={home.testimonials} />
       <Youtube />
       <Community communityTiles={home.communityTiles} />

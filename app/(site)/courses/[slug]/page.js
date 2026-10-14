@@ -1,49 +1,53 @@
-import Link from "next/link";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { Award, CalendarDays, CircleCheck, Headset, Radio, Signal } from "lucide-react";
-import { courses, findCourse } from "@/lib/data";
+import { Award, BookOpen, CalendarDays, CircleCheck, Infinity as InfinityIcon, Signal } from "lucide-react";
 import PageHero from "@/components/ui/page-hero";
 import SectionHeading from "@/components/ui/section-heading";
 import CourseCard from "@/components/ui/course-card";
-import Reveal from "@/components/motion/reveal";
+import CourseCta, { CourseCtaFallback, coursePriceLabel } from "@/features/courses/components/course-cta";
+import CourseCurriculum from "@/features/courses/components/course-curriculum";
+import { getCatalog, getPublicCourse } from "@/features/courses/queries";
+import { formatDuration, formatPrice } from "@/lib/format";
 
 export const instant = false;
 
-export const generateStaticParams = () => courses.map(({ slug }) => ({ slug }));
-
 export const generateMetadata = async ({ params }) => {
   const { slug } = await params;
-  return { title: findCourse(slug)?.title ?? "Course" };
+  const course = await getPublicCourse(slug);
+  if (!course) return { title: "Course" };
+  return {
+    title: course.title,
+    description: course.subtitle || course.description?.slice(0, 160),
+    openGraph: course.thumbnail?.url ? { images: [course.thumbnail.url] } : undefined,
+  };
 };
 
 const CourseDetailPage = async ({ params }) => {
   const { slug } = await params;
-  const course = findCourse(slug);
+  const [course, catalog] = await Promise.all([getPublicCourse(slug), getCatalog()]);
   if (!course) notFound();
 
   const facts = [
-    { icon: CalendarDays, label: "Duration", value: course.duration },
-    { icon: Radio, label: "Mode", value: course.mode },
-    { icon: Signal, label: "Level", value: course.level },
+    { icon: CalendarDays, label: "Duration", value: course.estimatedDuration ? formatDuration(course.estimatedDuration) : "Self-paced" },
+    { icon: BookOpen, label: "Lessons", value: course.lessons },
+    { icon: Signal, label: "Level", value: course.level || "All levels" },
     { icon: Award, label: "Certificate", value: "Yes" },
-    { icon: Headset, label: "Mentor Support", value: "24/7" },
+    { icon: InfinityIcon, label: "Access", value: "Lifetime" },
   ];
-
-  const related = courses.filter((c) => c.slug !== slug).slice(0, 3);
+  const related = catalog.filter((c) => c.slug !== slug).slice(0, 3);
+  const discounted = course.discountPrice != null && course.discountPrice < course.price && course.discountPrice > 0;
 
   return (
     <main>
-      <PageHero tag={course.category} title={course.title} text={course.blurb}>
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-4">
-          <Link
-            href={`/signin?next=/courses/${slug}`}
-            className="rounded-2xl bg-linear-to-b from-[#E8602E] to-[#A8401A] px-10 py-4 text-xl font-bold transition-shadow hover:shadow-[0_0_40px_5px_rgba(232,96,46,0.5)]"
-          >
-            Enroll for {course.price.now}
-          </Link>
-          <Link href="/request-callback" className="rounded-2xl border border-white/30 px-10 py-4 text-xl transition-colors hover:border-accent hover:text-accent">
-            Talk to a counselor
-          </Link>
+      <PageHero tag={course.category || "Course"} title={course.title} text={course.subtitle}>
+        <div className="mt-4 flex flex-col items-center gap-4">
+          <p className="text-3xl font-medium">
+            {coursePriceLabel(course)}
+            {discounted && <span className="ml-3 text-xl font-light text-white/40 line-through">{formatPrice(course.price, course.currency)}</span>}
+          </p>
+          <Suspense fallback={<CourseCtaFallback course={course} />}>
+            <CourseCta course={course} />
+          </Suspense>
         </div>
       </PageHero>
 
@@ -61,50 +65,53 @@ const CourseDetailPage = async ({ params }) => {
         ))}
       </section>
 
-      <section className="mx-2 rounded-4xl bg-[#FFF3EF] px-6 py-20 text-black sm:mx-4">
-        <SectionHeading light tag="Curriculum" title="What you will learn, module by module" />
-        <div className="mx-auto flex max-w-4xl flex-col gap-4">
-          {course.modules.map(({ title, topics }, i) => (
-            <Reveal key={title} delay={i * 0.05}>
-              <details open={i === 0} className="group rounded-2xl border border-[#CACACA]/50 bg-white p-6">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 [&::-webkit-details-marker]:hidden">
-                  <span className="flex items-center gap-4">
-                    <span className="font-machina text-3xl text-accent">{String(i + 1).padStart(2, "0")}</span>
-                    <span className="text-2xl font-medium">{title}</span>
-                  </span>
-                  <span className="text-2xl transition-transform group-open:rotate-45">+</span>
-                </summary>
-                <ul className="mt-4 grid gap-2 pl-14 text-lg text-black/70 sm:grid-cols-2">
-                  {topics.map((t) => (
-                    <li key={t} className="list-disc">{t}</li>
+      {course.description && (
+        <section className="mx-auto w-[90%] max-w-4xl pb-20">
+          <SectionHeading tag="About" title="About this course" />
+          <p className="whitespace-pre-line text-xl font-light leading-relaxed text-white/70">{course.description}</p>
+        </section>
+      )}
+
+      {course.outline.length > 0 && (
+        <section className="mx-2 rounded-4xl bg-[#FFF3EF] px-4 py-20 text-black sm:mx-4 sm:px-6">
+          <SectionHeading light tag="Curriculum" title="What you will learn, module by module" />
+          <CourseCurriculum outline={course.outline} />
+        </section>
+      )}
+
+      {(course.outcomes.length > 0 || course.prerequisites.length > 0) && (
+        <section className="mx-auto grid w-[90%] max-w-6xl gap-12 py-24 lg:grid-cols-2">
+          {[
+            ["Outcomes", "What you will be able to do", course.outcomes],
+            ["Before you start", "Prerequisites", course.prerequisites],
+          ]
+            .filter(([, , items]) => items.length)
+            .map(([tag, title, items]) => (
+              <div key={tag}>
+                <SectionHeading tag={tag} title={title} />
+                <ul className="flex flex-col gap-4">
+                  {items.map((item) => (
+                    <li key={item} className="flex items-start gap-3 rounded-2xl border border-[#302C2A] p-5">
+                      <CircleCheck className="mt-1 size-5 shrink-0 text-green-500" />
+                      <span className="text-lg">{item}</span>
+                    </li>
                   ))}
                 </ul>
-              </details>
-            </Reveal>
-          ))}
-        </div>
-      </section>
+              </div>
+            ))}
+        </section>
+      )}
 
-      <section className="px-8 py-24">
-        <SectionHeading tag="Outcomes" title="Where you will be when you finish" />
-        <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-3">
-          {course.outcomes.map((o) => (
-            <div key={o} className="flex items-start gap-3 rounded-2xl border border-[#302C2A] p-6">
-              <CircleCheck className="mt-1 size-6 shrink-0 text-green-500" />
-              <p className="text-xl">{o}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="mx-auto w-[90%] pb-24 lg:w-[85%]">
-        <SectionHeading tag="More Courses" title="Keep exploring" />
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {related.map((c) => (
-            <CourseCard key={c.slug} {...c} />
-          ))}
-        </div>
-      </section>
+      {related.length > 0 && (
+        <section className="mx-auto w-[90%] pb-24 lg:w-[85%]">
+          <SectionHeading tag="More Courses" title="Keep exploring" />
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {related.map((c) => (
+              <CourseCard key={c.id} {...c} />
+            ))}
+          </div>
+        </section>
+      )}
     </main>
   );
 };
