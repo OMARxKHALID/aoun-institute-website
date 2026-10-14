@@ -1,7 +1,7 @@
 import { getSiteSettings } from "@/features/site-settings/queries";
 import LegalPage from "@/components/ui/legal-page";
 
-export const metadata = { title: "Privacy Policy" };
+export const metadata = { title: "Privacy Policy", description: "How we collect, use and protect your personal data.", alternates: { canonical: "/privacy-policy" } };
 
 const buildSections = ({ brand, contact }) => [
   {

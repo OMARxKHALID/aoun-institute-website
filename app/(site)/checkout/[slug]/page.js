@@ -13,7 +13,7 @@ import { imageUrl } from "@/lib/upload-rules";
 
 export const instant = false;
 
-export const metadata = { title: "Checkout" };
+export const metadata = { title: "Checkout", robots: { index: false, follow: false } };
 
 const StateCard = ({ icon: Icon, tone, title, children }) => (
   <div className="flex flex-col gap-4 rounded-3xl border border-[#302C2A] bg-[#0C0C0C] p-6 md:p-8">
@@ -71,7 +71,7 @@ const CheckoutPage = async ({ params }) => {
         {body()}
         <aside className="flex flex-col gap-4 rounded-3xl border border-[#302C2A] bg-[#0C0C0C] p-6 lg:sticky lg:top-36">
           <div className="aspect-video overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#f97316,#7c2d12_55%,#1c1917)]">
-            {course.thumbnail?.url && <img src={imageUrl(course.thumbnail.url, 800)} alt="" loading="lazy" decoding="async" className="size-full object-cover" />}
+            {course.thumbnail?.url && <img src={imageUrl(course.thumbnail.url, 800)} alt={course.title} loading="lazy" decoding="async" className="size-full object-cover" />}
           </div>
           <Link href={`/courses/${course.slug}`} className="font-machina text-2xl leading-tight hover:text-accent">
             {course.title}

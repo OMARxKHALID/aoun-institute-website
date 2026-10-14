@@ -10,6 +10,9 @@ import ReviewList from "@/features/reviews/components/review-list";
 import Stars from "@/components/ui/stars";
 import { getCatalog, getPublicCourse } from "@/features/courses/queries";
 import { formatDuration, formatPrice } from "@/lib/format";
+import JsonLd from "@/components/ui/json-ld";
+import { SITE_URL, absoluteUrl } from "@/lib/site";
+import { getSiteSettings } from "@/features/site-settings/queries";
 
 export const instant = false;
 
@@ -17,16 +20,20 @@ export const generateMetadata = async ({ params }) => {
   const { slug } = await params;
   const course = await getPublicCourse(slug);
   if (!course) return { title: "Course" };
+  const description = course.subtitle || course.description?.slice(0, 160);
+  const images = course.thumbnail?.url ? [course.thumbnail.url] : undefined;
   return {
     title: course.title,
-    description: course.subtitle || course.description?.slice(0, 160),
-    openGraph: course.thumbnail?.url ? { images: [course.thumbnail.url] } : undefined,
+    description,
+    alternates: { canonical: `/courses/${course.slug}` },
+    openGraph: { type: "website", title: course.title, description, url: `/courses/${course.slug}`, images },
+    twitter: { card: images ? "summary_large_image" : "summary", title: course.title, description, images },
   };
 };
 
 const CourseDetailPage = async ({ params }) => {
   const { slug } = await params;
-  const [course, catalog] = await Promise.all([getPublicCourse(slug), getCatalog()]);
+  const [course, catalog, { brand }] = await Promise.all([getPublicCourse(slug), getCatalog(), getSiteSettings()]);
   if (!course) notFound();
 
   const facts = [
@@ -39,8 +46,25 @@ const CourseDetailPage = async ({ params }) => {
   const related = catalog.filter((c) => c.slug !== slug).slice(0, 3);
   const discounted = course.discountPrice != null && course.discountPrice < course.price && course.discountPrice > 0;
 
+  const price = course.discountPrice ?? course.price;
+  const structured = {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    name: course.title,
+    description: course.subtitle || course.description,
+    url: absoluteUrl(`/courses/${course.slug}`),
+    image: course.thumbnail?.url && (course.thumbnail.url.startsWith("http") ? course.thumbnail.url : absoluteUrl(course.thumbnail.url)),
+    provider: { "@type": "EducationalOrganization", name: brand.name, sameAs: SITE_URL },
+    educationalLevel: course.level,
+    inLanguage: "en",
+    offers: { "@type": "Offer", category: price ? "Paid" : "Free", price, priceCurrency: course.currency, availability: "https://schema.org/InStock", url: absoluteUrl(`/courses/${course.slug}`) },
+    hasCourseInstance: { "@type": "CourseInstance", courseMode: "Online", courseWorkload: course.estimatedDuration ? `PT${Math.round(course.estimatedDuration / 60)}M` : undefined },
+    ...(course.rating && { aggregateRating: { "@type": "AggregateRating", ratingValue: course.rating.average.toFixed(1), reviewCount: course.rating.count } }),
+  };
+
   return (
     <main>
+      <JsonLd data={structured} />
       <PageHero tag={course.category || "Course"} title={course.title} text={course.subtitle}>
         <div className="mt-4 flex flex-col items-center gap-4">
           {course.rating && (

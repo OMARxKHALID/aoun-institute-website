@@ -63,8 +63,6 @@ export const outlineOrderSchema = z
   .array(z.strictObject({ id: objectId, lessonIds: z.array(objectId).max(500) }))
   .max(100);
 
-export const objectIdSchema = objectId;
-
 export const slugify = (value) =>
   value
     .toLowerCase()

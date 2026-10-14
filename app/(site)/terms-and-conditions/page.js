@@ -1,7 +1,7 @@
 import { getSiteSettings } from "@/features/site-settings/queries";
 import LegalPage from "@/components/ui/legal-page";
 
-export const metadata = { title: "Terms & Conditions" };
+export const metadata = { title: "Terms & Conditions", description: "The terms for using the website and our courses.", alternates: { canonical: "/terms-and-conditions" } };
 
 const buildSections = ({ brand, contact }) => [
   {

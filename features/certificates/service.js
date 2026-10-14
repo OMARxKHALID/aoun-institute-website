@@ -3,14 +3,13 @@ import { randomInt } from "node:crypto";
 import Certificate from "@/features/certificates/model";
 import ActivityLog from "@/features/progress/models/activity-log";
 import { linkEmail, sendEmail } from "@/lib/email";
+import { SITE_URL } from "@/lib/site";
 
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
-export const generateCode = () => `INST-${new Date().getFullYear()}-${Array.from({ length: 8 }, () => ALPHABET[randomInt(ALPHABET.length)]).join("")}`;
+const generateCode = () => `INST-${new Date().getFullYear()}-${Array.from({ length: 8 }, () => ALPHABET[randomInt(ALPHABET.length)]).join("")}`;
 
 export const CODE_PATTERN = /^INST-\d{4}-[A-Z2-9]{8}$/;
-
-export const siteUrl = () => process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
 
 export const createCertificate = async ({ user, course, reissuedFrom }) => {
   for (let tries = 0; tries < 5; tries += 1) {
@@ -29,7 +28,7 @@ export const notifyCertificate = (user, certificate) => {
   return sendEmail({
     to: user.email,
     subject: `Your certificate for ${certificate.courseTitle}`,
-    html: linkEmail({ title: "Congratulations!", text: `You completed ${certificate.courseTitle}. Your certificate code is ${certificate.code}.`, url: `${siteUrl()}/verify/${certificate.code}`, cta: "View certificate" }),
+    html: linkEmail({ title: "Congratulations!", text: `You completed ${certificate.courseTitle}. Your certificate code is ${certificate.code}.`, url: `${SITE_URL}/verify/${certificate.code}`, cta: "View certificate" }),
   }).catch((error) => console.error("[certificates] email failed", error));
 };
 

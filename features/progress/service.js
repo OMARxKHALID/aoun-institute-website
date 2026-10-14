@@ -1,5 +1,4 @@
 import "server-only";
-import { Types } from "mongoose";
 import Course from "@/features/courses/models/course";
 import Section from "@/features/courses/models/section";
 import Lesson from "@/features/courses/models/lesson";
@@ -131,4 +130,3 @@ export const findLessonInOutline = (outline, lessonId) => {
   return index < 0 ? null : { lesson: flat[index], prev: flat[index - 1] ?? null, next: flat[index + 1] ?? null, index, total: flat.length };
 };
 
-export const toObjectId = (value) => new Types.ObjectId(String(value));

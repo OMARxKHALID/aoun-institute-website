@@ -12,12 +12,11 @@ import Lesson from "@/features/courses/models/lesson";
 import Enrollment from "@/features/enrollments/model";
 import Discussion from "@/features/discussions/model";
 import { audit } from "@/features/audit/service";
+import { SITE_URL } from "@/lib/site";
 
 const bodySchema = z.strictObject({ body: z.string().trim().min(3, { error: "Write a little more" }).max(3000) });
 
 const canPost = async (user, courseId) => isAdmin(user) || Boolean(await Enrollment.exists({ userId: user.id, courseId, status: "active" }));
-
-const siteUrl = () => process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
 
 export const askQuestion = async (lessonId, input) => {
   const user = await requireUser();
@@ -55,7 +54,7 @@ export const replyToQuestion = async (questionId, input) => {
       await sendEmail({
         to: asker.email,
         subject: `Your question in ${course?.title} was answered`,
-        html: linkEmail({ title: "Your question has an answer", text: `The instructor replied to your question on "${lesson?.title}".`, url: `${siteUrl()}/dashboard/courses/${course?.slug}/lessons/${question.lessonId}#questions`, cta: "Read the answer" }),
+        html: linkEmail({ title: "Your question has an answer", text: `The instructor replied to your question on "${lesson?.title}".`, url: `${SITE_URL}/dashboard/courses/${course?.slug}/lessons/${question.lessonId}#questions`, cta: "Read the answer" }),
       }).catch((error) => console.error("[discussions] email failed", error));
   }
   return { ok: true };

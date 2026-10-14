@@ -20,6 +20,7 @@ import Note from "@/features/notes/model";
 import StudyPlan from "@/features/calendar/model";
 import Review from "@/features/reviews/model";
 import { linkEmail, sendEmail } from "@/lib/email";
+import { SITE_URL } from "@/lib/site";
 
 const passwordSchema = z.strictObject({ password: z.string().min(8, { error: "At least 8 characters" }).max(128) });
 
@@ -101,7 +102,7 @@ export const setStudentPassword = async (userId, input) => {
     await sendEmail({
       to: student.email,
       subject: "Your password was changed",
-      html: linkEmail({ title: "Your password was changed", text: "An administrator set a new password for your account and signed you out on all devices. If you did not ask for this, contact us.", url: `${process.env.BETTER_AUTH_URL ?? "http://localhost:3000"}/login`, cta: "Sign in" }),
+      html: linkEmail({ title: "Your password was changed", text: "An administrator set a new password for your account and signed you out on all devices. If you did not ask for this, contact us.", url: `${SITE_URL}/login`, cta: "Sign in" }),
     }).catch((error) => console.error("[students] email failed", error));
   await audit(admin, "student.password", "Set a new password for a student", { type: "student", id: userId });
   return { ok: true };

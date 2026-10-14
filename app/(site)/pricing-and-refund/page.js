@@ -1,7 +1,7 @@
 import { getSiteSettings } from "@/features/site-settings/queries";
 import LegalPage from "@/components/ui/legal-page";
 
-export const metadata = { title: "Pricing & Refund Policy" };
+export const metadata = { title: "Pricing & Refund Policy", description: "How course pricing, payments and refunds work.", alternates: { canonical: "/pricing-and-refund" } };
 
 const buildSections = ({ brand, contact }) => [
   {

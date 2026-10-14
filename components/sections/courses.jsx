@@ -53,7 +53,7 @@ const CourseCard = ({ slug, title, subtitle, thumbnail, price, discountPrice, cu
         </div>
       </div>
       <div className="relative aspect-video w-full shrink-0 self-center overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#f97316,#7c2d12_55%,#1c1917)] lg:w-[45%]">
-        {thumbnail?.url && <img src={imageUrl(thumbnail.url, 800)} alt="" loading="lazy" decoding="async" className="size-full object-cover" />}
+        {thumbnail?.url && <img src={imageUrl(thumbnail.url, 800)} alt={title} loading="lazy" decoding="async" className="size-full object-cover" />}
       </div>
     </div>
   </article>

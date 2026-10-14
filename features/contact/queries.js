@@ -10,7 +10,3 @@ export const getContactMessages = async () => {
   return JSON.parse(JSON.stringify(list.map((m) => ({ ...m, id: String(m._id) }))));
 };
 
-export const countNewMessages = async () => {
-  await connectDB();
-  return ContactMessage.countDocuments({ status: "new" });
-};

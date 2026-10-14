@@ -21,7 +21,7 @@ import Select from "@/components/ui/select";
 import Pager from "@/components/ui/pager";
 import { PAGE_SIZE } from "@/hooks/use-pager";
 
-export const tableFeatureSet = tableFeatures({
+const tableFeatureSet = tableFeatures({
   rowSortingFeature,
   sortedRowModel: createSortedRowModel(),
   sortFns: { alphanumeric: sortFn_alphanumeric, basic: sortFn_basic, datetime: sortFn_datetime },

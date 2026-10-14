@@ -1,7 +1,7 @@
 import { requireAdmin } from "@/lib/dal";
 import PanelShell from "@/components/ui/panel-shell";
 
-export const metadata = { title: { default: "Admin", template: "%s | Admin" } };
+export const metadata = { robots: { index: false, follow: false }, title: { default: "Admin", template: "%s | Admin" } };
 
 const AdminGuard = async ({ children }) => {
   await requireAdmin();

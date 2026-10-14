@@ -44,7 +44,3 @@ export const getAdminQuestions = async () => {
   return plain(list.map((t, i) => ({ ...t, course: course.get(String(questions[i].courseId))?.title ?? "Deleted course", courseId: String(questions[i].courseId), lesson: lesson.get(String(questions[i].lessonId)) ?? "Deleted lesson", lessonId: String(questions[i].lessonId) })));
 };
 
-export const countUnanswered = async () => {
-  await connectDB();
-  return Discussion.countDocuments({ parentId: null, answered: false });
-};

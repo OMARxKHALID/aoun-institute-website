@@ -3,6 +3,7 @@ import { connectDB, db } from "@/lib/db";
 import { linkEmail, sendEmail } from "@/lib/email";
 import { TIME_ZONE } from "@/lib/format";
 import StudyPlan from "@/features/calendar/model";
+import { SITE_URL } from "@/lib/site";
 
 const timeOf = (date) => new Intl.DateTimeFormat("en-GB", { weekday: "short", hour: "2-digit", minute: "2-digit", timeZone: TIME_ZONE }).format(date);
 
@@ -15,7 +16,7 @@ export const GET = async (request) => {
   const byUser = Map.groupBy(plans, (p) => p.userId);
   const ids = [...byUser.keys()].filter(Types.ObjectId.isValid).map((id) => new Types.ObjectId(id));
   const users = await db.collection("user").find({ _id: { $in: ids }, notifyReminders: { $ne: false }, banned: { $ne: true } }, { projection: { email: 1, name: 1 } }).toArray();
-  const url = `${process.env.BETTER_AUTH_URL ?? "http://localhost:3000"}/dashboard/calendar`;
+  const url = `${SITE_URL}/dashboard/calendar`;
   let sent = 0;
   for (const user of users) {
     const list = byUser.get(String(user._id));

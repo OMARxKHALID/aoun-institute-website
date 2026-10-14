@@ -1,6 +1,7 @@
 import { Manrope, Space_Grotesk } from "next/font/google";
 import Providers from "@/app/providers";
 import { getSiteSettings } from "@/features/site-settings/queries";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const manrope = Manrope({ variable: "--font-manrope-src", subsets: ["latin"] });
@@ -8,10 +9,16 @@ const display = Space_Grotesk({ variable: "--font-display-src", subsets: ["latin
 
 export const generateMetadata = async () => {
   const { brand, seo } = await getSiteSettings();
+  const title = seo.title || brand.name;
+  const images = seo.ogImage?.url ? [seo.ogImage.url] : undefined;
   return {
-    title: { default: seo.title || brand.name, template: `%s | ${brand.name}` },
+    metadataBase: SITE_URL,
+    title: { default: title, template: `%s | ${brand.name}` },
     description: seo.description,
-    openGraph: seo.ogImage?.url ? { images: [seo.ogImage.url] } : undefined,
+    applicationName: brand.name,
+    openGraph: { type: "website", siteName: brand.name, locale: "en_PK", title, description: seo.description, url: "/", images },
+    twitter: { card: images ? "summary_large_image" : "summary", title, description: seo.description, images },
+    robots: { index: true, follow: true },
   };
 };
 

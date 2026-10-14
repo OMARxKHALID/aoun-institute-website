@@ -1,7 +1,7 @@
 import { requireUser } from "@/lib/dal";
 import PanelShell from "@/components/ui/panel-shell";
 
-export const metadata = { title: { default: "Dashboard", template: "%s | Dashboard" } };
+export const metadata = { robots: { index: false, follow: false }, title: { default: "Dashboard", template: "%s | Dashboard" } };
 
 const StudentGuard = async ({ children }) => {
   await requireUser();

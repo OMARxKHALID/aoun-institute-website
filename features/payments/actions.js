@@ -15,8 +15,7 @@ import { getSiteSettings } from "@/features/site-settings/queries";
 import { cardSchema, checkoutSchema, rejectSchema } from "@/features/payments/schemas";
 import { chargeDemoCard, demoPaymentsEnabled } from "@/features/payments/providers/demo-card";
 import { audit } from "@/features/audit/service";
-
-const siteUrl = () => process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+import { SITE_URL } from "@/lib/site";
 
 const loadPublishedCourse = async (courseId) => {
   if (!isValidObjectId(courseId)) return null;
@@ -60,7 +59,7 @@ export const createManualOrder = async (courseId, input) => {
       sendEmail({
         to: contact.email,
         subject: `New payment to review: ${course.title}`,
-        html: linkEmail({ title: "New payment to review", text: `${user.name} (${user.email}) paid for ${course.title} by ${data.method}. Reference: ${data.reference}.`, url: `${siteUrl()}/admin/orders`, cta: "Review payment" }),
+        html: linkEmail({ title: "New payment to review", text: `${user.name} (${user.email}) paid for ${course.title} by ${data.method}. Reference: ${data.reference}.`, url: `${SITE_URL}/admin/orders`, cta: "Review payment" }),
       }),
     );
   return { ok: true };
@@ -86,7 +85,7 @@ export const payWithDemoCard = async (courseId, input) => {
     sendEmail({
       to: user.email,
       subject: `You're enrolled in ${course.title}`,
-      html: linkEmail({ title: "Payment received", text: `We charged ${course.currency} ${amountOf(course)} to your card ending ${charge.last4}. You now have lifetime access to ${course.title}.`, url: `${siteUrl()}/dashboard/courses/${course.slug}`, cta: "Start learning" }),
+      html: linkEmail({ title: "Payment received", text: `We charged ${course.currency} ${amountOf(course)} to your card ending ${charge.last4}. You now have lifetime access to ${course.title}.`, url: `${SITE_URL}/dashboard/courses/${course.slug}`, cta: "Start learning" }),
     }),
   );
   return { ok: true, data: { slug: course.slug } };
@@ -120,7 +119,7 @@ export const approveOrder = async (orderId) => {
       sendEmail({
         to: student.email,
         subject: `You're enrolled in ${order.courseId.title}`,
-        html: linkEmail({ title: "Payment approved", text: `Your payment was confirmed. You now have lifetime access to ${order.courseId.title}.`, url: `${siteUrl()}/dashboard/courses/${order.courseId.slug}`, cta: "Start learning" }),
+        html: linkEmail({ title: "Payment approved", text: `Your payment was confirmed. You now have lifetime access to ${order.courseId.title}.`, url: `${SITE_URL}/dashboard/courses/${order.courseId.slug}`, cta: "Start learning" }),
       }),
     );
   await audit(admin, "order.approve", `Approved ${order.currency} ${order.amount} for "${order.courseId.title}"`, { type: "order", id: order._id });
@@ -140,7 +139,7 @@ export const rejectOrder = async (orderId, input) => {
       sendEmail({
         to: student.email,
         subject: `Payment not confirmed: ${order.courseId.title}`,
-        html: linkEmail({ title: "We could not confirm your payment", text: `Reason: ${result.data.note}. You can submit your payment details again.`, url: `${siteUrl()}/checkout/${order.courseId.slug}`, cta: "Try again" }),
+        html: linkEmail({ title: "We could not confirm your payment", text: `Reason: ${result.data.note}. You can submit your payment details again.`, url: `${SITE_URL}/checkout/${order.courseId.slug}`, cta: "Try again" }),
       }),
     );
   await audit(admin, "order.reject", `Rejected a payment for "${order.courseId.title}": ${result.data.note}`, { type: "order", id: order._id });
@@ -165,7 +164,7 @@ export const refundOrder = async (orderId, input) => {
       sendEmail({
         to: student.email,
         subject: `Refund for ${order.courseId.title}`,
-        html: linkEmail({ title: "Your payment was refunded", text: `Reason: ${result.data.note}. Your access to ${order.courseId.title} has been removed.`, url: `${siteUrl()}/dashboard/orders`, cta: "View orders" }),
+        html: linkEmail({ title: "Your payment was refunded", text: `Reason: ${result.data.note}. Your access to ${order.courseId.title} has been removed.`, url: `${SITE_URL}/dashboard/orders`, cta: "View orders" }),
       }),
     );
   await audit(admin, "order.refund", `Refunded ${order.currency} ${order.amount} for "${order.courseId.title}"`, { type: "order", id: order._id });

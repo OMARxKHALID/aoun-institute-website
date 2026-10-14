@@ -127,6 +127,11 @@ Dark mode only. Student `/dashboard` and admin `/admin` both follow the "Welcome
 - Lesson completes at 90% watched (watch time is counted client-side from real playback, capped server-side by elapsed time). Embeds and lessons without video use "Mark as complete".
 - Certificates auto-issue on the event that makes a student eligible (lesson completion or quiz submission).
 
+## SEO
+- `app/robots.js` and `app/sitemap.js` (public pages + published courses); base URL from `lib/site.js` (`NEXT_PUBLIC_SITE_URL`, falls back to `BETTER_AUTH_URL`).
+- Root layout sets `metadataBase`, Open Graph and Twitter defaults; public pages set title, description and canonical; course pages add Course JSON-LD, the home page EducationalOrganization JSON-LD (`components/ui/json-ld.jsx`).
+- Dashboard, admin, auth pages, checkout and certificate pages are `noindex`.
+
 ## Conventions
 - Zero comments; `const` arrow functions only; event handlers prefixed `handle`; early returns; kebab-case filenames; Tailwind only; ES modules.
 - Look for an existing helper in `lib/`, `components/ui/`, or the feature folder before writing a new one.

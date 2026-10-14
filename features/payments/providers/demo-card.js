@@ -1,7 +1,7 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
 
-export const DEMO_CARDS = { success: "4242424242424242", declined: "4000000000000002", noFunds: "4000000000009995" };
+const DEMO_CARDS = { success: "4242424242424242", declined: "4000000000000002", noFunds: "4000000000009995" };
 
 export const demoPaymentsEnabled = () => process.env.DEMO_PAYMENTS === "true";
 

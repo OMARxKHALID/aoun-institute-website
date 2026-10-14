@@ -4,7 +4,7 @@ import Faq from "@/components/sections/faq";
 import { getSiteSettings } from "@/features/site-settings/queries";
 import { getCatalog } from "@/features/courses/queries";
 
-export const metadata = { title: "Courses" };
+export const metadata = { title: "Courses", description: "Browse recorded courses in development, data, design, AI and freelancing with quizzes, projects and verifiable certificates.", alternates: { canonical: "/courses" } };
 
 const CoursesPage = async () => {
   const [{ home }, courses] = await Promise.all([getSiteSettings(), getCatalog()]);

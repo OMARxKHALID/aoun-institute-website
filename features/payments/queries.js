@@ -28,11 +28,6 @@ export const getAdminOrders = async () => {
   }));
 };
 
-export const countPendingOrders = async () => {
-  await connectDB();
-  return Order.countDocuments({ status: "PENDING" });
-};
-
 export const getMyOrders = async () => {
   const user = await requireUser();
   await connectDB();

@@ -2,7 +2,7 @@ import PageHero from "@/components/ui/page-hero";
 import Faq from "@/components/sections/faq";
 import { getSiteSettings } from "@/features/site-settings/queries";
 
-export const metadata = { title: "FAQ" };
+export const metadata = { title: "FAQ", description: "Answers about enrolling, payments, lifetime access, quizzes and certificates.", alternates: { canonical: "/faq" } };
 
 const FaqPage = async () => {
   const { home } = await getSiteSettings();

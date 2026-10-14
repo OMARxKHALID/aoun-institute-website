@@ -3,7 +3,7 @@ import PageHero from "@/components/ui/page-hero";
 import ContactForm from "@/features/contact/components/contact-form";
 import { getSiteSettings } from "@/features/site-settings/queries";
 
-export const metadata = { title: "Contact" };
+export const metadata = { title: "Contact", description: "Questions about a course, payment or certificate? Message us or find our phone, email and address.", alternates: { canonical: "/contact" } };
 
 const ContactPage = async () => {
   const { contact } = await getSiteSettings();

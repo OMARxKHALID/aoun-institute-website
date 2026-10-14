@@ -16,7 +16,7 @@ const ContinueWatching = ({ courses }) => {
   return (
     <section aria-label="Continue watching" className="grid min-w-0 overflow-hidden rounded-3xl border border-[#302C2A] bg-[#0C0C0C] sm:grid-cols-[minmax(0,240px)_1fr] lg:grid-cols-[minmax(0,320px)_1fr]">
       <Link href={href} className="group relative aspect-video bg-[linear-gradient(135deg,#f97316,#7c2d12_55%,#1c1917)] sm:aspect-auto sm:h-full">
-        {course.thumbnail?.url && <img src={imageUrl(course.thumbnail.url, 800)} alt="" className="size-full object-cover" />}
+        {course.thumbnail?.url && <img src={imageUrl(course.thumbnail.url, 800)} alt={course.title} className="size-full object-cover" />}
         <span className="absolute inset-0 grid place-items-center bg-black/30 transition group-hover:bg-black/10">
           <PlayCircle className="size-14 text-white drop-shadow-lg transition group-hover:scale-110" />
         </span>

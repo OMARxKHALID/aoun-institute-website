@@ -1,7 +1,7 @@
 import PageHero from "@/components/ui/page-hero";
 import VerifyForm from "@/features/certificates/components/verify-form";
 
-export const metadata = { title: "Verify a Certificate", description: "Check that a certificate issued by the institute is genuine." };
+export const metadata = { title: "Verify a Certificate", description: "Check that a certificate issued by the institute is genuine.", alternates: { canonical: "/verify" } };
 
 const VerifyPage = () => (
   <main className="pb-24">

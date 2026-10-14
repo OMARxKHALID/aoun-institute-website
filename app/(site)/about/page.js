@@ -4,7 +4,7 @@ import SectionHeading from "@/components/ui/section-heading";
 import GlowButton from "@/components/ui/glow-button";
 import Reveal from "@/components/motion/reveal";
 
-export const metadata = { title: "About Us" };
+export const metadata = { title: "About Us", description: "Meet the institute behind our project-based courses: who we are, how we teach and why our students get hired.", alternates: { canonical: "/about" } };
 
 const AboutPage = () => (
   <main>
