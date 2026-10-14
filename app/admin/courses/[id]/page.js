@@ -11,7 +11,7 @@ const EditCoursePage = async ({ params }) => {
   if (!data) notFound();
   return (
     <>
-      <PanelHeader title={data.course.title} subtitle={data.course.subtitle} />
+      <PanelHeader back={{ href: "/admin/courses", label: "All courses" }} title={data.course.title} subtitle={data.course.subtitle} />
       <div className="p-5 lg:p-8">
         <CourseEditor course={data.course} outline={data.outline} students={data.students} />
       </div>

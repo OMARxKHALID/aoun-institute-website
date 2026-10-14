@@ -10,7 +10,7 @@ const AdminCoursesPage = async ({ searchParams }) => {
   const [{ q = "" }, courses] = await Promise.all([searchParams, getAdminCourses()]);
   return (
     <>
-      <PanelHeader title="Courses" subtitle={`${courses.length} courses`}>
+      <PanelHeader title="Courses" subtitle={`${courses.length} ${courses.length === 1 ? "course" : "courses"}`}>
         <Link href="/admin/courses/new" className="hidden items-center gap-2 rounded-full bg-linear-to-b from-[#E8602E] to-[#A8401A] px-5 py-2.5 font-medium sm:flex">
           <Plus className="size-4" /> New course
         </Link>

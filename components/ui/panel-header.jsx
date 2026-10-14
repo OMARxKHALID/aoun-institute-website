@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
 import { getUser, isAdmin } from "@/lib/dal";
 
 const initials = (name = "") =>
@@ -10,12 +10,17 @@ const initials = (name = "") =>
     .slice(0, 2)
     .toUpperCase();
 
-const PanelHeader = async ({ title, subtitle, children }) => {
+const PanelHeader = async ({ title, subtitle, back, children }) => {
   const user = await getUser();
   const admin = isAdmin(user);
   return (
     <header className="flex flex-col gap-4 border-b border-white/5 p-5 md:flex-row md:items-center md:justify-between lg:p-8">
       <div className="min-w-0">
+        {back && (
+          <Link href={back.href} className="mb-2 inline-flex items-center gap-1.5 text-sm text-white/50 transition hover:text-accent">
+            <ArrowLeft className="size-4" /> {back.label}
+          </Link>
+        )}
         <h1 className="truncate font-machina text-3xl md:text-4xl">{title}</h1>
         {subtitle && <p className="mt-1 text-white/50">{subtitle}</p>}
       </div>

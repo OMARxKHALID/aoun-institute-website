@@ -2,12 +2,13 @@ import "server-only";
 import { Types } from "mongoose";
 import { connectDB, db } from "@/lib/db";
 import { requireAdmin } from "@/lib/dal";
+import Course from "@/features/courses/models/course";
 import Order from "@/features/payments/models/order";
 
 export const getAdminOrders = async () => {
   await requireAdmin();
   await connectDB();
-  const orders = await Order.find().sort({ createdAt: -1 }).limit(500).populate("courseId", "title slug").lean();
+  const orders = await Order.find().populate({ path: "courseId", select: "title slug", model: Course }).sort({ createdAt: -1 }).limit(500).lean();
   const ids = [...new Set(orders.map((o) => o.userId))].filter(Types.ObjectId.isValid).map((id) => new Types.ObjectId(id));
   const users = await db.collection("user").find({ _id: { $in: ids } }, { projection: { name: 1, email: 1 } }).toArray();
   const byId = new Map(users.map((u) => [String(u._id), u]));

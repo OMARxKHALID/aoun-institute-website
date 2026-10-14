@@ -82,7 +82,7 @@ const LessonVideoField = ({ lessonId, video }) => {
   };
 
   return (
-    <fieldset className="flex flex-col gap-4 rounded-2xl border border-[#302C2A] p-4">
+    <fieldset className="flex min-w-0 flex-col gap-4 rounded-2xl border border-[#302C2A] p-4">
       <legend className="px-2 text-base text-white/70">Video</legend>
 
       <div className="flex flex-wrap items-center gap-2 text-sm">

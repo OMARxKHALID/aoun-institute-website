@@ -50,10 +50,10 @@ const SyllabusSettingsForm = ({ course }) => {
       <ArrayField {...shared} name="outcomes" label="What students will learn" max={20} empty={{ text: "" }} columns={[{ name: "text", label: "Outcome", wide: true }]} />
       <ArrayField {...shared} name="prerequisites" label="Prerequisites" max={20} empty={{ text: "" }} columns={[{ name: "text", label: "Prerequisite", wide: true }]} />
 
-      <fieldset className="grid gap-4 rounded-2xl border border-[#302C2A] p-5 md:grid-cols-2">
+      <fieldset className="grid min-w-0 gap-4 rounded-2xl border border-[#302C2A] p-5 md:grid-cols-2">
         <legend className="px-2 font-machina text-xl">Progress & certificate</legend>
         <Checkbox className="md:col-span-2" label="Sequential unlock" hint="Students must finish each lesson before the next one unlocks." {...register("sequentialUnlock")} />
-        <Field label="Certificate rule" options={["all", "percent"]} error={errors.certificateRule?.type?.message} {...register("certificateRule.type")} />
+        <Field label="Certificate rule" options={[{ value: "all", label: "Complete all lessons" }, { value: "percent", label: "Complete a percentage of lessons" }]} error={errors.certificateRule?.type?.message} {...register("certificateRule.type")} />
         {ruleType === "percent" && (
           <Field label="Completion threshold (%)" type="number" min="1" max="100" error={errors.certificateRule?.percent?.message} {...register("certificateRule.percent", { valueAsNumber: true })} />
         )}

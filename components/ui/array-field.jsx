@@ -22,7 +22,7 @@ const ArrayField = ({ control, register, errors, name, label, columns, empty, ma
   const handleToggle = (id) => () => setOpenId((current) => (current === id ? null : id));
 
   return (
-    <fieldset className="flex flex-col gap-3 rounded-2xl border border-[#302C2A] p-4 md:p-5">
+    <fieldset className="flex min-w-0 flex-col gap-3 rounded-2xl border border-[#302C2A] p-4 md:p-5">
       <legend className="px-2 font-machina text-xl">
         {label} <span className="text-base text-white/40">({fields.length})</span>
       </legend>

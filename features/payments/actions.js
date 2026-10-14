@@ -74,7 +74,7 @@ export const enrollFree = async (courseId) => {
 const loadPendingOrder = async (orderId) => {
   if (!isValidObjectId(orderId)) return null;
   await connectDB();
-  return Order.findOne({ _id: orderId, status: "PENDING" }).populate("courseId", "title slug");
+  return Order.findOne({ _id: orderId, status: "PENDING" }).populate({ path: "courseId", select: "title slug", model: Course });
 };
 
 export const approveOrder = async (orderId) => {

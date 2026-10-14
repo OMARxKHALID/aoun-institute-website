@@ -9,7 +9,7 @@ const AdminOrdersPage = async () => {
   const pending = orders.filter((o) => o.status === "PENDING").length;
   return (
     <>
-      <PanelHeader title="Orders" subtitle={pending ? `${pending} payments waiting for review` : "All payments are reviewed"} />
+      <PanelHeader title="Orders" subtitle={pending ? `${pending} ${pending === 1 ? "payment" : "payments"} waiting for review` : "All payments are reviewed"} />
       <div className="p-5 lg:p-8">
         <OrderTable orders={orders} />
       </div>

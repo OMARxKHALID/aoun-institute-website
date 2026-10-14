@@ -16,7 +16,7 @@ export const generateMetadata = async () => {
 };
 
 const RootLayout = ({ children }) => (
-  <html lang="en" className={`${manrope.variable} ${display.variable} text-[clamp(12px,0.85vw,25px)] antialiased`}>
+  <html lang="en" className={`${manrope.variable} ${display.variable} text-[clamp(12px,0.85vw,25px)] scheme-dark antialiased`}>
     <body className="min-h-screen overflow-x-hidden bg-black font-manrope text-white">
       <Providers>{children}</Providers>
     </body>
