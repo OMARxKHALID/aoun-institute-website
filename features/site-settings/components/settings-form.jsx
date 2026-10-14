@@ -13,8 +13,11 @@ import ArrayField from "@/components/ui/array-field";
 
 const tabs = ["Brand & Contact", "Homepage", "SEO", "Payments"];
 
+const homeSections = ["Hero", "Stats", "Partners", "Impact", "Testimonials", "Community", "FAQs"];
+
 const SettingsForm = ({ settings }) => {
   const [tab, setTab] = useState(tabs[0]);
+  const [homeSection, setHomeSection] = useState(homeSections[0]);
   const [saved, setSaved] = useState(false);
   const { register, control, handleSubmit, setError, formState } = useForm({ resolver: zodResolver(siteSettingsSchema), defaultValues: settings });
   const { errors, isSubmitting } = formState;
@@ -69,20 +72,46 @@ const SettingsForm = ({ settings }) => {
         </div>
       </div>
 
-      <div hidden={tab !== "Homepage"} className="flex flex-col gap-6">
-        <div className="grid gap-5 md:grid-cols-2">
+      <div hidden={tab !== "Homepage"} className="flex flex-col gap-5">
+        <div role="tablist" aria-label="Homepage sections" className="flex gap-2 overflow-x-auto pb-1">
+          {homeSections.map((section) => (
+            <button
+              key={section}
+              type="button"
+              role="tab"
+              aria-selected={homeSection === section}
+              onClick={() => setHomeSection(section)}
+              className={`shrink-0 rounded-xl px-3.5 py-1.5 text-sm transition ${homeSection === section ? "bg-white text-black" : "bg-white/5 text-white/60 hover:text-white"}`}
+            >
+              {section}
+            </button>
+          ))}
+        </div>
+        <div hidden={homeSection !== "Hero"} className="grid gap-5 md:grid-cols-2">
           <Field label="Eyebrow" error={errors.hero?.eyebrow?.message} {...register("hero.eyebrow")} />
           <Field label="Highlighted word" error={errors.hero?.highlight?.message} {...register("hero.highlight")} />
           <Field label="Headline start" error={errors.hero?.title?.message} {...register("hero.title")} />
           <Field label="Headline end" error={errors.hero?.titleEnd?.message} {...register("hero.titleEnd")} />
           <Field label="Subtitle" rows={2} className="md:col-span-2" error={errors.hero?.subtitle?.message} {...register("hero.subtitle")} />
         </div>
-        <ArrayField {...shared} name="home.stats" label="Stats (2)" max={2} empty={{ value: "", label: "", text: "" }} columns={[{ name: "value", label: "Value" }, { name: "label", label: "Label" }, { name: "text", label: "Description", wide: true }]} />
-        <ArrayField {...shared} name="home.partners" label="Partner logos" max={16} empty={{ name: "", logo: null }} columns={[{ name: "name", label: "Name" }, { name: "logo", label: "Logo", image: true }]} />
-        <ArrayField {...shared} name="home.impactCards" label="Impact cards" max={8} empty={{ title: "", text: "", tag: "", image: null }} columns={[{ name: "title", label: "Title" }, { name: "tag", label: "Tag" }, { name: "text", label: "Text", wide: true }, { name: "image", label: "Image", image: true, aspect: 7 / 9 }]} />
-        <ArrayField {...shared} name="home.testimonials" label="Testimonials" max={20} empty={{ name: "", role: "", rating: "5.0", quote: "", photo: null }} columns={[{ name: "name", label: "Name" }, { name: "role", label: "Role" }, { name: "rating", label: "Rating (1-5)" }, { name: "photo", label: "Photo", image: true, aspect: 1 }, { name: "quote", label: "Quote", rows: 3, wide: true }]} />
-        <ArrayField {...shared} name="home.communityTiles" label="Community tiles (8)" max={8} empty={{ title: "", text: "", image: null }} columns={[{ name: "title", label: "Title" }, { name: "text", label: "Text" }, { name: "image", label: "Image", image: true }]} />
-        <ArrayField {...shared} name="home.faqs" label="FAQs" max={30} empty={{ q: "", a: "" }} columns={[{ name: "q", label: "Question", wide: true }, { name: "a", label: "Answer", rows: 3, wide: true }]} />
+        <div hidden={homeSection !== "Stats"}>
+          <ArrayField {...shared} name="home.stats" label="Stats (2)" max={2} empty={{ value: "", label: "", text: "" }} columns={[{ name: "value", label: "Value" }, { name: "label", label: "Label" }, { name: "text", label: "Description", wide: true }]} />
+        </div>
+        <div hidden={homeSection !== "Partners"}>
+          <ArrayField {...shared} name="home.partners" label="Partner logos" max={16} empty={{ name: "", logo: null }} columns={[{ name: "name", label: "Name" }, { name: "logo", label: "Logo", image: true }]} />
+        </div>
+        <div hidden={homeSection !== "Impact"}>
+          <ArrayField {...shared} name="home.impactCards" label="Impact cards" max={8} empty={{ title: "", text: "", tag: "", image: null }} columns={[{ name: "title", label: "Title" }, { name: "tag", label: "Tag" }, { name: "text", label: "Text", wide: true }, { name: "image", label: "Image", image: true, aspect: 7 / 9 }]} />
+        </div>
+        <div hidden={homeSection !== "Testimonials"}>
+          <ArrayField {...shared} name="home.testimonials" label="Testimonials" max={20} empty={{ name: "", role: "", rating: "5.0", quote: "", photo: null }} columns={[{ name: "name", label: "Name" }, { name: "role", label: "Role" }, { name: "rating", label: "Rating (1-5)" }, { name: "photo", label: "Photo", image: true, aspect: 1 }, { name: "quote", label: "Quote", rows: 3, wide: true }]} />
+        </div>
+        <div hidden={homeSection !== "Community"}>
+          <ArrayField {...shared} name="home.communityTiles" label="Community tiles (8)" max={8} empty={{ title: "", text: "", image: null }} columns={[{ name: "title", label: "Title" }, { name: "text", label: "Text" }, { name: "image", label: "Image", image: true }]} />
+        </div>
+        <div hidden={homeSection !== "FAQs"}>
+          <ArrayField {...shared} name="home.faqs" label="FAQs" max={30} empty={{ q: "", a: "" }} columns={[{ name: "q", label: "Question", wide: true }, { name: "a", label: "Answer", rows: 3, wide: true }]} />
+        </div>
       </div>
 
       <div hidden={tab !== "SEO"} className="grid gap-5 md:grid-cols-2">

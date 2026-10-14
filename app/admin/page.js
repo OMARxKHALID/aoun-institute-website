@@ -1,9 +1,12 @@
 import Link from "next/link";
-import { ArrowUpRight, Settings } from "lucide-react";
+import { ArrowUpRight, BookOpen, Settings } from "lucide-react";
 import { requireAdmin } from "@/lib/dal";
 import PanelHeader from "@/components/ui/panel-header";
 
-const shortcuts = [{ title: "Site Settings", text: "Brand, contact, homepage content, SEO, payment details", href: "/admin/settings", icon: Settings }];
+const shortcuts = [
+  { title: "Courses", text: "Create courses, build the syllabus, manage lessons", href: "/admin/courses", icon: BookOpen },
+  { title: "Site Settings", text: "Brand, contact, homepage content, SEO, payment details", href: "/admin/settings", icon: Settings },
+];
 
 const AdminPage = async () => {
   const user = await requireAdmin();

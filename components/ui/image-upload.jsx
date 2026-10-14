@@ -1,7 +1,7 @@
 "use client";
 
 import { CldUploadWidget } from "next-cloudinary";
-import { ImagePlus, X } from "lucide-react";
+import { FileText, ImagePlus, X } from "lucide-react";
 import { UPLOAD_RULES } from "@/lib/upload-rules";
 
 const cloudConfigured = Boolean(process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME && process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY);
@@ -18,7 +18,8 @@ const ImageUpload = ({ kind, value, onChange, label, aspect }) => {
     );
   }
 
-  const handleSuccess = ({ info }) => onChange({ url: info.secure_url, publicId: info.public_id });
+  const isDocument = rule.formats.includes("pdf") && rule.formats.length === 1;
+  const handleSuccess = ({ info }) => onChange({ url: info.secure_url, publicId: info.public_id, name: `${info.original_filename}.${info.format}` });
   const handleRemove = () => onChange(null);
 
   return (
@@ -26,7 +27,7 @@ const ImageUpload = ({ kind, value, onChange, label, aspect }) => {
       <span className="text-base text-white/70">{label}</span>
       <div className="flex items-center gap-4">
         <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-xl border border-[#302C2A] bg-[#0C0C0C]">
-          {value?.url ? <img src={value.url} alt="" className="size-full object-cover" /> : <ImagePlus className="size-6 text-white/30" />}
+          {value?.url && !isDocument ? <img src={value.url} alt="" className="size-full object-cover" /> : isDocument ? <FileText className={`size-6 ${value?.url ? "text-accent" : "text-white/30"}`} /> : <ImagePlus className="size-6 text-white/30" />}
         </div>
         <CldUploadWidget
           uploadPreset={rule.preset}
@@ -55,6 +56,11 @@ const ImageUpload = ({ kind, value, onChange, label, aspect }) => {
           </button>
         )}
       </div>
+      {isDocument && value?.name && (
+        <a href={value.url} target="_blank" rel="noopener noreferrer" className="truncate text-sm text-accent hover:underline">
+          {value.name}
+        </a>
+      )}
       <p className="text-xs text-white/40">
         {rule.formats.join(", ").toUpperCase()} · max {rule.maxBytes / 1024 / 1024} MB
       </p>

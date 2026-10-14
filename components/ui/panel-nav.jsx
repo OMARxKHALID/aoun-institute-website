@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, ChevronLeft, LayoutDashboard, Menu, Settings, X } from "lucide-react";
+import { ArrowUpRight, BookOpen, ChevronLeft, LayoutDashboard, Menu, Settings, X } from "lucide-react";
 import SignOutButton from "@/features/auth/components/sign-out-button";
 
 const navs = {
@@ -14,6 +14,7 @@ const navs = {
   admin: {
     items: [
       { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
+      { label: "Courses", href: "/admin/courses", icon: BookOpen },
       { label: "Site Settings", href: "/admin/settings", icon: Settings },
     ],
     promo: { title: "Your website", text: "See the public site the way students see it.", href: "/", cta: "View site" },
@@ -36,20 +37,52 @@ const writeCollapsed = (value) => {
   } catch {}
 };
 
+const NavList = ({ items, activeHref, collapsed }) => {
+  const root = items[0].href;
+  const isActive = (href) => activeHref != null && (href === root ? activeHref === root : activeHref.startsWith(href));
+  return (
+    <nav className="flex w-full flex-col gap-1.5">
+      {items.map(({ label, href, icon: Icon }) => {
+        const active = isActive(href);
+        return (
+          <Link
+            key={href}
+            href={href}
+            title={collapsed ? label : undefined}
+            aria-label={label}
+            aria-current={active ? "page" : undefined}
+            className={`flex items-center gap-3 rounded-full py-3 transition ${collapsed ? "px-5 lg:justify-center lg:px-0" : "px-5"} ${
+              active ? "bg-linear-to-b from-[#E8602E] to-[#A8401A] font-medium text-white shadow-[0_0_24px_rgba(232,96,46,0.35)]" : "text-white/65 hover:bg-white/5 hover:text-white"
+            }`}
+          >
+            <Icon className="size-5 shrink-0" />
+            <span className={collapsed ? "lg:hidden" : ""}>{label}</span>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+};
+
+const ActiveNavList = ({ onNavigate, ...props }) => {
+  const pathname = usePathname();
+
+  useEffect(() => {
+    onNavigate();
+  }, [pathname, onNavigate]);
+
+  return <NavList {...props} activeHref={pathname} />;
+};
+
 const PanelNav = ({ panel, brand }) => {
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const pathname = usePathname();
   const { items, promo } = navs[panel];
   const root = items[0].href;
 
   useEffect(() => {
     setCollapsed(readCollapsed());
   }, []);
-
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
 
   useEffect(() => {
     if (!open) return;
@@ -62,9 +95,8 @@ const PanelNav = ({ panel, brand }) => {
     };
   }, [open]);
 
-  const isActive = (href) => (href === root ? pathname === root : pathname.startsWith(href));
   const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
+  const handleClose = useCallback(() => setOpen(false), []);
   const handleCollapse = () =>
     setCollapsed((v) => {
       writeCollapsed(!v);
@@ -119,26 +151,9 @@ const PanelNav = ({ panel, brand }) => {
           </button>
         </div>
 
-        <nav className="flex w-full flex-col gap-1.5">
-          {items.map(({ label, href, icon: Icon }) => {
-            const active = isActive(href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                title={collapsed ? label : undefined}
-                aria-label={label}
-                aria-current={active ? "page" : undefined}
-                className={`flex items-center gap-3 rounded-full py-3 transition ${collapsed ? "px-5 lg:justify-center lg:px-0" : "px-5"} ${
-                  active ? "bg-linear-to-b from-[#E8602E] to-[#A8401A] font-medium text-white shadow-[0_0_24px_rgba(232,96,46,0.35)]" : "text-white/65 hover:bg-white/5 hover:text-white"
-                }`}
-              >
-                <Icon className="size-5 shrink-0" />
-                <span className={hideWhenCollapsed}>{label}</span>
-              </Link>
-            );
-          })}
-        </nav>
+        <Suspense fallback={<NavList items={items} activeHref={null} collapsed={collapsed} />}>
+          <ActiveNavList items={items} collapsed={collapsed} onNavigate={handleClose} />
+        </Suspense>
 
         <div className="mt-auto flex w-full flex-col gap-3">
           <Link href={promo.href} className={`group relative overflow-hidden rounded-2xl bg-[#FFF3EF] p-5 text-black ${hideWhenCollapsed}`}>

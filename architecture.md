@@ -93,6 +93,7 @@ Progress staleness: structural course edits bump `contentVersion`; an older `cou
 
 ## Security rules
 - `proxy.js` does optimistic cookie redirects only. Real checks happen in `lib/dal.js` inside every action, route handler and protected query.
+- Lesson quizzes: a quiz the teacher attaches to a lesson (`quiz.lessonId`) stays locked until the student completes that lesson's video; the server checks `lessonProgress.completedAt` before starting an attempt (section/course quizzes follow sequential unlock).
 - Quizzes graded only on the server; student queries never select `isCorrect`/`explanation`; attempts have server `expiresAt`; attempt limits and ownership enforced server-side.
 - Video: enrollment (or free preview) checked before minting Mux tokens; tokens per view with `exp` = duration + buffer; domain/UA playback restriction; DRM; moving watermark (name + email + short id); one stream per account.
 - Uploads: server-signed Cloudinary params; after upload the server re-checks format/size via Admin API and deletes invalid assets; old asset destroyed on replace; receipts use `authenticated` delivery.
