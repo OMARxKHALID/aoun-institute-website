@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useId, useRef } from "react";
 import Link from "next/link";
 import BrandLogo from "@/components/ui/brand-logo";
 import SocialIcon from "@/components/ui/social-icon";
@@ -35,28 +35,59 @@ const linkColumns = [
 ];
 
 const Wordmark = ({ text }) => {
-  const areaRef = useRef(null);
-  const dotRef = useRef(null);
+  const rawId = useId();
+  const id = rawId.replace(/[^a-zA-Z0-9_-]/g, "");
+  const svgRef = useRef(null);
+  const glowRef = useRef(null);
+  const fontSize = Math.round(980 / Math.max(text.length * 0.6, 1));
+  const height = Math.round(fontSize * 0.95);
+  const baseline = Math.round(fontSize * 0.76);
+  const textProps = {
+    x: 500,
+    y: baseline,
+    textAnchor: "middle",
+    textLength: 960,
+    lengthAdjust: "spacing",
+    fontSize,
+    className: "font-machina font-bold",
+  };
 
   const handleMove = (e) => {
-    const r = areaRef.current.getBoundingClientRect();
-    dotRef.current.style.opacity = "1";
-    dotRef.current.style.transform = `translate(${e.clientX - r.left}px, ${e.clientY - r.top}px) translate(-50%, -50%)`;
+    const svg = svgRef.current;
+    const point = new DOMPoint(e.clientX, e.clientY).matrixTransform(svg.getScreenCTM().inverse());
+    glowRef.current.style.transform = `translate(${point.x}px, ${point.y}px)`;
+    glowRef.current.style.opacity = "0.85";
   };
 
   const handleLeave = () => {
-    dotRef.current.style.opacity = "0";
+    glowRef.current.style.opacity = "0";
   };
 
   return (
-    <div ref={areaRef} onMouseMove={handleMove} onMouseLeave={handleLeave} aria-hidden="true" className="relative flex w-full items-center justify-center overflow-hidden px-4 py-10 sm:px-8 md:py-16">
-      <span ref={dotRef} className="pointer-events-none absolute left-0 top-0 hidden aspect-square h-[30vw] rounded-full bg-accent opacity-0 blur-2xl transition-opacity duration-300 md:block" />
-      <p
-        style={{ fontSize: `${Math.round(92 / Math.max(text.length * 0.62, 1))}vw` }}
-        className="relative z-10 select-none whitespace-nowrap font-machina font-bold leading-[0.9] tracking-tight text-transparent [-webkit-text-stroke:1px_rgba(255,255,255,0.28)]"
-      >
-        {text}
-      </p>
+    <div onPointerMove={handleMove} onPointerLeave={handleLeave} aria-hidden="true" className="w-full select-none px-4 py-10 sm:px-8 md:py-16">
+      <svg ref={svgRef} viewBox={`0 0 1000 ${height}`} className="mx-auto h-auto max-h-[40vh] w-full overflow-visible">
+        <defs>
+          <clipPath id={`${id}-clip`}>
+            <text {...textProps}>{text}</text>
+          </clipPath>
+          <filter id={`${id}-blur`} x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="55" />
+          </filter>
+        </defs>
+        <g clipPath={`url(#${id}-clip)`}>
+          <rect width="1000" height={height} fill="#080808" />
+          <circle
+            ref={glowRef}
+            r={height * 0.42}
+            fill="#E8602E"
+            filter={`url(#${id}-blur)`}
+            style={{ opacity: 0, transform: `translate(500px, ${height / 2}px)`, transition: "opacity 1.2s ease, transform 0.25s cubic-bezier(0.25, 0.8, 0.25, 1)" }}
+          />
+        </g>
+        <text {...textProps} fill="none" stroke="rgba(255,255,255,0.32)" strokeWidth="1.2" vectorEffect="non-scaling-stroke">
+          {text}
+        </text>
+      </svg>
     </div>
   );
 };
