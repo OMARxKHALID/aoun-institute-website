@@ -6,8 +6,10 @@ import { useQuery } from "@tanstack/react-query";
 import MuxPlayer from "@mux/mux-player-react/lazy";
 import { Loader2, Lock, MonitorX } from "lucide-react";
 import { claimStream, streamHeartbeat } from "@/features/video/actions";
+import { saveProgress } from "@/features/progress/actions";
 
 const HEARTBEAT_MS = 30_000;
+const SAVE_MS = 15_000;
 
 const messages = {
   "not-found": "This lesson is not available.",
@@ -16,6 +18,7 @@ const messages = {
   processing: "This video is still processing. Check back in a few minutes.",
   "no-video": "No video has been added to this lesson yet.",
   unavailable: "Video playback is not configured yet.",
+  sequence: "Finish the previous lesson to unlock this one.",
 };
 
 const getDeviceId = () => {
@@ -62,9 +65,10 @@ const Watermark = ({ viewer }) => {
   );
 };
 
-const VideoPlayer = ({ lessonId, title }) => {
+const VideoPlayer = ({ lessonId, title, onComplete }) => {
   const playerRef = useRef(null);
   const deviceRef = useRef(null);
+  const trackRef = useRef({ last: null, watched: 0 });
   const [blocked, setBlocked] = useState(false);
   const [playing, setPlaying] = useState(false);
   const { data, isPending } = useQuery({
@@ -88,6 +92,34 @@ const VideoPlayer = ({ lessonId, title }) => {
     return () => clearInterval(id);
   }, [guarded, playing, lessonId]);
 
+  const flush = async () => {
+    const player = playerRef.current;
+    const track = trackRef.current;
+    if (!data?.track || !player || track.watched < 1) return;
+    const watched = Math.round(track.watched);
+    track.watched = 0;
+    const result = await saveProgress(lessonId, { position: Math.floor(player.currentTime), watched, duration: Math.floor(player.duration || 0) });
+    if (result.ok && result.data.completed) onComplete?.();
+  };
+
+  useEffect(() => {
+    if (!data?.track || !playing) return;
+    const id = setInterval(flush, SAVE_MS);
+    return () => clearInterval(id);
+  });
+
+  const handleTimeUpdate = () => {
+    const time = playerRef.current?.currentTime ?? 0;
+    const track = trackRef.current;
+    const delta = track.last == null ? 0 : time - track.last;
+    if (delta > 0 && delta < 2) track.watched += delta;
+    track.last = time;
+  };
+
+  const handleSeeking = () => {
+    trackRef.current.last = null;
+  };
+
   const handlePlay = async () => {
     setPlaying(true);
     if (!guarded) return;
@@ -95,7 +127,11 @@ const VideoPlayer = ({ lessonId, title }) => {
     await claimStream(lessonId, deviceRef.current);
   };
 
-  const handlePause = () => setPlaying(false);
+  const handlePause = () => {
+    setPlaying(false);
+    trackRef.current.last = null;
+    flush();
+  };
 
   const handleResume = () => {
     setBlocked(false);
@@ -141,9 +177,12 @@ const VideoPlayer = ({ lessonId, title }) => {
           metadataViewerUserId={data.viewer?.tag}
           accentColor="#E8602E"
           fullscreenElement={containerId}
+          startTime={data.startTime || undefined}
           onPlay={handlePlay}
           onPause={handlePause}
           onEnded={handlePause}
+          onTimeUpdate={handleTimeUpdate}
+          onSeeking={handleSeeking}
           className="size-full [--pip-button:none]"
         />
       )}

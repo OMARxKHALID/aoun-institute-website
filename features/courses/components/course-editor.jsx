@@ -10,6 +10,7 @@ import SyllabusSettingsForm from "@/features/courses/components/syllabus-setting
 import Button from "@/components/ui/button";
 import FormAlert from "@/components/ui/form-alert";
 import StatusPill from "@/components/ui/status-pill";
+import TabList from "@/components/ui/tab-list";
 
 const tabs = ["Syllabus", "Details", "Settings"];
 
@@ -32,7 +33,7 @@ const CourseEditor = ({ course, outline, students }) => {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center gap-3">
         <StatusPill status={course.status} />
-        <span className="text-white/50">{students} enrolled students</span>
+        <span className="text-white/50">{students} enrolled {students === 1 ? "student" : "students"}</span>
         {course.status === "published" && (
           <a href={`/courses/${course.slug}`} target="_blank" rel="noopener noreferrer" className="ml-auto flex items-center gap-1.5 text-sm text-accent hover:underline">
             View public page <ExternalLink className="size-3.5" />
@@ -40,20 +41,7 @@ const CourseEditor = ({ course, outline, students }) => {
         )}
       </div>
 
-      <div role="tablist" className="flex flex-wrap gap-2">
-        {tabs.map((t) => (
-          <button
-            key={t}
-            type="button"
-            role="tab"
-            aria-selected={tab === t}
-            onClick={() => setTab(t)}
-            className={`rounded-full border px-5 py-2 transition ${tab === t ? "border-accent bg-[#4B1E0E]" : "border-[#302C2A] text-white/60 hover:text-white"}`}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
+      <TabList tabs={tabs} value={tab} onChange={setTab} label="Course editor" />
 
       <div role="tabpanel">
         {tab === "Syllabus" && <SyllabusBuilder courseId={course.id} outline={outline} />}

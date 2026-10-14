@@ -31,7 +31,7 @@ export const FreeEnrollButton = ({ courseId }) => {
     const result = await enrollFree(courseId);
     setBusy(false);
     if (!result.ok) return setError(Object.values(result.errors).flat()[0]);
-    router.push("/dashboard");
+    router.push("/dashboard/courses");
   };
 
   return (

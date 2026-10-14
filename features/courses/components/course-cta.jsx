@@ -28,7 +28,7 @@ const CourseCta = async ({ course }) => {
   const { enrolled, order } = await getCourseAccess(user?.id, course.id);
   if (enrolled)
     return (
-      <Link href="/dashboard" className={primary}>
+      <Link href={`/dashboard/courses/${course.slug}`} className={primary}>
         Go to my course
       </Link>
     );

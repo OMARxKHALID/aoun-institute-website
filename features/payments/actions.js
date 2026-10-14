@@ -90,7 +90,7 @@ export const approveOrder = async (orderId) => {
       sendEmail({
         to: student.email,
         subject: `You're enrolled in ${order.courseId.title}`,
-        html: linkEmail({ title: "Payment approved", text: `Your payment was confirmed. You now have lifetime access to ${order.courseId.title}.`, url: `${siteUrl()}/dashboard`, cta: "Start learning" }),
+        html: linkEmail({ title: "Payment approved", text: `Your payment was confirmed. You now have lifetime access to ${order.courseId.title}.`, url: `${siteUrl()}/dashboard/courses/${order.courseId.slug}`, cta: "Start learning" }),
       }),
     );
   return { ok: true };
@@ -110,6 +110,30 @@ export const rejectOrder = async (orderId, input) => {
         to: student.email,
         subject: `Payment not confirmed: ${order.courseId.title}`,
         html: linkEmail({ title: "We could not confirm your payment", text: `Reason: ${result.data.note}. You can submit your payment details again.`, url: `${siteUrl()}/checkout/${order.courseId.slug}`, cta: "Try again" }),
+      }),
+    );
+  return { ok: true };
+};
+
+export const refundOrder = async (orderId, input) => {
+  const admin = await requireAdmin();
+  const result = parse(rejectSchema, input);
+  if (!result.ok) return result;
+  if (!isValidObjectId(orderId)) return fail("Order not found");
+  await connectDB();
+  const order = await Order.findOneAndUpdate(
+    { _id: orderId, status: "PAID" },
+    { $set: { status: "REFUNDED", refundedAt: new Date(), reviewedBy: admin.id, note: result.data.note } },
+  ).populate({ path: "courseId", select: "title slug", model: Course });
+  if (!order) return fail("Only paid orders can be refunded");
+  await Enrollment.updateOne({ userId: order.userId, courseId: order.courseId._id, orderId: order._id }, { $set: { status: "revoked" } });
+  const student = await findUser(order.userId);
+  if (student?.email)
+    await notify(
+      sendEmail({
+        to: student.email,
+        subject: `Refund for ${order.courseId.title}`,
+        html: linkEmail({ title: "Your payment was refunded", text: `Reason: ${result.data.note}. Your access to ${order.courseId.title} has been removed.`, url: `${siteUrl()}/dashboard/orders`, cta: "View orders" }),
       }),
     );
   return { ok: true };

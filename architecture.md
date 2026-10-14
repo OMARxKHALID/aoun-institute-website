@@ -18,7 +18,6 @@ Course-selling LMS for an institute: students register, buy recorded video cours
 | react-hook-form 7.90.0, @hookform/resolvers 5.9.1 | client forms with `zodResolver`; server errors mapped with `setError` |
 | @tanstack/react-query 5.104.2 | client cache for interactive views; reads via route handlers, mutations via Server Actions |
 | @tanstack/react-table 9.3.1 | admin tables (v9 API: `createTableHook`, `tableFeatures`, `create*RowModel`) — added in Phase 2 |
-| zustand 5.0.15 | client-only UI state (quiz session, player prefs); per-tree store via `createStore` + context — added in Phase 6 |
 | cloudinary 2.11.0, next-cloudinary 6.19.3 | signed direct image/PDF uploads, crop widget, delivery |
 | @mux/ts 15.6.1, @mux/mux-player-react 3.14.0, @mux/upchunk 3.5.0 | video: direct upload, signed + DRM playback, player — Phase 3 (`@mux/mux-node` is deprecated) |
 | resend 6.32.1 | transactional email (console fallback in dev without key) |
@@ -26,7 +25,7 @@ Course-selling LMS for an institute: students register, buy recorded video cours
 | rate-limiter-flexible 11.2.2 | Mongo-backed limits for verify/uploads/quiz — added when needed |
 | server-only 0.0.1 | guards server modules from client bundles |
 
-Rejected: pdf-lib (abandoned), @dnd-kit (stale/pre-1.0; native drag + keyboard buttons instead), Vidstack/Plyr (deprecated), sharp (Cloudinary transforms), bcrypt (Better Auth hashes).
+Skipped: zustand (quiz and player state fit in component state). Rejected: pdf-lib (abandoned), @dnd-kit (stale/pre-1.0; native drag + keyboard buttons instead), Vidstack/Plyr (deprecated), sharp (Cloudinary transforms), bcrypt (Better Auth hashes).
 
 ## Decisions
 - Payments: **manual first** (PKR; bank transfer + JazzCash/Easypaisa with receipt upload; admin approves). Gateway later behind `PaymentProvider` (Safepay/PayFast/JazzCash/Easypaisa to verify).
@@ -46,13 +45,13 @@ app/
   (auth)/      layout.js, login/, register/, forgot-password/, reset-password/, verify-email/
   dashboard/   layout.js, page.js, courses/, courses/[slug]/, courses/[slug]/lessons/[lessonId]/,
                quizzes/, quizzes/[quizId]/, quizzes/attempts/[attemptId]/, certificates/, orders/, settings/
-  admin/       layout.js, page.js, courses/, courses/new/, courses/[id]/, courses/[id]/quizzes/[quizId]/,
+  admin/       layout.js, page.js, courses/, courses/new/, courses/[id]/, courses/[id]/lessons/[lessonId]/, courses/[id]/quizzes/[quizId]/,
                quizzes/[id]/results/, students/, students/[id]/, orders/, certificates/, announcements/, settings/
   api/auth/[...all]/route.js · api/webhooks/mux/route.js · api/lessons/[lessonId]/playback/route.js · api/progress/route.js
-  api/certificates/[code]/pdf/route.js · api/admin/orders/[id]/receipt/route.js · api/admin/{students,quiz-results}/route.js
+  api/certificates/[code]/pdf/route.js · api/admin/orders/[id]/receipt/route.js · api/admin/quiz-results/[quizId]/route.js (CSV)
 features/<name>/   model(s).js · schemas.js · actions.js · queries.js · components/ · (providers/, store.js, *.test.js)
   auth · site-settings · courses · video · payments · enrollments · progress · quizzes ·
-  certificates · announcements · students · analytics · profile
+  certificates · announcements · students · analytics · profile · notifications
 components/ui/ · components/motion/ · components/sections/    shared UI (existing design system)
 lib/  db.js · auth.js · auth-client.js · permissions.js · dal.js · validate.js · query-client.js ·
       cloudinary.js · email.js · rate-limit.js · ids.js · format.js
@@ -113,6 +112,17 @@ Progress staleness: structural course edits bump `contentVersion`; an older `cou
 
 ## Panel design
 Dark mode only. Student `/dashboard` and admin `/admin` both follow the "Welcome back" (Eduplex-style) dashboard layout described in `docs/design-refs/README.md`, in the site's own black/orange/cream design system; the second reference only adds student content blocks. Shared shell: `components/ui/panel-shell.jsx`, `panel-nav.jsx`, `panel-header.jsx`; every panel page folder gets a `loading.js` (re-export of `panel-skeleton`) so per-user data stays inside a Suspense boundary.
+
+## UI consistency
+- Every table uses `components/ui/data-table.jsx` (TanStack Table v9: search, sort, pagination 10/25/50; collapsible cards below `md`).
+- Every dropdown uses `components/ui/select.jsx` (custom listbox over a hidden native select, works with RHF `register`); every row/section menu uses `components/ui/action-menu.jsx`. Both share `menuPanel`/`menuItem` from `lib/ui.js`.
+- Tabs use `components/ui/tab-list.jsx`; panel cards `panel-card.jsx`; stats `stat-card.jsx`; charts `bar-chart.jsx`; `progress-bar.jsx`, `progress-ring.jsx`, `mini-calendar.jsx`.
+- Sub-pages pass `back` to `PanelHeader`.
+
+## Progress & certificates
+- `features/progress/service.js#buildOutline` is the single source of lesson/quiz states (completed, in progress, available, locked; quiz passed/retry/failed/locked) and certificate eligibility. Playback, quiz start and dashboards all use it.
+- Lesson completes at 90% watched (watch time is counted client-side from real playback, capped server-side by elapsed time). Embeds and lessons without video use "Mark as complete".
+- Certificates auto-issue on the event that makes a student eligible (lesson completion or quiz submission).
 
 ## Conventions
 - Zero comments; `const` arrow functions only; event handlers prefixed `handle`; early returns; kebab-case filenames; Tailwind only; ES modules.

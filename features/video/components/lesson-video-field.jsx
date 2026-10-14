@@ -8,6 +8,7 @@ import VideoPlayer from "@/features/video/components/video-player";
 import Button from "@/components/ui/button";
 import FormAlert from "@/components/ui/form-alert";
 import StatusPill from "@/components/ui/status-pill";
+import TabList from "@/components/ui/tab-list";
 
 const modes = [
   { id: "mux", label: "Upload (protected)" },
@@ -82,8 +83,8 @@ const LessonVideoField = ({ lessonId, video }) => {
   };
 
   return (
-    <fieldset className="flex min-w-0 flex-col gap-4 rounded-2xl border border-[#302C2A] p-4">
-      <legend className="px-2 text-base text-white/70">Video</legend>
+    <fieldset className="flex min-w-0 flex-col gap-4">
+      <legend className="mb-4 font-machina text-xl">Lesson video</legend>
 
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <StatusPill status={progress !== null ? "uploading" : status} label={progress !== null ? `uploading ${progress}%` : undefined} />
@@ -105,20 +106,7 @@ const LessonVideoField = ({ lessonId, video }) => {
 
       <FormAlert>{error}</FormAlert>
 
-      <div role="tablist" className="flex flex-wrap gap-2">
-        {modes.map(({ id, label }) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            aria-selected={mode === id}
-            onClick={handleMode(id)}
-            className={`rounded-xl px-3.5 py-1.5 text-sm transition ${mode === id ? "bg-white text-black" : "bg-white/5 text-white/60 hover:text-white"}`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <TabList tabs={modes.map(({ id, label }) => ({ value: id, label }))} value={mode} onChange={(id) => handleMode(id)()} label="Video source" size="sm" />
 
       {mode === "mux" ? (
         <label className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-white/25 p-6 text-center transition hover:border-accent ${progress !== null ? "pointer-events-none opacity-60" : ""}`}>

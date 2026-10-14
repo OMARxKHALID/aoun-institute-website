@@ -11,11 +11,10 @@ import Button from "@/components/ui/button";
 import Checkbox from "@/components/ui/checkbox";
 import FormAlert from "@/components/ui/form-alert";
 import AttachmentsField from "@/components/ui/attachments-field";
-import LessonVideoField from "@/features/video/components/lesson-video-field";
 
 const toMinutes = (seconds) => Math.round((seconds ?? 0) / 60);
 
-const LessonForm = ({ lesson, onDone }) => {
+const LessonForm = ({ lesson }) => {
   const router = useRouter();
   const [saved, setSaved] = useState(false);
   const { register, control, handleSubmit, setError, formState } = useForm({
@@ -37,20 +36,16 @@ const LessonForm = ({ lesson, onDone }) => {
     if (!result.ok) return Object.entries(result.errors).forEach(([field, messages]) => setError(field, { message: messages[0] }));
     setSaved(true);
     router.refresh();
-    onDone?.();
   };
 
   return (
-    <form onSubmit={handleSubmit(handleSave)} noValidate className="grid gap-4 rounded-2xl border border-accent/30 bg-[#0C0C0C] p-5 md:grid-cols-2">
+    <form onSubmit={handleSubmit(handleSave)} noValidate className="grid gap-4 md:grid-cols-2">
       <div className="md:col-span-2">
         <FormAlert>{errors.root?.message}</FormAlert>
         {saved && <FormAlert type="success">Lesson saved.</FormAlert>}
       </div>
       <Field label="Lesson title" error={errors.title?.message} {...register("title")} />
       <Field label="Status" options={["draft", "published"]} error={errors.status?.message} {...register("status")} />
-      <div className="md:col-span-2">
-        <LessonVideoField lessonId={lesson.id} video={lesson.video} />
-      </div>
       <Field label="Description" rows={4} className="md:col-span-2" error={errors.description?.message} {...register("description")} />
       <Field label="Duration (minutes, auto-filled for uploads)" type="number" min="0" step="1" error={errors.durationMin?.message ?? errors.durationSec?.message} {...register("durationMin", { valueAsNumber: true })} />
       <Checkbox label="Free preview" hint="Anyone can watch this lesson before buying." {...register("isFreePreview")} />
@@ -60,9 +55,6 @@ const LessonForm = ({ lesson, onDone }) => {
       <div className="flex gap-3 md:col-span-2">
         <Button type="submit" loading={isSubmitting}>
           Save Lesson
-        </Button>
-        <Button type="button" variant="ghost" onClick={onDone}>
-          Close
         </Button>
       </div>
     </form>

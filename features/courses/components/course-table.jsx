@@ -1,67 +1,29 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createColumnHelper } from "@tanstack/react-table";
-import { BookOpen, ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { BookOpen, ExternalLink, Pencil, Trash2 } from "lucide-react";
 import { deleteCourse } from "@/features/courses/actions";
 import DataTable from "@/components/ui/data-table";
+import ActionMenu from "@/components/ui/action-menu";
 import FormAlert from "@/components/ui/form-alert";
 import StatusPill from "@/components/ui/status-pill";
 import { formatDate, formatPrice } from "@/lib/format";
 
 const helper = createColumnHelper();
 
-const menuItem = "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition hover:bg-white/5";
-
-const RowActions = ({ course, onDelete }) => {
-  const [pos, setPos] = useState({ top: 0, left: 0 });
-  const menuId = useId();
-
-  const handleToggle = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setPos({ top: rect.bottom + 6, left: Math.max(8, rect.right - 192) });
-  };
-
-  const handleDelete = () => {
-    document.getElementById(menuId)?.hidePopover();
-    onDelete(course);
-  };
-
-  return (
-    <>
-      <button
-        type="button"
-        popoverTarget={menuId}
-        onClick={handleToggle}
-        aria-label={`Actions for ${course.title}`}
-        className="grid size-9 place-items-center rounded-full text-white/60 transition hover:bg-white/5 hover:text-white"
-      >
-        <MoreHorizontal className="size-5" />
-      </button>
-      <div
-        id={menuId}
-        popover="auto"
-        role="menu"
-        style={{ top: pos.top, left: pos.left }}
-        className="fixed m-0 w-48 rounded-xl border border-[#302C2A] bg-[#0C0C0C] p-1.5 text-white shadow-2xl"
-      >
-        <Link href={`/admin/courses/${course.id}`} role="menuitem" className={menuItem}>
-          <Pencil className="size-4 text-white/50" /> Edit course
-        </Link>
-        {course.status === "published" && (
-          <a href={`/courses/${course.slug}`} target="_blank" rel="noopener noreferrer" role="menuitem" className={menuItem}>
-            <ExternalLink className="size-4 text-white/50" /> View public page
-          </a>
-        )}
-        <button type="button" role="menuitem" onClick={handleDelete} className={`${menuItem} text-red-300 hover:bg-red-500/10`}>
-          <Trash2 className="size-4" /> Delete
-        </button>
-      </div>
-    </>
-  );
-};
+const RowActions = ({ course, onDelete }) => (
+  <ActionMenu
+    label={`Actions for ${course.title}`}
+    items={[
+      { label: "Edit course", icon: Pencil, href: `/admin/courses/${course.id}` },
+      course.status === "published" && { label: "View public page", icon: ExternalLink, href: `/courses/${course.slug}`, external: true },
+      { label: "Delete", icon: Trash2, danger: true, onClick: () => onDelete(course) },
+    ]}
+  />
+);
 
 const baseColumns = helper.columns([
   helper.accessor("title", {

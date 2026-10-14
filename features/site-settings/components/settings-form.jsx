@@ -10,6 +10,7 @@ import Button from "@/components/ui/button";
 import FormAlert from "@/components/ui/form-alert";
 import ImageUpload from "@/components/ui/image-upload";
 import ArrayField from "@/components/ui/array-field";
+import TabList from "@/components/ui/tab-list";
 
 const tabs = ["Brand & Contact", "Homepage", "SEO", "Payments"];
 
@@ -38,20 +39,7 @@ const SettingsForm = ({ settings }) => {
 
   return (
     <form onSubmit={handleSubmit(handleSave, handleInvalid)} noValidate className="flex flex-col gap-6">
-      <div role="tablist" className="flex flex-wrap gap-2">
-        {tabs.map((t) => (
-          <button
-            key={t}
-            type="button"
-            role="tab"
-            aria-selected={tab === t}
-            onClick={() => setTab(t)}
-            className={`rounded-full border px-4 py-2 transition ${tab === t ? "border-accent bg-[#4B1E0E]" : "border-[#302C2A] text-white/60 hover:text-white"}`}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
+      <TabList tabs={tabs} value={tab} onChange={setTab} label="Site settings" />
 
       <FormAlert>{errors.root?.message}</FormAlert>
       {saved && <FormAlert type="success">Settings saved. The site is updated.</FormAlert>}
@@ -73,20 +61,7 @@ const SettingsForm = ({ settings }) => {
       </div>
 
       <div hidden={tab !== "Homepage"} className="flex flex-col gap-5">
-        <div role="tablist" aria-label="Homepage sections" className="flex gap-2 overflow-x-auto pb-1">
-          {homeSections.map((section) => (
-            <button
-              key={section}
-              type="button"
-              role="tab"
-              aria-selected={homeSection === section}
-              onClick={() => setHomeSection(section)}
-              className={`shrink-0 rounded-xl px-3.5 py-1.5 text-sm transition ${homeSection === section ? "bg-white text-black" : "bg-white/5 text-white/60 hover:text-white"}`}
-            >
-              {section}
-            </button>
-          ))}
-        </div>
+        <TabList tabs={homeSections} value={homeSection} onChange={setHomeSection} label="Homepage sections" size="sm" />
         <div hidden={homeSection !== "Hero"} className="grid gap-5 md:grid-cols-2">
           <Field label="Eyebrow" error={errors.hero?.eyebrow?.message} {...register("hero.eyebrow")} />
           <Field label="Highlighted word" error={errors.hero?.highlight?.message} {...register("hero.highlight")} />

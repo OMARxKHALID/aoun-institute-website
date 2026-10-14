@@ -33,14 +33,19 @@ export const getCourseForEdit = async (id) => {
   const [sections, lessons, quizzes, students] = await Promise.all([
     Section.find({ courseId: id }).sort({ order: 1 }).lean(),
     Lesson.find({ courseId: id }).sort({ order: 1 }).lean(),
-    Quiz.find({ courseId: id }, "title sectionId status order").sort({ order: 1 }).lean(),
+    Quiz.find({ courseId: id }, "title sectionId lessonId status order").sort({ order: 1 }).lean(),
     Enrollment.countDocuments({ courseId: id, status: "active" }),
   ]);
   const outline = sections.map((s) => ({
     ...s,
     id: String(s._id),
-    lessons: lessons.filter((l) => String(l.sectionId) === String(s._id)).map((l) => ({ ...l, id: String(l._id) })),
-    quizzes: quizzes.filter((q) => String(q.sectionId) === String(s._id)).map((q) => ({ ...q, id: String(q._id) })),
+    lessons: lessons
+      .filter((l) => String(l.sectionId) === String(s._id))
+      .map((l) => {
+        const quiz = quizzes.find((q) => String(q.lessonId) === String(l._id));
+        return { ...l, id: String(l._id), quiz: quiz && { id: String(quiz._id), title: quiz.title, status: quiz.status } };
+      }),
+    quizzes: quizzes.filter((q) => !q.lessonId && String(q.sectionId) === String(s._id)).map((q) => ({ ...q, id: String(q._id) })),
   }));
   return plain({ course: { ...course, id: String(course._id) }, outline, students });
 };
@@ -85,4 +90,30 @@ export const getPublicCourse = async (slug) => {
     }))
     .filter((s) => s.lessons.length);
   return plain({ ...course, id: String(course._id), outline, lessons: lessons.length });
+};
+
+export const getLessonForEdit = async (courseId, lessonId) => {
+  await requireAdmin();
+  if (!isValidObjectId(courseId) || !isValidObjectId(lessonId)) return null;
+  await connectDB();
+  const [course, lesson] = await Promise.all([Course.findById(courseId, "title slug status").lean(), Lesson.findOne({ _id: lessonId, courseId }).lean()]);
+  if (!course || !lesson) return null;
+  const [sections, lessons, quiz] = await Promise.all([
+    Section.find({ courseId }, "title order").sort({ order: 1 }).lean(),
+    Lesson.find({ courseId }, "title sectionId order").sort({ order: 1 }).lean(),
+    Quiz.findOne({ lessonId }, "title status").lean(),
+  ]);
+  const ordered = sections.flatMap((s) => lessons.filter((l) => String(l.sectionId) === String(s._id)));
+  const index = ordered.findIndex((l) => String(l._id) === String(lessonId));
+  const section = sections.find((s) => String(s._id) === String(lesson.sectionId));
+  const link = (l) => l && { id: String(l._id), title: l.title };
+  return plain({
+    course: { id: String(course._id), title: course.title, slug: course.slug, status: course.status },
+    lesson: { ...lesson, id: String(lesson._id) },
+    section: { title: section?.title, number: sections.indexOf(section) + 1 },
+    position: { index: index + 1, total: ordered.length },
+    prev: link(ordered[index - 1]),
+    next: link(ordered[index + 1]),
+    quiz: quiz && { id: String(quiz._id), title: quiz.title, status: quiz.status },
+  });
 };

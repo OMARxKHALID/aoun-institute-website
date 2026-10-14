@@ -3,19 +3,30 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, BookOpen, ChevronLeft, LayoutDashboard, Menu, Receipt, Settings, X } from "lucide-react";
+import { ArrowUpRight, Award, BookOpen, ChevronLeft, FileQuestion, LayoutDashboard, Megaphone, Menu, Receipt, Settings, Users, X } from "lucide-react";
 import SignOutButton from "@/features/auth/components/sign-out-button";
+import { railLabel } from "@/lib/ui";
 
 const navs = {
   student: {
-    items: [{ label: "Dashboard", href: "/dashboard", icon: LayoutDashboard }],
+    items: [
+      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { label: "My Courses", href: "/dashboard/courses", icon: BookOpen },
+      { label: "Quizzes", href: "/dashboard/quizzes", icon: FileQuestion },
+      { label: "Certificates", href: "/dashboard/certificates", icon: Award },
+      { label: "Orders", href: "/dashboard/orders", icon: Receipt },
+      { label: "Settings", href: "/dashboard/settings", icon: Settings },
+    ],
     promo: { title: "Keep learning", text: "Explore new courses and level up your skills.", href: "/courses", cta: "Browse courses" },
   },
   admin: {
     items: [
       { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
       { label: "Courses", href: "/admin/courses", icon: BookOpen },
+      { label: "Students", href: "/admin/students", icon: Users },
       { label: "Orders", href: "/admin/orders", icon: Receipt },
+      { label: "Certificates", href: "/admin/certificates", icon: Award },
+      { label: "Announcements", href: "/admin/announcements", icon: Megaphone },
       { label: "Site Settings", href: "/admin/settings", icon: Settings },
     ],
     promo: { title: "Your website", text: "See the public site the way students see it.", href: "/", cta: "View site" },
@@ -52,12 +63,12 @@ const NavList = ({ items, activeHref, collapsed }) => {
             title={collapsed ? label : undefined}
             aria-label={label}
             aria-current={active ? "page" : undefined}
-            className={`flex items-center gap-3 rounded-full py-3 transition ${collapsed ? "px-5 lg:justify-center lg:px-0" : "px-5"} ${
+            className={`flex items-center rounded-full px-[17px] py-3 transition-colors ${
               active ? "bg-linear-to-b from-[#E8602E] to-[#A8401A] font-medium text-white shadow-[0_0_24px_rgba(232,96,46,0.35)]" : "text-white/65 hover:bg-white/5 hover:text-white"
             }`}
           >
             <Icon className="size-5 shrink-0" />
-            <span className={collapsed ? "lg:hidden" : ""}>{label}</span>
+            <span className={railLabel(collapsed)}>{label}</span>
           </Link>
         );
       })}
@@ -78,11 +89,14 @@ const ActiveNavList = ({ onNavigate, ...props }) => {
 const PanelNav = ({ panel, brand }) => {
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [ready, setReady] = useState(false);
   const { items, promo } = navs[panel];
   const root = items[0].href;
 
   useEffect(() => {
     setCollapsed(readCollapsed());
+    const id = requestAnimationFrame(() => requestAnimationFrame(() => setReady(true)));
+    return () => cancelAnimationFrame(id);
   }, []);
 
   useEffect(() => {
@@ -104,10 +118,10 @@ const PanelNav = ({ panel, brand }) => {
       return !v;
     });
 
-  const hideWhenCollapsed = collapsed ? "lg:hidden" : "";
-
   return (
-    <div className={`relative transition-[width] duration-300 lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)] lg:shrink-0 ${collapsed ? "lg:w-20" : "lg:w-72"}`}>
+    <div
+      className={`relative transition-[width] duration-300 ease-out lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)] lg:shrink-0 ${collapsed ? "lg:w-20" : "lg:w-72"} ${ready ? "" : "transition-none **:transition-none!"}`}
+    >
       <div className="flex items-center justify-between rounded-2xl bg-[#0C0C0C] px-4 py-3 lg:hidden">
         <button type="button" onClick={handleOpen} aria-label="Open navigation" aria-expanded={open} aria-controls="panel-sidebar" className="rounded-xl p-2 hover:bg-white/5">
           <Menu className="size-6" />
@@ -137,15 +151,17 @@ const PanelNav = ({ panel, brand }) => {
 
       <aside
         id="panel-sidebar"
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col gap-6 overflow-y-auto border-r border-white/5 bg-[#0C0C0C] p-5 transition-transform duration-300 lg:static lg:z-auto lg:h-full lg:w-auto lg:max-w-none lg:translate-x-0 lg:rounded-3xl lg:border ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col gap-6 overflow-x-hidden overflow-y-auto border-r border-white/5 bg-[#0C0C0C] p-5 transition-transform duration-300 lg:static lg:z-auto lg:h-full lg:w-auto lg:max-w-none lg:translate-x-0 lg:rounded-3xl lg:border lg:px-3 lg:py-6 ${
           open ? "translate-x-0" : "-translate-x-full"
-        } ${collapsed ? "lg:items-center lg:px-3 lg:py-6" : "lg:p-6"}`}
+        }`}
       >
         <div className="flex items-center gap-3">
-          <Link href="/" aria-label={brand.name} className={`flex min-w-0 flex-1 items-center gap-3 ${collapsed ? "lg:justify-center" : ""}`}>
+          <Link href="/" aria-label={brand.name} className="flex min-w-0 flex-1 items-center lg:pl-[7px]">
             <span className="grid size-10 shrink-0 place-items-center rounded-full bg-white font-machina text-xl font-bold text-black">{brand.name?.[0]}</span>
-            <span className={`truncate font-machina text-2xl leading-none ${hideWhenCollapsed}`}>{brand.shortName || brand.name}</span>
-            {panel === "admin" && <span className={`ml-auto rounded-full bg-accent/15 px-2 py-0.5 text-xs uppercase tracking-wider text-accent ${hideWhenCollapsed}`}>Admin</span>}
+            <span className={`truncate font-machina text-2xl leading-none ${railLabel(collapsed)}`}>{brand.shortName || brand.name}</span>
+            {panel === "admin" && (
+              <span className={`ml-auto shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-xs uppercase tracking-wider text-accent transition-opacity duration-300 ${collapsed ? "lg:pointer-events-none lg:opacity-0" : ""}`}>Admin</span>
+            )}
           </Link>
           <button type="button" onClick={handleClose} aria-label="Close navigation" className="rounded-xl p-2 text-white/60 hover:bg-white/5 hover:text-white lg:hidden">
             <X className="size-5" />
@@ -157,14 +173,18 @@ const PanelNav = ({ panel, brand }) => {
         </Suspense>
 
         <div className="mt-auto flex w-full flex-col gap-3">
-          <Link href={promo.href} className={`group relative overflow-hidden rounded-2xl bg-[#FFF3EF] p-5 text-black ${hideWhenCollapsed}`}>
-            <span className="absolute right-4 top-4 grid size-9 place-items-center rounded-full bg-black text-white transition-transform group-hover:rotate-45">
-              <ArrowUpRight className="size-4" />
-            </span>
-            <p className="font-machina text-xl">{promo.title}</p>
-            <p className="mt-1 pr-8 text-sm text-black/60">{promo.text}</p>
-            <span className="mt-4 inline-block rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-white">{promo.cta}</span>
-          </Link>
+          <div className={`grid grid-rows-[1fr] opacity-100 transition-[grid-template-rows,opacity] duration-300 ease-out ${collapsed ? "lg:pointer-events-none lg:grid-rows-[0fr] lg:opacity-0" : ""}`}>
+            <div className="min-h-0 overflow-hidden">
+              <Link href={promo.href} tabIndex={collapsed ? -1 : undefined} className="group relative block w-[246px] max-w-full overflow-hidden rounded-2xl bg-[#FFF3EF] p-5 text-black lg:w-[262px]">
+                <span className="absolute right-4 top-4 grid size-9 place-items-center rounded-full bg-black text-white transition-transform group-hover:rotate-45">
+                  <ArrowUpRight className="size-4" />
+                </span>
+                <p className="font-machina text-xl">{promo.title}</p>
+                <p className="mt-1 pr-8 text-sm text-black/60">{promo.text}</p>
+                <span className="mt-4 inline-block rounded-full bg-accent px-4 py-1.5 text-sm font-medium text-white">{promo.cta}</span>
+              </Link>
+            </div>
+          </div>
           <SignOutButton compact={collapsed} />
         </div>
       </aside>

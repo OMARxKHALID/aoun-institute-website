@@ -3,16 +3,18 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createColumnHelper } from "@tanstack/react-table";
-import { Check, FileText, X } from "lucide-react";
-import { approveOrder, rejectOrder } from "@/features/payments/actions";
+import { Check, FileText, Undo2, X } from "lucide-react";
+import { approveOrder, refundOrder, rejectOrder } from "@/features/payments/actions";
+import ActionMenu from "@/components/ui/action-menu";
 import DataTable from "@/components/ui/data-table";
 import FormAlert from "@/components/ui/form-alert";
 import StatusPill from "@/components/ui/status-pill";
 import { formatDate, formatPrice } from "@/lib/format";
+import TabList from "@/components/ui/tab-list";
 
 const helper = createColumnHelper();
 
-const filters = ["PENDING", "PAID", "FAILED", "ALL"];
+const filters = ["PENDING", "PAID", "FAILED", "REFUNDED", "ALL"];
 
 const OrderActions = ({ order, onResult }) => {
   const [busy, setBusy] = useState(false);
@@ -32,6 +34,12 @@ const OrderActions = ({ order, onResult }) => {
     if (note) run(() => rejectOrder(order.id, { note }));
   };
 
+  const handleRefund = () => {
+    const note = window.prompt(`Refund ${formatPrice(order.amount, order.currency)} to ${order.student}? Their access to ${order.course} will be removed. Reason:`);
+    if (note) run(() => refundOrder(order.id, { note }));
+  };
+
+  if (order.status === "PAID") return <ActionMenu label={`Actions for order by ${order.student}`} items={[{ label: "Mark refunded & remove access", icon: Undo2, danger: true, onClick: handleRefund }]} />;
   if (order.status !== "PENDING") return <span className="text-sm text-white/40">{order.note}</span>;
 
   return (
@@ -97,20 +105,7 @@ const OrderTable = ({ orders }) => {
 
   return (
     <div className="flex flex-col gap-4">
-      <div role="tablist" className="flex flex-wrap gap-2">
-        {filters.map((f) => (
-          <button
-            key={f}
-            type="button"
-            role="tab"
-            aria-selected={filter === f}
-            onClick={() => setFilter(f)}
-            className={`rounded-xl px-3.5 py-1.5 text-sm capitalize transition ${filter === f ? "bg-white text-black" : "bg-white/5 text-white/60 hover:text-white"}`}
-          >
-            {f.toLowerCase()} ({f === "ALL" ? orders.length : orders.filter((o) => o.status === f).length})
-          </button>
-        ))}
-      </div>
+      <TabList tabs={filters.map((f) => ({ value: f, label: `${f.charAt(0)}${f.slice(1).toLowerCase()} (${f === "ALL" ? orders.length : orders.filter((o) => o.status === f).length})` }))} value={filter} onChange={setFilter} label="Order status" size="sm" />
       <FormAlert>{error}</FormAlert>
       <DataTable key={filter} columns={columns} data={shown} searchPlaceholder="Search student, course or reference" empty="No orders here." />
     </div>

@@ -34,8 +34,8 @@ const CheckoutPage = async ({ params }) => {
       return (
         <StateCard icon={CircleCheck} tone="text-green-400" title="You're enrolled">
           <p>You have lifetime access to this course.</p>
-          <Link href="/dashboard" className="self-start rounded-2xl bg-accent px-6 py-3 font-semibold text-white">
-            Go to my dashboard
+          <Link href={`/dashboard/courses/${course.slug}`} className="self-start rounded-2xl bg-accent px-6 py-3 font-semibold text-white">
+            Go to my course
           </Link>
         </StateCard>
       );

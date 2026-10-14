@@ -1,12 +1,36 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowUp, ChevronDown, Eye, FileQuestion, GripVertical, Pencil, Plus, Trash2 } from "lucide-react";
-import { addLesson, addSection, deleteLesson, deleteSection, renameSection, reorderOutline } from "@/features/courses/actions";
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronDown,
+  CircleDashed,
+  Clapperboard,
+  Clock,
+  Eye,
+  EyeOff,
+  FileQuestion,
+  FolderInput,
+  GripVertical,
+  Layers,
+  ListChecks,
+  Loader2,
+  Pencil,
+  Plus,
+  Send,
+  Trash2,
+  TriangleAlert,
+  Undo2,
+  Video,
+} from "lucide-react";
+import { addLesson, addSection, deleteLesson, deleteSection, publishAllLessons, renameSection, reorderOutline, setLessonFlags } from "@/features/courses/actions";
+import { createQuiz } from "@/features/quizzes/actions";
+import ActionMenu from "@/components/ui/action-menu";
 import StatusPill from "@/components/ui/status-pill";
 import FormAlert from "@/components/ui/form-alert";
-import LessonForm from "@/features/courses/components/lesson-form";
 import { formatDuration } from "@/lib/format";
 
 const toOrder = (sections) => sections.map((s) => ({ id: s.id, lessonIds: s.lessons.map((l) => l.id) }));
@@ -18,7 +42,15 @@ const moveItem = (list, from, to) => {
   return next;
 };
 
-const InlineAdd = ({ placeholder, onAdd }) => {
+const videoState = (lesson) => {
+  const status = lesson.video?.status ?? "none";
+  if (status === "ready") return { icon: Video, tone: "text-green-400", label: "Video ready" };
+  if (status === "uploading" || status === "processing") return { icon: Loader2, tone: "animate-spin text-amber-300", label: "Video processing" };
+  if (status === "failed") return { icon: TriangleAlert, tone: "text-red-400", label: "Video failed" };
+  return { icon: Clapperboard, tone: "text-white/30", label: "No video yet" };
+};
+
+const InlineAdd = ({ placeholder, onAdd, button = "Add" }) => {
   const [value, setValue] = useState("");
   const [pending, startTransition] = useTransition();
 
@@ -40,38 +72,60 @@ const InlineAdd = ({ placeholder, onAdd }) => {
         aria-label={placeholder}
         className="min-w-0 flex-1 rounded-xl border border-[#302C2A] bg-[#070707] px-4 py-2.5 outline-hidden placeholder:text-white/30 focus:border-accent"
       />
-      <button disabled={pending} className="flex items-center gap-1.5 rounded-xl bg-white/5 px-4 text-sm transition hover:bg-accent disabled:opacity-50">
-        <Plus className="size-4" /> Add
+      <button disabled={pending} className="flex shrink-0 items-center gap-1.5 rounded-xl bg-white/5 px-4 text-sm transition hover:bg-accent disabled:opacity-50">
+        {pending ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />} {button}
       </button>
     </form>
   );
 };
 
-const IconButton = ({ label, children, className = "", ...props }) => (
-  <button type="button" aria-label={label} title={label} className={`grid size-8 shrink-0 place-items-center rounded-lg text-white/50 transition hover:bg-white/5 hover:text-white disabled:pointer-events-none disabled:opacity-25 ${className}`} {...props}>
-    {children}
-  </button>
+const Stat = ({ icon: Icon, label, value, tone = "text-accent" }) => (
+  <div className="flex items-center gap-3 rounded-2xl border border-[#302C2A] bg-[#0C0C0C] px-4 py-3">
+    <Icon className={`size-5 shrink-0 ${tone}`} />
+    <div className="min-w-0">
+      <p className="text-lg font-semibold leading-tight">{value}</p>
+      <p className="truncate text-xs text-white/45">{label}</p>
+    </div>
+  </div>
+);
+
+const QuizRow = ({ courseId, quiz, label, nested }) => (
+  <Link
+    href={`/admin/courses/${courseId}/quizzes/${quiz.id}`}
+    className={`flex items-center gap-2.5 rounded-2xl border border-dashed border-accent/25 bg-accent/[0.03] px-3 py-2.5 text-sm transition hover:border-accent/60 ${nested ? "ml-6 sm:ml-10" : ""}`}
+  >
+    <FileQuestion className="size-4 shrink-0 text-accent" />
+    <span className="min-w-0 flex-1 truncate">
+      <span className="text-white/45">{label}: </span>
+      {quiz.title}
+    </span>
+    <StatusPill status={quiz.status} />
+    <Pencil className="size-3.5 shrink-0 text-white/40" />
+  </Link>
 );
 
 const SyllabusBuilder = ({ courseId, outline }) => {
   const router = useRouter();
   const [sections, setSections] = useState(outline);
+  const [collapsed, setCollapsed] = useState(() => new Set());
   const [error, setError] = useState(null);
-  const [editingLesson, setEditingLesson] = useState(null);
   const [renaming, setRenaming] = useState(null);
   const [dragging, setDragging] = useState(null);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => setSections(outline), [outline]);
 
   const run = async (action) => {
     setError(null);
+    setBusy(true);
     const result = await action();
+    setBusy(false);
     if (!result.ok) {
       setError(Object.values(result.errors).flat()[0]);
-      return false;
+      return null;
     }
     router.refresh();
-    return true;
+    return result;
   };
 
   const commitOrder = async (next) => {
@@ -81,15 +135,24 @@ const SyllabusBuilder = ({ courseId, outline }) => {
     if (!ok) setSections(previous);
   };
 
+  const cloneSections = () => sections.map((s) => ({ ...s, lessons: [...s.lessons] }));
+
   const moveSection = (index, delta) => commitOrder(moveItem(sections, index, index + delta));
 
   const moveLesson = (sIndex, lIndex, delta) => {
-    const next = sections.map((s) => ({ ...s, lessons: [...s.lessons] }));
+    const next = cloneSections();
     const target = lIndex + delta;
     const [lesson] = next[sIndex].lessons.splice(lIndex, 1);
     if (target < 0) next[sIndex - 1].lessons.push(lesson);
     else if (target > next[sIndex].lessons.length) next[sIndex + 1].lessons.unshift(lesson);
     else next[sIndex].lessons.splice(target, 0, lesson);
+    commitOrder(next);
+  };
+
+  const moveLessonTo = (sIndex, lIndex, toSection) => {
+    const next = cloneSections();
+    const [lesson] = next[sIndex].lessons.splice(lIndex, 1);
+    next[toSection].lessons.push(lesson);
     commitOrder(next);
   };
 
@@ -105,7 +168,7 @@ const SyllabusBuilder = ({ courseId, outline }) => {
     e.preventDefault();
     e.stopPropagation();
     if (dragging?.type !== "lesson") return;
-    const next = sections.map((s) => ({ ...s, lessons: [...s.lessons] }));
+    const next = cloneSections();
     const fromS = next.findIndex((s) => s.lessons.some((l) => l.id === dragging.id));
     const fromL = next[fromS].lessons.findIndex((l) => l.id === dragging.id);
     const [lesson] = next[fromS].lessons.splice(fromL, 1);
@@ -133,6 +196,17 @@ const SyllabusBuilder = ({ courseId, outline }) => {
 
   const allowDrop = (e) => e.preventDefault();
 
+  const toggleSection = (id) => () =>
+    setCollapsed((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const handleCollapseAll = () => setCollapsed(new Set(sections.map((s) => s.id)));
+  const handleExpandAll = () => setCollapsed(new Set());
+
   const handleAddSection = (title) => run(() => addSection(courseId, { title }));
   const handleAddLesson = (sectionId) => (title) => run(() => addLesson(sectionId, { title }));
   const handleRename = (sectionId) => (e) => {
@@ -140,118 +214,193 @@ const SyllabusBuilder = ({ courseId, outline }) => {
     const title = new FormData(e.currentTarget).get("title");
     run(() => renameSection(sectionId, { title })).then((ok) => ok && setRenaming(null));
   };
-  const handleDeleteSection = (section) => () => {
-    if (window.confirm(`Delete "${section.title}" and its ${section.lessons.length} lessons? This cannot be undone.`)) run(() => deleteSection(section.id));
+  const handleDeleteSection = (section) => {
+    if (window.confirm(`Delete "${section.title}", its ${section.lessons.length} lessons and quizzes? This cannot be undone.`)) run(() => deleteSection(section.id));
   };
-  const handleDeleteLesson = (lesson) => () => {
-    if (window.confirm(`Delete lesson "${lesson.title}"? This cannot be undone.`)) run(() => deleteLesson(lesson.id));
+  const handleDeleteLesson = (lesson) => {
+    if (window.confirm(`Delete lesson "${lesson.title}" and its quiz? This cannot be undone.`)) run(() => deleteLesson(lesson.id));
+  };
+  const handleFlags = (lesson, flags) => run(() => setLessonFlags(lesson.id, flags));
+  const handleAddQuiz = async (section, lesson) => {
+    const title = window.prompt("Quiz title", lesson ? `${lesson.title} quiz` : `${section.title} quiz`);
+    if (!title) return;
+    const result = await run(() => createQuiz(courseId, { title, sectionId: section.id, lessonId: lesson?.id ?? null }));
+    if (result) router.push(`/admin/courses/${courseId}/quizzes/${result.data.id}`);
+  };
+  const handlePublishAll = () => {
+    if (window.confirm("Publish every lesson in this course? Students will see them immediately.")) run(() => publishAllLessons(courseId));
   };
 
-  const totalLessons = sections.reduce((sum, s) => sum + s.lessons.length, 0);
+  const lessons = sections.flatMap((s) => s.lessons);
+  const published = lessons.filter((l) => l.status === "published").length;
+  const missingVideo = lessons.filter((l) => l.video?.status !== "ready").length;
+  const duration = lessons.reduce((sum, l) => sum + (l.durationSec ?? 0), 0);
+  const quizzes = sections.reduce((sum, s) => sum + s.quizzes.length + s.lessons.filter((l) => l.quiz).length, 0);
 
   return (
     <div className="flex flex-col gap-5">
-      <p className="text-white/55">
-        {sections.length} sections · {totalLessons} lessons. Drag rows to reorder, or use the arrow buttons. Changes are visible to enrolled students immediately.
-      </p>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+        <Stat icon={Layers} label="Sections" value={sections.length} />
+        <Stat icon={ListChecks} label={`Lessons (${published} published)`} value={lessons.length} />
+        <Stat icon={Clock} label="Total length" value={formatDuration(duration)} />
+        <Stat icon={FileQuestion} label="Quizzes" value={quizzes} />
+        <Stat icon={missingVideo ? TriangleAlert : Video} tone={missingVideo ? "text-amber-300" : "text-green-400"} label="Lessons without video" value={missingVideo} />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="mr-auto text-sm text-white/50">Drag rows or use the ⋯ menus to reorder. Click a lesson to upload its video and edit details.</p>
+        <button type="button" onClick={handleExpandAll} className="rounded-full border border-[#302C2A] px-3.5 py-1.5 text-sm text-white/70 hover:border-accent hover:text-white">
+          Expand all
+        </button>
+        <button type="button" onClick={handleCollapseAll} className="rounded-full border border-[#302C2A] px-3.5 py-1.5 text-sm text-white/70 hover:border-accent hover:text-white">
+          Collapse all
+        </button>
+        {published < lessons.length && (
+          <button type="button" onClick={handlePublishAll} disabled={busy} className="flex items-center gap-1.5 rounded-full bg-accent/15 px-3.5 py-1.5 text-sm text-accent hover:bg-accent hover:text-white disabled:opacity-50">
+            <Send className="size-3.5" /> Publish all lessons
+          </button>
+        )}
+      </div>
+
       <FormAlert>{error}</FormAlert>
 
-      {sections.map((section, sIndex) => (
-        <section
-          key={section.id}
-          onDragOver={allowDrop}
-          onDrop={handleDropOnSection(sIndex)}
-          aria-label={`Section ${sIndex + 1}: ${section.title}`}
-          className={`rounded-3xl border bg-[#0C0C0C] p-4 transition md:p-5 ${dragging ? "border-dashed border-accent/40" : "border-[#302C2A]"}`}
-        >
-          <header className="flex flex-wrap items-center gap-2">
-            <span draggable onDragStart={handleDragStart({ type: "section", id: section.id })} onDragEnd={handleDragEnd} className="cursor-grab text-white/30 active:cursor-grabbing" aria-hidden="true">
-              <GripVertical className="size-5" />
-            </span>
-            <span className="grid size-8 place-items-center rounded-lg bg-accent/15 font-machina text-accent">{sIndex + 1}</span>
-            {renaming === section.id ? (
-              <form onSubmit={handleRename(section.id)} className="flex min-w-0 flex-1 gap-2">
-                <input name="title" defaultValue={section.title} autoFocus aria-label="Section title" className="min-w-0 flex-1 rounded-lg border border-accent bg-[#070707] px-3 py-1.5 outline-hidden" />
-                <button className="rounded-lg bg-accent px-3 text-sm">Save</button>
-                <button type="button" onClick={() => setRenaming(null)} className="rounded-lg px-3 text-sm text-white/60 hover:bg-white/5">
-                  Cancel
+      {sections.map((section, sIndex) => {
+        const isOpen = !collapsed.has(section.id);
+        const sectionDuration = section.lessons.reduce((sum, l) => sum + (l.durationSec ?? 0), 0);
+        return (
+          <section
+            key={section.id}
+            onDragOver={allowDrop}
+            onDrop={handleDropOnSection(sIndex)}
+            aria-label={`Section ${sIndex + 1}: ${section.title}`}
+            className={`rounded-3xl border bg-[#0C0C0C] transition ${dragging ? "border-dashed border-accent/40" : "border-[#302C2A]"}`}
+          >
+            <header className="flex items-center gap-2 p-3 sm:p-4">
+              <span
+                draggable
+                onDragStart={handleDragStart({ type: "section", id: section.id })}
+                onDragEnd={handleDragEnd}
+                className="hidden cursor-grab text-white/30 active:cursor-grabbing sm:block"
+                aria-hidden="true"
+              >
+                <GripVertical className="size-5" />
+              </span>
+              {renaming === section.id ? (
+                <form onSubmit={handleRename(section.id)} className="flex min-w-0 flex-1 flex-wrap gap-2">
+                  <input name="title" defaultValue={section.title} autoFocus aria-label="Section title" className="min-w-0 flex-1 basis-40 rounded-lg border border-accent bg-[#070707] px-3 py-1.5 outline-hidden" />
+                  <button className="rounded-lg bg-accent px-3 py-1.5 text-sm">Save</button>
+                  <button type="button" onClick={() => setRenaming(null)} className="rounded-lg px-3 py-1.5 text-sm text-white/60 hover:bg-white/5">
+                    Cancel
+                  </button>
+                </form>
+              ) : (
+                <button type="button" onClick={toggleSection(section.id)} aria-expanded={isOpen} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent/15 font-machina text-accent">{sIndex + 1}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-machina text-lg sm:text-xl">{section.title}</span>
+                    <span className="block text-xs text-white/45">
+                      {section.lessons.length} lessons{sectionDuration > 0 && ` · ${formatDuration(sectionDuration)}`}
+                      {section.quizzes.length > 0 && ` · ${section.quizzes.length} quiz`}
+                    </span>
+                  </span>
+                  <ChevronDown className={`size-5 shrink-0 text-white/40 transition-transform ${isOpen ? "rotate-180" : ""}`} />
                 </button>
-              </form>
-            ) : (
-              <h3 className="min-w-0 flex-1 truncate font-machina text-xl">{section.title}</h3>
-            )}
-            <div className="ml-auto flex items-center">
-              <IconButton label="Move section up" onClick={() => moveSection(sIndex, -1)} disabled={sIndex === 0}>
-                <ArrowUp className="size-4" />
-              </IconButton>
-              <IconButton label="Move section down" onClick={() => moveSection(sIndex, 1)} disabled={sIndex === sections.length - 1}>
-                <ArrowDown className="size-4" />
-              </IconButton>
-              <IconButton label="Rename section" onClick={() => setRenaming(section.id)}>
-                <Pencil className="size-4" />
-              </IconButton>
-              <IconButton label="Delete section" onClick={handleDeleteSection(section)} className="hover:text-red-300">
-                <Trash2 className="size-4" />
-              </IconButton>
-            </div>
-          </header>
+              )}
+              <ActionMenu
+                label={`Actions for section ${section.title}`}
+                items={[
+                  { label: "Rename section", icon: Pencil, onClick: () => setRenaming(section.id) },
+                  { label: "Add section quiz", icon: FileQuestion, onClick: () => handleAddQuiz(section) },
+                  { label: "Move section up", icon: ArrowUp, onClick: () => moveSection(sIndex, -1), disabled: sIndex === 0 },
+                  { label: "Move section down", icon: ArrowDown, onClick: () => moveSection(sIndex, 1), disabled: sIndex === sections.length - 1 },
+                  { label: "Delete section", icon: Trash2, danger: true, onClick: () => handleDeleteSection(section) },
+                ]}
+              />
+            </header>
 
-          <ol className="mt-4 flex flex-col gap-2">
-            {section.lessons.map((lesson, lIndex) => (
-              <li key={lesson.id} onDragOver={allowDrop} onDrop={handleDropOnLesson(sIndex, lIndex)} className="flex flex-col gap-2">
-                <div
-                  draggable
-                  onDragStart={handleDragStart({ type: "lesson", id: lesson.id })}
-                  onDragEnd={handleDragEnd}
-                  className={`flex flex-wrap items-center gap-2 rounded-2xl border border-white/5 bg-[#070707] px-3 py-2.5 ${dragging?.id === lesson.id ? "opacity-40" : ""}`}
-                >
-                  <GripVertical className="size-4 shrink-0 cursor-grab text-white/25" aria-hidden="true" />
-                  <span className="min-w-0 flex-1 truncate">{lesson.title}</span>
-                  <span className="flex flex-wrap items-center gap-2 text-sm text-white/45">
-                    {lesson.isFreePreview && (
-                      <span className="flex items-center gap-1 text-accent">
-                        <Eye className="size-3.5" /> Preview
-                      </span>
-                    )}
-                    {lesson.durationSec > 0 && <span>{formatDuration(lesson.durationSec)}</span>}
-                    <StatusPill status={lesson.status} />
-                  </span>
-                  <span className="flex items-center">
-                    <IconButton label="Move lesson up" onClick={() => moveLesson(sIndex, lIndex, -1)} disabled={sIndex === 0 && lIndex === 0}>
-                      <ArrowUp className="size-4" />
-                    </IconButton>
-                    <IconButton label="Move lesson down" onClick={() => moveLesson(sIndex, lIndex, 1)} disabled={sIndex === sections.length - 1 && lIndex === section.lessons.length - 1}>
-                      <ArrowDown className="size-4" />
-                    </IconButton>
-                    <IconButton label={editingLesson === lesson.id ? "Close lesson editor" : "Edit lesson"} onClick={() => setEditingLesson(editingLesson === lesson.id ? null : lesson.id)}>
-                      <ChevronDown className={`size-4 transition-transform ${editingLesson === lesson.id ? "rotate-180" : ""}`} />
-                    </IconButton>
-                    <IconButton label="Delete lesson" onClick={handleDeleteLesson(lesson)} className="hover:text-red-300">
-                      <Trash2 className="size-4" />
-                    </IconButton>
-                  </span>
+            {isOpen && (
+              <div className="flex flex-col gap-2 border-t border-white/5 p-3 sm:p-4">
+                <ol className="flex flex-col gap-2">
+                  {section.lessons.map((lesson, lIndex) => {
+                    const video = videoState(lesson);
+                    const isFirst = sIndex === 0 && lIndex === 0;
+                    const isLast = sIndex === sections.length - 1 && lIndex === section.lessons.length - 1;
+                    const lessonHref = `/admin/courses/${courseId}/lessons/${lesson.id}`;
+                    return (
+                      <li key={lesson.id} onDragOver={allowDrop} onDrop={handleDropOnLesson(sIndex, lIndex)} className="flex flex-col gap-2">
+                        <div
+                          draggable
+                          onDragStart={handleDragStart({ type: "lesson", id: lesson.id })}
+                          onDragEnd={handleDragEnd}
+                          className={`flex items-center gap-2 rounded-2xl border border-white/5 bg-[#070707] p-2 pl-3 transition hover:border-white/15 ${dragging?.id === lesson.id ? "opacity-40" : ""}`}
+                        >
+                          <GripVertical className="hidden size-4 shrink-0 cursor-grab text-white/25 sm:block" aria-hidden="true" />
+                          <span className="w-8 shrink-0 text-xs tabular-nums text-white/35">
+                            {sIndex + 1}.{lIndex + 1}
+                          </span>
+                          <video.icon className={`size-4 shrink-0 ${video.tone}`} aria-label={video.label} />
+                          <Link href={lessonHref} className="min-w-0 flex-1 py-1 hover:text-accent">
+                            <span className="block truncate">{lesson.title}</span>
+                            <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-white/45">
+                              <StatusPill status={lesson.status} />
+                              {lesson.isFreePreview && (
+                                <span className="flex items-center gap-1 text-accent">
+                                  <Eye className="size-3" /> Free preview
+                                </span>
+                              )}
+                              {lesson.durationSec > 0 && <span>{formatDuration(lesson.durationSec)}</span>}
+                              {!lesson.video?.provider && <span className="text-amber-300/80">Add video</span>}
+                            </span>
+                          </Link>
+                          <Link href={lessonHref} aria-label={`Edit ${lesson.title}`} title="Edit lesson and video" className="hidden size-9 shrink-0 place-items-center rounded-full text-white/60 transition hover:bg-white/5 hover:text-white sm:grid">
+                            <Pencil className="size-4" />
+                          </Link>
+                          <ActionMenu
+                            label={`Actions for lesson ${lesson.title}`}
+                            items={[
+                              { label: "Edit lesson & video", icon: Pencil, href: lessonHref },
+                              lesson.status === "published"
+                                ? { label: "Unpublish", icon: Undo2, onClick: () => handleFlags(lesson, { status: "draft" }) }
+                                : { label: "Publish", icon: Send, onClick: () => handleFlags(lesson, { status: "published" }) },
+                              lesson.isFreePreview
+                                ? { label: "Remove free preview", icon: EyeOff, onClick: () => handleFlags(lesson, { isFreePreview: false }) }
+                                : { label: "Make free preview", icon: Eye, onClick: () => handleFlags(lesson, { isFreePreview: true }) },
+                              lesson.quiz
+                                ? { label: "Edit lesson quiz", icon: FileQuestion, href: `/admin/courses/${courseId}/quizzes/${lesson.quiz.id}` }
+                                : { label: "Add quiz after this lesson", icon: FileQuestion, onClick: () => handleAddQuiz(section, lesson) },
+                              { label: "Move up", icon: ArrowUp, onClick: () => moveLesson(sIndex, lIndex, -1), disabled: isFirst },
+                              { label: "Move down", icon: ArrowDown, onClick: () => moveLesson(sIndex, lIndex, 1), disabled: isLast },
+                              ...sections
+                                .map((target, tIndex) => tIndex !== sIndex && { label: `Move to ${tIndex + 1}. ${target.title}`, icon: FolderInput, onClick: () => moveLessonTo(sIndex, lIndex, tIndex) })
+                                .filter(Boolean),
+                              { label: "Delete lesson", icon: Trash2, danger: true, onClick: () => handleDeleteLesson(lesson) },
+                            ]}
+                          />
+                        </div>
+                        {lesson.quiz && <QuizRow courseId={courseId} quiz={lesson.quiz} label="Quiz after lesson" nested />}
+                      </li>
+                    );
+                  })}
+                </ol>
+                {section.quizzes.map((quiz) => (
+                  <QuizRow key={quiz.id} courseId={courseId} quiz={quiz} label="Section quiz" />
+                ))}
+                {section.lessons.length === 0 && section.quizzes.length === 0 && (
+                  <p className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-white/10 px-4 py-6 text-center text-sm text-white/40">
+                    <CircleDashed className="size-5" /> Drop lessons here or add the first one below.
+                  </p>
+                )}
+                <div className="mt-1">
+                  <InlineAdd placeholder="New lesson title" onAdd={handleAddLesson(section.id)} button="Lesson" />
                 </div>
-                {editingLesson === lesson.id && <LessonForm lesson={lesson} onDone={() => setEditingLesson(null)} />}
-              </li>
-            ))}
-            {section.quizzes.map((quiz) => (
-              <li key={quiz.id} className="flex items-center gap-2 rounded-2xl border border-dashed border-white/10 px-3 py-2.5 text-white/60">
-                <FileQuestion className="size-4 text-accent" />
-                <span className="flex-1 truncate">{quiz.title}</span>
-                <StatusPill status={quiz.status} />
-              </li>
-            ))}
-            {section.lessons.length === 0 && section.quizzes.length === 0 && <li className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-center text-sm text-white/40">Drop lessons here or add one below.</li>}
-          </ol>
+              </div>
+            )}
+          </section>
+        );
+      })}
 
-          <div className="mt-3">
-            <InlineAdd placeholder="New lesson title" onAdd={handleAddLesson(section.id)} />
-          </div>
-        </section>
-      ))}
-
-      <div className="rounded-3xl border border-dashed border-[#302C2A] p-4 md:p-5">
-        <InlineAdd placeholder="New section title" onAdd={handleAddSection} />
+      <div className="rounded-3xl border border-dashed border-[#302C2A] p-3 sm:p-4">
+        <InlineAdd placeholder="New section title, e.g. Getting Started" onAdd={handleAddSection} button="Section" />
       </div>
     </div>
   );

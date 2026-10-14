@@ -20,6 +20,12 @@ const statusTone = {
   uploading: "amber",
   failed: "red",
   none: "gray",
+  active: "green",
+  banned: "red",
+  deletion: "amber",
+  unverified: "gray",
+  revoked: "red",
+  in_progress: "accent",
 };
 
 const StatusPill = ({ status, label, tone }) => (

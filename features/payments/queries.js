@@ -1,7 +1,7 @@
 import "server-only";
 import { Types } from "mongoose";
 import { connectDB, db } from "@/lib/db";
-import { requireAdmin } from "@/lib/dal";
+import { requireAdmin, requireUser } from "@/lib/dal";
 import Course from "@/features/courses/models/course";
 import Order from "@/features/payments/models/order";
 
@@ -31,4 +31,22 @@ export const getAdminOrders = async () => {
 export const countPendingOrders = async () => {
   await connectDB();
   return Order.countDocuments({ status: "PENDING" });
+};
+
+export const getMyOrders = async () => {
+  const user = await requireUser();
+  await connectDB();
+  const orders = await Order.find({ userId: user.id }).populate({ path: "courseId", select: "title slug", model: Course }).sort({ createdAt: -1 }).lean();
+  return orders.map((o) => ({
+    id: String(o._id),
+    course: o.courseId?.title ?? "Deleted course",
+    slug: o.courseId?.slug ?? null,
+    amount: o.amount,
+    currency: o.currency,
+    method: o.method ?? o.provider,
+    reference: o.providerRef?.replace(/^manual:/, "") ?? "",
+    note: o.status === "FAILED" ? (o.note ?? "") : "",
+    status: o.status,
+    createdAt: o.createdAt.toISOString(),
+  }));
 };

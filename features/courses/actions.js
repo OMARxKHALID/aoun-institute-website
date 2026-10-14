@@ -8,6 +8,7 @@ import { fail, parse } from "@/lib/validate";
 import { destroyAsset, verifyUpload } from "@/lib/cloudinary";
 import { recomputeCourse } from "@/features/courses/recompute";
 import { deleteVideo } from "@/features/video/mux";
+import { notifyCourseStudents } from "@/features/notifications/service";
 import Course from "@/features/courses/models/course";
 import Section from "@/features/courses/models/section";
 import Lesson from "@/features/courses/models/lesson";
@@ -48,6 +49,19 @@ const loadCourse = async (id) => {
   await connectDB();
   return Course.findById(id);
 };
+
+const announceLesson = async (lesson) => {
+  const course = await Course.findById(lesson.courseId, "title slug status").lean();
+  if (course?.status !== "published") return;
+  await notifyCourseStudents(lesson.courseId, "notifyNewLesson", {
+    subject: `New lesson in ${course.title}`,
+    title: "A new lesson is available",
+    text: `"${lesson.title}" was just added to ${course.title}.`,
+    path: `/dashboard/courses/${course.slug}/lessons/${lesson._id}`,
+  });
+};
+
+const bulk = (Model, ops) => (ops.length ? Model.bulkWrite(ops) : null);
 
 const duplicateSlug = (error) => error?.code === 11000 && error?.keyPattern?.slug;
 
@@ -196,6 +210,7 @@ export const updateLesson = async (lessonId, input) => {
   const structural = lesson.status !== result.data.status || lesson.durationSec !== result.data.durationSec;
   await Lesson.updateOne({ _id: lessonId }, { $set: result.data }, { runValidators: true });
   await destroyRemoved("document", result.data.attachments, lesson.attachments);
+  if (lesson.status === "draft" && result.data.status === "published") await announceLesson({ ...lesson.toObject(), ...result.data });
   if (structural) await touchCourse(lesson.courseId);
   else invalidate(lesson.courseId);
   return { ok: true };
@@ -207,7 +222,13 @@ export const deleteLesson = async (lessonId) => {
   await connectDB();
   const lesson = await Lesson.findById(lessonId);
   if (!lesson) return fail("Lesson not found");
-  await Promise.all([Lesson.deleteOne({ _id: lessonId }), LessonProgress.deleteMany({ lessonId })]);
+  const quizIds = (await Quiz.find({ lessonId }, "_id").lean()).map((q) => q._id);
+  await Promise.all([
+    Lesson.deleteOne({ _id: lessonId }),
+    LessonProgress.deleteMany({ lessonId }),
+    Question.deleteMany({ quizId: { $in: quizIds } }),
+    Quiz.deleteMany({ _id: { $in: quizIds } }),
+  ]);
   await Promise.all([destroyRemoved("document", [], lesson.attachments), deleteVideo(lesson.video)]);
   await touchCourse(lesson.courseId);
   return { ok: true };
@@ -230,9 +251,32 @@ export const reorderOutline = async (courseId, input) => {
     sentLessons.every((id) => lessonIds.has(id));
   if (!valid) return fail("The outline changed in another tab. Reload and try again.");
   await Promise.all([
-    Section.bulkWrite(result.data.map((s, order) => ({ updateOne: { filter: { _id: s.id }, update: { order } } }))),
-    Lesson.bulkWrite(result.data.flatMap((s) => s.lessonIds.map((id, order) => ({ updateOne: { filter: { _id: id }, update: { order, sectionId: s.id } } })))),
+    bulk(Section, result.data.map((s, order) => ({ updateOne: { filter: { _id: s.id }, update: { order } } }))),
+    bulk(Lesson, result.data.flatMap((s) => s.lessonIds.map((id, order) => ({ updateOne: { filter: { _id: id }, update: { order, sectionId: s.id } } })))),
+    bulk(Quiz, result.data.flatMap((s) => s.lessonIds.map((id) => ({ updateMany: { filter: { lessonId: id }, update: { sectionId: s.id } } })))),
   ]);
+  await touchCourse(courseId);
+  return { ok: true };
+};
+
+export const setLessonFlags = async (lessonId, input) => {
+  await requireAdmin();
+  const result = parse(lessonSchema.pick({ status: true, isFreePreview: true }).partial().strict(), input);
+  if (!result.ok) return result;
+  if (!isValidObjectId(lessonId)) return fail("Lesson not found");
+  await connectDB();
+  const lesson = await Lesson.findByIdAndUpdate(lessonId, { $set: result.data });
+  if (!lesson) return fail("Lesson not found");
+  if (lesson.status === "draft" && result.data.status === "published") await announceLesson(lesson);
+  if (result.data.status && result.data.status !== lesson.status) await touchCourse(lesson.courseId);
+  else invalidate(lesson.courseId);
+  return { ok: true };
+};
+
+export const publishAllLessons = async (courseId) => {
+  await requireAdmin();
+  if (!(await loadCourse(courseId))) return fail("Course not found");
+  await Lesson.updateMany({ courseId }, { $set: { status: "published" } });
   await touchCourse(courseId);
   return { ok: true };
 };
