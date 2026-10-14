@@ -24,7 +24,7 @@ const EditLessonPage = async ({ params }) => {
       <div className="grid gap-5 p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:p-8">
         <div className="flex min-w-0 flex-col gap-5">
           <PanelCard id="video">
-            <LessonVideoField lessonId={lesson.id} video={lesson.video} />
+            <LessonVideoField lessonId={lesson.id} video={lesson.video} upload={lesson.upload} />
           </PanelCard>
           <PanelCard title="Lesson details">
             <LessonForm lesson={lesson} />
@@ -36,7 +36,7 @@ const EditLessonPage = async ({ params }) => {
             <div className="flex flex-wrap items-center gap-2 text-sm text-white/60">
               <StatusPill status={lesson.status} />
               {lesson.isFreePreview && <StatusPill status="preview" tone="accent" label="free preview" />}
-              <StatusPill status={lesson.video?.status ?? "none"} label={`video ${lesson.video?.status ?? "missing"}`} />
+              <StatusPill status={lesson.upload?.status ?? lesson.video?.status ?? "none"} label={`video ${lesson.upload?.status ?? lesson.video?.status ?? "missing"}`} />
             </div>
             <p className="text-sm text-white/50">Students only see published lessons. Free preview lessons can be watched before buying.</p>
             {course.status === "published" && lesson.status === "published" && (

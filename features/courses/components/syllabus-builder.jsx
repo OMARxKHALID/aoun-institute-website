@@ -45,7 +45,7 @@ const moveItem = (list, from, to) => {
 };
 
 const videoState = (lesson) => {
-  const status = lesson.video?.status ?? "none";
+  const status = lesson.upload?.status ?? lesson.video?.status ?? "none";
   if (status === "ready") return { icon: Video, tone: "text-green-400", label: "Video ready" };
   if (status === "uploading" || status === "processing") return { icon: Loader2, tone: "animate-spin text-amber-300", label: "Video processing" };
   if (status === "failed") return { icon: TriangleAlert, tone: "text-red-400", label: "Video failed" };

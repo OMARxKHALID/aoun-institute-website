@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Trash2, UploadCloud } from "lucide-react";
-import { refreshVideoStatus, removeVideo, setVideoLink, startVideoUpload } from "@/features/video/actions";
+import { cancelVideoUpload, refreshVideoStatus, removeVideo, setVideoLink, startVideoUpload } from "@/features/video/actions";
 import VideoPlayer from "@/features/video/components/video-player";
 import Button from "@/components/ui/button";
 import FormAlert from "@/components/ui/form-alert";
@@ -28,7 +28,7 @@ const formatEta = (sec) => (sec >= 3600 ? `${Math.floor(sec / 3600)}h ${Math.rou
 
 const firstError = (result) => Object.values(result.errors ?? {}).flat()[0] ?? "Something went wrong";
 
-const LessonVideoField = ({ lessonId, video }) => {
+const LessonVideoField = ({ lessonId, video, upload: pendingUpload }) => {
   const dialog = useDialog();
   const router = useRouter();
   const [mode, setMode] = useState(video?.provider ?? "mux");
@@ -39,7 +39,7 @@ const LessonVideoField = ({ lessonId, video }) => {
   const [preview, setPreview] = useState(false);
   const [upload, setUpload] = useState(null);
   const uploadRef = useRef(null);
-  const status = video?.status ?? "none";
+  const status = pendingUpload?.status ?? video?.status ?? "none";
   const pending = status === "uploading" || status === "processing";
 
   useEffect(() => {
@@ -106,12 +106,12 @@ const LessonVideoField = ({ lessonId, video }) => {
   };
 
   const handleCancelUpload = async () => {
-    if (!(await dialog.confirm({ title: "Cancel this upload?", message: "The part already sent is discarded. You can upload again any time.", confirmLabel: "Cancel upload", cancelLabel: "Keep uploading", danger: true }))) return;
+    if (!(await dialog.confirm({ title: "Cancel this upload?", message: "The part already sent is discarded. The current video stays live. You can upload again any time.", confirmLabel: "Cancel upload", cancelLabel: "Keep uploading", danger: true }))) return;
     uploadRef.current?.abort();
     uploadRef.current = null;
     setProgress(null);
     setUpload(null);
-    run(() => removeVideo(lessonId));
+    run(() => cancelVideoUpload(lessonId));
   };
 
   const handleSaveLink = () => run(() => setVideoLink(lessonId, { provider: mode, src: link }));

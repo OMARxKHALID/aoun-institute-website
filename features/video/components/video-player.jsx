@@ -116,9 +116,10 @@ const VideoPlayer = ({ lessonId, title, onComplete, controllerRef, startAt }) =>
   const playerRef = useRef(null);
   const deviceRef = useRef(null);
   const trackRef = useRef({ last: null, watched: 0 });
+  const resumeRef = useRef(null);
   const [blocked, setBlocked] = useState(false);
   const [playing, setPlaying] = useState(false);
-  const { data, isPending } = useQuery({
+  const { data, isPending, refetch } = useQuery({
     queryKey: ["playback", lessonId],
     queryFn: () => fetchPlayback(lessonId),
     staleTime: 10 * 60_000,
@@ -199,6 +200,18 @@ const VideoPlayer = ({ lessonId, title, onComplete, controllerRef, startAt }) =>
     playerRef.current?.play();
   };
 
+  const handleError = () => {
+    if (data?.provider !== "mux" || resumeRef.current !== null) return;
+    resumeRef.current = playerRef.current?.currentTime ?? 0;
+    refetch();
+  };
+
+  const handleLoadedMetadata = () => {
+    if (resumeRef.current === null) return;
+    playerRef.current.currentTime = resumeRef.current;
+    resumeRef.current = null;
+  };
+
   const handleContextMenu = (e) => e.preventDefault();
 
   const handleShieldResume = () => {
@@ -249,6 +262,8 @@ const VideoPlayer = ({ lessonId, title, onComplete, controllerRef, startAt }) =>
           onEnded={handlePause}
           onTimeUpdate={handleTimeUpdate}
           onSeeking={handleSeeking}
+          onError={handleError}
+          onLoadedMetadata={handleLoadedMetadata}
           disablePictureInPicture
           disableRemotePlayback
           className="size-full [--airplay-button:none] [--cast-button:none] [--pip-button:none]"

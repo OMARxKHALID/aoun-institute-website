@@ -19,6 +19,8 @@ const loadLesson = async (lessonId) => {
   return Lesson.findById(lessonId);
 };
 
+const cancelUpload = (lesson) => deleteVideo({ provider: "mux", uploadId: lesson.upload?.uploadId });
+
 const invalidate = (lesson) => {
   updateTag("catalog");
   updateTag(`course:${lesson.courseId}`);
@@ -30,9 +32,8 @@ export const startVideoUpload = async (lessonId) => {
   const lesson = await loadLesson(lessonId);
   if (!lesson) return fail("Lesson not found");
   const upload = await createDirectUpload(String(lesson._id));
-  await deleteVideo(lesson.video);
-  await Lesson.updateOne({ _id: lesson._id }, { $set: { video: { provider: "mux", uploadId: upload.id, status: "uploading" } } });
-  invalidate(lesson);
+  await cancelUpload(lesson);
+  await Lesson.updateOne({ _id: lesson._id }, { $set: { upload: { uploadId: upload.id, status: "uploading" } } });
   await audit(admin, "video.upload", `Started a video upload for "${lesson.title}"`, { type: "lesson", id: lesson._id });
   return { ok: true, data: { url: upload.url } };
 };
@@ -41,9 +42,18 @@ export const refreshVideoStatus = async (lessonId) => {
   await requireAdmin();
   const lesson = await loadLesson(lessonId);
   if (!lesson) return fail("Lesson not found");
-  const video = await syncLessonVideo(lesson.toObject());
-  if (video.status === "ready") invalidate(lesson);
-  return { ok: true, data: { status: video.status ?? "none" } };
+  const { status } = await syncLessonVideo(lesson.toObject());
+  if (status === "ready") invalidate(lesson);
+  return { ok: true, data: { status: status ?? "none" } };
+};
+
+export const cancelVideoUpload = async (lessonId) => {
+  await requireAdmin();
+  const lesson = await loadLesson(lessonId);
+  if (!lesson) return fail("Lesson not found");
+  await cancelUpload(lesson);
+  await Lesson.updateOne({ _id: lesson._id }, { $unset: { upload: 1 } });
+  return { ok: true };
 };
 
 export const setVideoLink = async (lessonId, input) => {
@@ -52,8 +62,8 @@ export const setVideoLink = async (lessonId, input) => {
   if (!result.ok) return result;
   const lesson = await loadLesson(lessonId);
   if (!lesson) return fail("Lesson not found");
-  await deleteVideo(lesson.video);
-  await Lesson.updateOne({ _id: lesson._id }, { $set: { video: { ...result.data, status: "ready", drm: false } } });
+  await Promise.all([deleteVideo(lesson.video), cancelUpload(lesson)]);
+  await Lesson.updateOne({ _id: lesson._id }, { $set: { video: { ...result.data, status: "ready", drm: false } }, $unset: { upload: 1 } });
   invalidate(lesson);
   await audit(admin, "video.link", `Set a ${result.data.provider} video for "${lesson.title}"`, { type: "lesson", id: lesson._id });
   return { ok: true };
@@ -63,8 +73,8 @@ export const removeVideo = async (lessonId) => {
   const admin = await requireAdmin();
   const lesson = await loadLesson(lessonId);
   if (!lesson) return fail("Lesson not found");
-  await deleteVideo(lesson.video);
-  await Lesson.updateOne({ _id: lesson._id }, { $set: { video: { status: "none" } } });
+  await Promise.all([deleteVideo(lesson.video), cancelUpload(lesson)]);
+  await Lesson.updateOne({ _id: lesson._id }, { $set: { video: { status: "none" } }, $unset: { upload: 1 } });
   invalidate(lesson);
   await audit(admin, "video.remove", `Removed the video from "${lesson.title}"`, { type: "lesson", id: lesson._id });
   return { ok: true };

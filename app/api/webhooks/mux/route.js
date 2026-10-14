@@ -16,12 +16,13 @@ export const POST = async (request) => {
   await connectDB();
   const lesson = await Lesson.findById(lessonId).lean();
   const uploadId = event.type.startsWith("video.upload.") ? event.data.id : event.data.upload_id;
-  if (!lesson || lesson.video?.uploadId !== uploadId) {
+  if (lesson?.video?.uploadId === uploadId) return Response.json({ ok: true });
+  if (!lesson || lesson.upload?.uploadId !== uploadId) {
     if (event.type === "video.asset.ready") await deleteVideo({ provider: "mux", assetId: event.data.id });
     return Response.json({ ok: true });
   }
-  const video = await syncLessonVideo(lesson);
-  if (video.status === "ready") {
+  const { status } = await syncLessonVideo(lesson);
+  if (status === "ready") {
     revalidateTag("catalog", "max");
     revalidateTag(`course:${lesson.courseId}`, "max");
   }

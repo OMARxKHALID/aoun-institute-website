@@ -19,6 +19,10 @@ const lessonSchema = new Schema(
       src: String,
       drm: { type: Boolean, default: true },
     },
+    upload: {
+      uploadId: String,
+      status: { type: String, enum: ["uploading", "processing", "failed"] },
+    },
     attachments: [{ url: String, publicId: String, name: String }],
   },
   { timestamps: true },
