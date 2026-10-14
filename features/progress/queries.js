@@ -69,6 +69,7 @@ export const getStudentOverview = async () => {
     ActivityLog.find({ userId: user.id, type: "lesson_viewed", "meta.day": { $gte: dayKey(since) } }, "meta").lean(),
     Promise.all(courses.map((c) => buildOutline(user.id, c.id))),
   ]);
+  const totalWatch = await ActivityLog.aggregate([{ $match: { userId: user.id, type: "lesson_viewed" } }, { $group: { _id: null, seconds: { $sum: "$meta.seconds" } } }]);
   const titles = new Map(courses.map((c) => [c.id, c.title]));
   const seconds = new Map(watch.map((w) => [w.meta.day, w.meta.seconds]));
   const week = Array.from({ length: 7 }, (_, i) => {
@@ -95,7 +96,7 @@ export const getStudentOverview = async () => {
       enrolled: courses.length,
       completedCourses: courses.filter((c) => c.totalLessons && c.completedLessons === c.totalLessons).length,
       completedLessons: courses.reduce((sum, c) => sum + c.completedLessons, 0),
-      hours: Math.round((courses.reduce((sum, c) => sum + c.timeSpentSec, 0) / 3600) * 10) / 10,
+      hours: Math.round((Math.max(courses.reduce((sum, c) => sum + c.timeSpentSec, 0), totalWatch[0]?.seconds ?? 0) / 3600) * 10) / 10,
       certificates: certificates.filter((c) => c.status === "VALID").length,
       pendingOrders,
     },

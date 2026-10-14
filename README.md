@@ -18,6 +18,22 @@ bun dev
 - `bun run seed` creates the admin and a test student from the `SEED_*` variables, the default site settings and a demo course. It is safe to run again.
 - Open http://localhost:3000. Admins land on `/admin`, students on `/dashboard`.
 
+## Demo data
+
+```bash
+bun run demo
+```
+
+Resets courses, orders, progress and students, then loads a realistic demo: 8 courses (7 published, 1 draft, 1 free) with playable sample videos, quizzes, 24 students in Pakistani cities, paid/pending/failed/refunded orders over six months, progress, quiz results, 15 certificates, announcements and contact messages. The admin account is kept.
+
+- Admin: `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`
+- Showcase student: `SEED_STUDENT_EMAIL` / `SEED_STUDENT_PASSWORD` (one finished course with certificate, one half done, one just started, a free course and a pending payment)
+- Other students: any `*@demo.pk` address, e.g. `ayesha.khan@demo.pk`, password `DEMO_STUDENT_PASSWORD` (default `demo1234`)
+
+Every course starts with a 1-minute intro lesson, so you can show a lesson completing and its quiz unlocking live. Sample videos are public test streams; the course artwork lives in `public/demo/`.
+
+The script only runs against a local database. To load the demo into a hosted database, run `bun run demo -- --force` with that `MONGODB_URI`.
+
 ## Environment
 
 Every variable is documented in `.env.example`. The site runs without the optional services; their features show a notice until keys are added.
@@ -53,6 +69,15 @@ Honest limits:
 - No website can block screenshots or phone cameras. The watermark makes leaks traceable.
 - DRM blacks out screen recordings only where hardware DRM exists (Safari, iOS, Android, Edge on Windows). Desktop Chrome and Firefox use software DRM, which stops downloading but not every screen recorder.
 - YouTube/Vimeo embeds and direct links are not protected; use them only for free or low-value content.
+
+## Deploy to Vercel
+
+1. Create a MongoDB Atlas cluster. Under Network Access allow `0.0.0.0/0` (Vercel has no fixed IPs) and copy the connection string with the database name in the path.
+2. Push the repo to GitHub and import it in Vercel. The framework is detected as Next.js and Bun is used automatically because of `bun.lock`. No build settings need changing.
+3. Add the environment variables from `.env.example` in Vercel → Settings → Environment Variables. Required: `MONGODB_URI`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (your Vercel or custom domain, e.g. `https://aoun-institute.vercel.app`). The database must be reachable during the build because the catalog and settings are prerendered.
+4. Load data once from your computer: `MONGODB_URI=... bun run seed` (admin and settings only) or `MONGODB_URI=... bun run demo -- --force` (full demo).
+5. Optional services: Resend (email), Cloudinary (uploads; run `bun run cloudinary:presets` once), Mux (protected video; webhook `https://your-domain/api/webhooks/mux`), Google OAuth (redirect `https://your-domain/api/auth/callback/google`).
+6. Redeploy after changing environment variables.
 
 ## Before going live
 

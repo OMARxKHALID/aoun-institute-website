@@ -9,7 +9,8 @@
     "seed": "bun scripts/seed.js",
     "cloudinary:presets": "bun scripts/cloudinary-presets.js",
     "test": "bun test",
-    "db": "bun scripts/dev-db.js"
+    "db": "bun scripts/dev-db.js",
+    "demo": "bun scripts/demo.js"
   },
   "dependencies": {
     "@better-auth/mongo-adapter": "1.7.7",

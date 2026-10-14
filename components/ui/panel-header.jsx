@@ -10,7 +10,7 @@ const initials = (name = "") =>
     .slice(0, 2)
     .toUpperCase();
 
-const PanelHeader = async ({ title, subtitle, back, children }) => {
+const PanelHeader = async ({ title, subtitle, back, query = "", children }) => {
   const user = await getUser();
   const admin = isAdmin(user);
   return (
@@ -26,13 +26,14 @@ const PanelHeader = async ({ title, subtitle, back, children }) => {
       </div>
       <div className="flex items-center gap-3">
         {children}
-        <form action={admin ? "/admin/courses" : "/courses"} className="relative flex-1 md:w-72 md:flex-none">
+        <form action={admin ? "/admin/search" : "/dashboard/search"} role="search" className="relative flex-1 md:w-72 md:flex-none">
           <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-white/40" />
           <input
             name="q"
             type="search"
-            placeholder="Search courses"
-            aria-label="Search courses"
+            defaultValue={query}
+            placeholder={admin ? "Search courses, students, orders…" : "Search your courses…"}
+            aria-label="Search"
             className="w-full rounded-full border border-[#302C2A] bg-[#0C0C0C] py-2.5 pl-11 pr-4 text-base outline-hidden placeholder:text-white/30 focus:border-accent"
           />
         </form>
