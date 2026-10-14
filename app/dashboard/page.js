@@ -1,6 +1,11 @@
 import Link from "next/link";
-import { ArrowUpRight, Award, BookOpen, CheckCircle2, ChevronRight, Clock, FileQuestion, PlayCircle, Receipt, Sparkles } from "lucide-react";
+import { Award, BookOpen, CheckCircle2, ChevronRight, Clock, FileQuestion, PlayCircle, Receipt } from "lucide-react";
 import { getStudentOverview } from "@/features/progress/queries";
+import ContinueWatching from "@/features/progress/components/continue-watching";
+import { getTodayPlans } from "@/features/calendar/queries";
+import PlanList from "@/features/calendar/components/plan-list";
+import { getRecommendations } from "@/features/courses/recommendations";
+import RecommendedCourses from "@/features/courses/components/recommended-courses";
 import { getMyAnnouncements } from "@/features/announcements/queries";
 import AnnouncementList from "@/features/announcements/components/announcement-list";
 import PanelHeader from "@/components/ui/panel-header";
@@ -8,19 +13,10 @@ import EmptyState from "@/components/ui/empty-state";
 import PanelCard from "@/components/ui/panel-card";
 import StatCard from "@/components/ui/stat-card";
 import ProgressBar from "@/components/ui/progress-bar";
-import ProgressRing from "@/components/ui/progress-ring";
 import BarChart from "@/components/ui/bar-chart";
 import MiniCalendar from "@/components/ui/mini-calendar";
-import StatusPill from "@/components/ui/status-pill";
-import { formatDate, formatDuration } from "@/lib/format";
-
-const activityText = {
-  lesson_completed: "Completed a lesson",
-  quiz_submitted: "Submitted a quiz",
-  quiz_started: "Started a quiz",
-  certificate_issued: "Earned a certificate",
-  enrolled: "Enrolled",
-};
+import { formatDuration } from "@/lib/format";
+import { imageUrl } from "@/lib/upload-rules";
 
 const SeeAll = ({ href }) => (
   <Link href={href} className="flex shrink-0 items-center gap-1 text-sm text-white/50 hover:text-accent">
@@ -29,7 +25,7 @@ const SeeAll = ({ href }) => (
 );
 
 const DashboardPage = async () => {
-  const [data, announcements] = await Promise.all([getStudentOverview(), getMyAnnouncements(null, 3)]);
+  const [data, announcements, todayPlans, recommended] = await Promise.all([getStudentOverview(), getMyAnnouncements(null, 3), getTodayPlans(), getRecommendations(3)]);
   const firstName = data.user.name.split(" ")[0];
   const { stats, courses } = data;
   const header = <PanelHeader title={`Welcome back, ${firstName} 👋`} subtitle={courses.length ? "Pick up where you left off." : "Here is what is happening with your learning."} />;
@@ -56,12 +52,14 @@ const DashboardPage = async () => {
       {header}
       <div className="grid gap-5 p-4 sm:p-5 lg:p-8 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="flex min-w-0 flex-col gap-5">
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 2xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             <StatCard icon={BookOpen} label="Courses enrolled" value={stats.enrolled} hint={`${stats.completedCourses} completed`} />
             <StatCard icon={CheckCircle2} label="Lessons completed" value={stats.completedLessons} />
             <StatCard icon={Clock} label="Hours learned" value={stats.hours} />
             <StatCard icon={Award} label="Certificates" value={stats.certificates} />
           </div>
+
+          <ContinueWatching courses={courses} />
 
           <PanelCard title="Continue learning" action={<SeeAll href="/dashboard/courses" />}>
             <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
@@ -69,7 +67,7 @@ const DashboardPage = async () => {
                 <Link key={c.id} href={c.lastLesson ? `/dashboard/courses/${c.slug}/lessons/${c.lastLesson.id}` : `/dashboard/courses/${c.slug}`} className="group flex min-w-0 flex-col gap-3 rounded-2xl border border-white/5 bg-[#070707] p-4 transition hover:border-accent/50">
                   <div className="flex items-start gap-3">
                     <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-accent/15 text-accent">
-                      {c.thumbnail?.url ? <img src={c.thumbnail.url} alt="" loading="lazy" decoding="async" className="size-full object-cover" /> : <BookOpen className="size-5" />}
+                      {c.thumbnail?.url ? <img src={imageUrl(c.thumbnail.url, 160)} alt="" loading="lazy" decoding="async" className="size-full object-cover" /> : <BookOpen className="size-5" />}
                     </span>
                     <div className="min-w-0">
                       <p className="truncate font-medium">{c.title}</p>
@@ -97,7 +95,7 @@ const DashboardPage = async () => {
             <PanelCard title="Quizzes to take" action={<SeeAll href="/dashboard/quizzes" />}>
               {data.quizzes.length ? (
                 <ul className="flex flex-col gap-2">
-                  {data.quizzes.map((q) => (
+                  {data.quizzes.slice(0, 3).map((q) => (
                     <li key={q.id}>
                       <Link href={`/dashboard/quizzes/${q.id}`} className="flex items-center gap-3 rounded-2xl border border-white/5 bg-[#070707] p-3 transition hover:border-accent/50">
                         <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent/15 text-accent">
@@ -118,76 +116,21 @@ const DashboardPage = async () => {
             </PanelCard>
           </div>
 
-          <PanelCard title="Courses you're taking" action={<SeeAll href="/dashboard/courses" />}>
-            <ul className="flex flex-col divide-y divide-white/5">
-              {courses.map((c) => (
-                <li key={c.id}>
-                  <Link href={`/dashboard/courses/${c.slug}`} className="flex items-center gap-3 py-3 hover:text-accent">
-                    <ProgressRing percent={c.percent} />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate">{c.title}</span>
-                      <span className="block truncate text-xs text-white/45">
-                        {c.totalLessons - c.completedLessons} lessons left{c.lastActiveAt && ` · active ${formatDate(c.lastActiveAt)}`}
-                      </span>
-                    </span>
-                    <ChevronRight className="size-4 shrink-0 text-white/40" />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </PanelCard>
+          {recommended.length > 0 && (
+            <PanelCard title="Recommended for you" action={<SeeAll href="/dashboard/explore" />}>
+              <RecommendedCourses courses={recommended} />
+            </PanelCard>
+          )}
         </div>
 
         <aside className="grid min-w-0 content-start gap-5 md:grid-cols-2 xl:grid-cols-1">
-          <Link href="/dashboard/explore" className="group relative flex flex-col gap-2 overflow-hidden rounded-3xl bg-[#FFF3EF] p-6 text-black md:col-span-2 xl:col-span-1">
-            <span className="absolute right-5 top-5 grid size-10 place-items-center rounded-full bg-black text-white transition-transform group-hover:rotate-45">
-              <ArrowUpRight className="size-5" />
-            </span>
-            <Sparkles className="size-6 text-accent" />
-            <p className="font-machina text-2xl">Explore courses</p>
-            <p className="pr-10 text-sm text-black/60">Add a new skill to your learning plan.</p>
-          </Link>
-          <div className="md:col-span-2 xl:col-span-1">
+          <div className="min-w-0">
             <AnnouncementList announcements={announcements} showCourse />
           </div>
-          <PanelCard>
+          <PanelCard title="Today's study plan" action={<SeeAll href="/dashboard/calendar" />}>
+            <PlanList plans={todayPlans} empty="No sessions planned today." />
             <MiniCalendar marked={data.activeDays} />
-            <p className="text-xs text-white/40">Highlighted days are days you studied.</p>
-          </PanelCard>
-          <PanelCard title="Certificates" action={<SeeAll href="/dashboard/certificates" />}>
-            {data.certificates.length ? (
-              <ul className="flex flex-col gap-2">
-                {data.certificates.map((c) => (
-                  <li key={c.code} className="flex items-center gap-3 rounded-2xl border border-white/5 bg-[#070707] p-3">
-                    <Award className="size-5 shrink-0 text-accent" />
-                    <span className="min-w-0 flex-1 truncate text-sm">{c.courseTitle}</span>
-                    <StatusPill status={c.status} />
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-white/45">Complete a course to earn your first certificate.</p>
-            )}
-          </PanelCard>
-          <PanelCard title="Recent activity">
-            {data.activity.length ? (
-              <ul className="flex flex-col gap-3 text-sm">
-                {data.activity.map((a) => (
-                  <li key={a.id} className="flex gap-3">
-                    <span className="mt-1.5 size-2 shrink-0 rounded-full bg-accent" />
-                    <span className="min-w-0">
-                      <span className="block">{activityText[a.type] ?? a.type}</span>
-                      <span className="block truncate text-xs text-white/40">
-                        {a.course} · {formatDate(a.createdAt)}
-                      </span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-white/45">Your learning activity will show up here.</p>
-            )}
-          </PanelCard>
+                      </PanelCard>
         </aside>
       </div>
     </>

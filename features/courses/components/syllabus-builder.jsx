@@ -31,7 +31,9 @@ import { createQuiz } from "@/features/quizzes/actions";
 import ActionMenu from "@/components/ui/action-menu";
 import StatusPill from "@/components/ui/status-pill";
 import FormAlert from "@/components/ui/form-alert";
-import { formatDuration } from "@/lib/format";
+import { formatDuration, plural } from "@/lib/format";
+import { useDialog } from "@/components/ui/dialog-provider";
+import { buttonClass, inputClass } from "@/lib/ui";
 
 const toOrder = (sections) => sections.map((s) => ({ id: s.id, lessonIds: s.lessons.map((l) => l.id) }));
 
@@ -70,9 +72,9 @@ const InlineAdd = ({ placeholder, onAdd, button = "Add" }) => {
         onChange={(e) => setValue(e.target.value)}
         placeholder={placeholder}
         aria-label={placeholder}
-        className="min-w-0 flex-1 rounded-xl border border-[#302C2A] bg-[#070707] px-4 py-2.5 outline-hidden placeholder:text-white/30 focus:border-accent"
+        className={`min-w-0 flex-1 ${inputClass}`}
       />
-      <button disabled={pending} className="flex shrink-0 items-center gap-1.5 rounded-xl bg-white/5 px-4 text-sm transition hover:bg-accent disabled:opacity-50">
+      <button disabled={pending} className={`${buttonClass("outline")} shrink-0`}>
         {pending ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />} {button}
       </button>
     </form>
@@ -105,6 +107,7 @@ const QuizRow = ({ courseId, quiz, label, nested }) => (
 );
 
 const SyllabusBuilder = ({ courseId, outline }) => {
+  const dialog = useDialog();
   const router = useRouter();
   const [sections, setSections] = useState(outline);
   const [collapsed, setCollapsed] = useState(() => new Set());
@@ -214,21 +217,21 @@ const SyllabusBuilder = ({ courseId, outline }) => {
     const title = new FormData(e.currentTarget).get("title");
     run(() => renameSection(sectionId, { title })).then((ok) => ok && setRenaming(null));
   };
-  const handleDeleteSection = (section) => {
-    if (window.confirm(`Delete "${section.title}", its ${section.lessons.length} lessons and quizzes? This cannot be undone.`)) run(() => deleteSection(section.id));
+  const handleDeleteSection = async (section) => {
+    if ((await dialog.confirm({ title: `Delete section "${section.title}"?`, message: `Its ${plural(section.lessons.length, "lesson")} and their quizzes are deleted too. This cannot be undone.`, confirmLabel: "Delete section", danger: true }))) run(() => deleteSection(section.id));
   };
-  const handleDeleteLesson = (lesson) => {
-    if (window.confirm(`Delete lesson "${lesson.title}" and its quiz? This cannot be undone.`)) run(() => deleteLesson(lesson.id));
+  const handleDeleteLesson = async (lesson) => {
+    if ((await dialog.confirm({ title: `Delete lesson "${lesson.title}"?`, message: "Its video link, attachments and quiz are removed too. This cannot be undone.", confirmLabel: "Delete lesson", danger: true }))) run(() => deleteLesson(lesson.id));
   };
   const handleFlags = (lesson, flags) => run(() => setLessonFlags(lesson.id, flags));
   const handleAddQuiz = async (section, lesson) => {
-    const title = window.prompt("Quiz title", lesson ? `${lesson.title} quiz` : `${section.title} quiz`);
+    const title = await dialog.prompt({ title: lesson ? "Add a quiz after this lesson" : "Add a section quiz", message: lesson ? "Students unlock it after they finish the lesson." : "Students take it at the end of the section.", label: "Quiz title", defaultValue: lesson ? `${lesson.title} quiz` : `${section.title} quiz`, multiline: false, minLength: 2, confirmLabel: "Create quiz" });
     if (!title) return;
     const result = await run(() => createQuiz(courseId, { title, sectionId: section.id, lessonId: lesson?.id ?? null }));
     if (result) router.push(`/admin/courses/${courseId}/quizzes/${result.data.id}`);
   };
-  const handlePublishAll = () => {
-    if (window.confirm("Publish every lesson in this course? Students will see them immediately.")) run(() => publishAllLessons(courseId));
+  const handlePublishAll = async () => {
+    if ((await dialog.confirm({ title: "Publish every lesson?", message: "Enrolled students see them immediately and get a new-lesson email.", confirmLabel: "Publish all", danger: false }))) run(() => publishAllLessons(courseId));
   };
 
   const lessons = sections.flatMap((s) => s.lessons);
@@ -248,11 +251,15 @@ const SyllabusBuilder = ({ courseId, outline }) => {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <p className="mr-auto text-sm text-white/50">Drag rows or use the ⋯ menus to reorder. Click a lesson to upload its video and edit details.</p>
-        <button type="button" onClick={handleExpandAll} className="rounded-full border border-[#302C2A] px-3.5 py-1.5 text-sm text-white/70 hover:border-accent hover:text-white">
+        <p className="mr-auto flex items-center gap-2 text-sm text-white/50">
+          <GripVertical className="hidden size-4 shrink-0 text-white/30 md:block" />
+          <span className="hidden md:inline">Drag to reorder · open a lesson to add its video</span>
+          <span className="md:hidden">Use ⋯ to reorder · tap a lesson to edit</span>
+        </p>
+        <button type="button" onClick={handleExpandAll} className={buttonClass("outline", "sm")}>
           Expand all
         </button>
-        <button type="button" onClick={handleCollapseAll} className="rounded-full border border-[#302C2A] px-3.5 py-1.5 text-sm text-white/70 hover:border-accent hover:text-white">
+        <button type="button" onClick={handleCollapseAll} className={buttonClass("outline", "sm")}>
           Collapse all
         </button>
         {published < lessons.length && (
@@ -299,7 +306,7 @@ const SyllabusBuilder = ({ courseId, outline }) => {
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-machina text-lg sm:text-xl">{section.title}</span>
                     <span className="block text-xs text-white/45">
-                      {section.lessons.length} lessons{sectionDuration > 0 && ` · ${formatDuration(sectionDuration)}`}
+                      {plural(section.lessons.length, "lesson")}{sectionDuration > 0 && ` · ${formatDuration(sectionDuration)}`}
                       {section.quizzes.length > 0 && ` · ${section.quizzes.length} quiz`}
                     </span>
                   </span>

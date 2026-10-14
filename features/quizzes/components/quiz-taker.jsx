@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, CheckCircle2, Circle, Clock, Loader2, Send, Square, SquareCheck } from "lucide-react";
 import { saveAnswers, submitAttempt } from "@/features/quizzes/student-actions";
 import FormAlert from "@/components/ui/form-alert";
-import { btn } from "@/lib/ui";
+import { btn, buttonClass, inputClass } from "@/lib/ui";
+import { useDialog } from "@/components/ui/dialog-provider";
 
-const toPayload = (answers) => Object.entries(answers).map(([questionId, selected]) => ({ questionId, selected }));
+const toPayload = (answers) => Object.entries(answers).map(([questionId, value]) => (Array.isArray(value) ? { questionId, selected: value } : { questionId, selected: [], text: value }));
 
 const formatClock = (ms) => {
   const total = Math.max(0, Math.ceil(ms / 1000));
@@ -15,8 +16,9 @@ const formatClock = (ms) => {
 };
 
 const QuizTaker = ({ attempt, quiz, questions }) => {
+  const dialog = useDialog();
   const router = useRouter();
-  const [answers, setAnswers] = useState(() => Object.fromEntries(questions.map((q) => [q.id, q.selected])));
+  const [answers, setAnswers] = useState(() => Object.fromEntries(questions.map((q) => [q.id, q.type === "short_answer" ? (q.text ?? "") : q.selected])));
   const [index, setIndex] = useState(0);
   const [saving, setSaving] = useState("idle");
   const [submitting, setSubmitting] = useState(false);
@@ -86,11 +88,17 @@ const QuizTaker = ({ attempt, quiz, questions }) => {
     });
   };
 
-  const answered = questions.filter((q) => answers[q.id]?.length).length;
+  const handleText = (question) => (e) => {
+    dirty.current = true;
+    setSaving("idle");
+    setAnswers((current) => ({ ...current, [question.id]: e.target.value }));
+  };
 
-  const handleSubmit = () => {
+  const answered = questions.filter((q) => String(answers[q.id] ?? "").trim().length || (Array.isArray(answers[q.id]) && answers[q.id].length)).length;
+
+  const handleSubmit = async () => {
     const missing = questions.length - answered;
-    if (!window.confirm(missing ? `${missing} questions are unanswered. Submit anyway?` : "Submit your answers? You cannot change them afterwards.")) return;
+    if (!(await dialog.confirm({ title: missing ? `${missing} ${missing === 1 ? "question is" : "questions are"} unanswered` : "Submit your answers?", message: missing ? "Unanswered questions score zero. Submit anyway?" : "You cannot change them afterwards.", confirmLabel: "Submit", danger: false }))) return;
     submit();
   };
 
@@ -113,7 +121,7 @@ const QuizTaker = ({ attempt, quiz, questions }) => {
           type="button"
           onClick={handleSubmit}
           disabled={submitting}
-          className={`flex items-center gap-2 rounded-full bg-linear-to-b from-[#E8602E] to-[#A8401A] px-4 py-2 text-sm font-semibold disabled:opacity-60 ${remaining == null ? "ml-auto" : ""}`}
+          className={`${buttonClass("primary")} ${remaining == null ? "ml-auto" : ""}`}
         >
           {submitting ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} Submit
         </button>
@@ -148,10 +156,21 @@ const QuizTaker = ({ attempt, quiz, questions }) => {
               <div className="min-w-0">
                 <p className="whitespace-pre-line break-words text-lg">{question.prompt}</p>
                 <p className="mt-1 text-xs text-white/40">
-                  {question.type === "multiple" ? "Select all that apply" : "Select one"} · {question.points} {question.points === 1 ? "point" : "points"}
+                  {question.type === "multiple" ? "Select all that apply" : question.type === "short_answer" ? "Type your answer" : "Select one"} · {question.points} {question.points === 1 ? "point" : "points"}
                 </p>
               </div>
             </div>
+            {question.type === "short_answer" ? (
+              <textarea
+                value={answers[question.id] ?? ""}
+                onChange={handleText(question)}
+                rows={2}
+                maxLength={500}
+                placeholder="Your answer"
+                aria-label={`Answer to question ${number}`}
+                className={inputClass}
+              />
+            ) : (
             <div className="flex flex-col gap-2">
               {question.options.map((option) => {
                 const isPicked = picked.includes(option.id);
@@ -171,6 +190,7 @@ const QuizTaker = ({ attempt, quiz, questions }) => {
                 );
               })}
             </div>
+            )}
           </fieldset>
         );
       })}

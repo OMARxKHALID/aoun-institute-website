@@ -11,17 +11,19 @@ import Button from "@/components/ui/button";
 import FormAlert from "@/components/ui/form-alert";
 import StatusPill from "@/components/ui/status-pill";
 import TabList from "@/components/ui/tab-list";
+import { useDialog } from "@/components/ui/dialog-provider";
 
 const tabs = ["Syllabus", "Details", "Settings"];
 
 const CourseEditor = ({ course, outline, students }) => {
+  const dialog = useDialog();
   const router = useRouter();
   const [tab, setTab] = useState(tabs[0]);
   const [error, setError] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
   const handleDelete = async () => {
-    if (!window.confirm(`Delete "${course.title}" with all its sections, lessons and quizzes? This cannot be undone.`)) return;
+    if (!(await dialog.confirm({ title: `Delete "${course.title}"?`, message: "Its sections, lessons and quizzes are deleted too. This cannot be undone.", confirmLabel: "Delete course", danger: true }))) return;
     setDeleting(true);
     const result = await deleteCourse(course.id);
     setDeleting(false);

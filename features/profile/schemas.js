@@ -24,6 +24,7 @@ export const NOTIFICATIONS = [
   { name: "notifyNewQuiz", label: "New quizzes", hint: "When a new quiz is published in your courses." },
   { name: "notifyAnnouncement", label: "Announcements", hint: "Messages from your instructor." },
   { name: "notifyCertificate", label: "Certificates", hint: "When you earn a certificate." },
+  { name: "notifyReminders", label: "Study reminders", hint: "A morning email about the study sessions you planned." },
 ];
 
 export const notificationsSchema = z.strictObject(Object.fromEntries(NOTIFICATIONS.map((n) => [n.name, z.boolean()])));

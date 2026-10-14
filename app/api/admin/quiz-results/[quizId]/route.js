@@ -1,11 +1,6 @@
 import { getUser, isAdmin } from "@/lib/dal";
 import { getQuizResults } from "@/features/quizzes/queries";
-
-const cell = (value) => {
-  const text = String(value ?? "");
-  const safe = /^[=+\-@\t\r]/.test(text) ? `'${text}` : text;
-  return /[",\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
-};
+import { toCsv } from "@/lib/csv";
 
 export const GET = async (_request, { params }) => {
   if (!isAdmin(await getUser())) return Response.json({ error: "Forbidden" }, { status: 403 });
@@ -13,9 +8,9 @@ export const GET = async (_request, { params }) => {
   const data = await getQuizResults(quizId);
   if (!data) return Response.json({ error: "Not found" }, { status: 404 });
   const header = ["Student", "Email", "Attempt", "Score", "Percent", "Passed", "Status", "Time taken (s)", "Submitted at"];
-  const lines = data.rows.map((r) => [r.student, r.email, r.attemptNo, r.score, r.percent, r.passed ? "yes" : "no", r.status, r.durationSec, r.submittedAt ?? ""].map(cell).join(","));
+  const csv = toCsv(header, data.rows.map((r) => [r.student, r.email, r.attemptNo, r.score, r.percent, r.passed ? "yes" : "no", r.status, r.durationSec, r.submittedAt ?? ""]));
   const filename = `${data.quiz.title.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-results.csv`;
-  return new Response([header.join(","), ...lines].join("\n"), {
+  return new Response(csv, {
     headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="${filename}"`, "Cache-Control": "no-store" },
   });
 };

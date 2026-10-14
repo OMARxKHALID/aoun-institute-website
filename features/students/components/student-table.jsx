@@ -7,6 +7,7 @@ import DataTable from "@/components/ui/data-table";
 import ActionMenu from "@/components/ui/action-menu";
 import StatusPill from "@/components/ui/status-pill";
 import { formatDate, formatPrice } from "@/lib/format";
+import { imageUrl } from "@/lib/upload-rules";
 
 const helper = createColumnHelper();
 
@@ -26,7 +27,7 @@ const columns = helper.columns([
     cell: ({ row }) => (
       <Link href={`/admin/students/${row.original.id}`} className="flex items-center gap-3 hover:text-accent">
         <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-accent/15 text-sm font-semibold text-accent">
-          {row.original.image ? <img src={row.original.image} alt="" className="size-full object-cover" /> : initials(row.original.name)}
+          {row.original.image ? <img src={imageUrl(row.original.image, 96)} alt="" className="size-full object-cover" /> : initials(row.original.name)}
         </span>
         <span className="min-w-0">
           <span className="block truncate font-medium">{row.original.name}</span>

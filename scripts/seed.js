@@ -42,7 +42,7 @@ const auth = betterAuth({
 });
 
 const models = [SiteSettings, Course, Section, Lesson, Quiz, Question, QuizAttempt, Enrollment, Order, PaymentEvent, LessonProgress, CourseProgress, ActivityLog, Certificate, Announcement, PlaybackSession, ContactMessage];
-await Promise.all(models.map((m) => m.createIndexes()));
+await Promise.all(models.map((m) => m.syncIndexes()));
 console.log(`indexes ensured on ${models.length} collections`);
 
 const ensureUser = async ({ email, password, name, role }) => {

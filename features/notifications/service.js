@@ -1,7 +1,7 @@
 import "server-only";
 import { Types } from "mongoose";
 import { db } from "@/lib/db";
-import { linkEmail, sendEmail } from "@/lib/email";
+import { linkEmail, sendEmails } from "@/lib/email";
 import Enrollment from "@/features/enrollments/model";
 
 export const notifyCourseStudents = async (courseId, flag, { subject, title, text, path }) => {
@@ -13,7 +13,6 @@ export const notifyCourseStudents = async (courseId, flag, { subject, title, tex
     .find({ _id: { $in: ids }, [flag]: { $ne: false }, banned: { $ne: true } }, { projection: { email: 1 } })
     .toArray();
   const url = `${process.env.BETTER_AUTH_URL ?? "http://localhost:3000"}${path}`;
-  const results = await Promise.allSettled(users.map((u) => sendEmail({ to: u.email, subject, html: linkEmail({ title, text, url, cta: "Open" }) })));
-  results.filter((r) => r.status === "rejected").forEach((r) => console.error("[notify] email failed", r.reason));
-  return users.length;
+  const html = linkEmail({ title, text, url, cta: "Open" });
+  return sendEmails(users.map((u) => ({ to: u.email, subject, html })));
 };

@@ -13,6 +13,8 @@ const q = (prompt, options, correct, explanation, type = "single") => ({
   options: options.map((text, i) => ({ text, isCorrect: [correct].flat().includes(i) })),
 });
 
+const sa = (prompt, acceptedAnswers, explanation) => ({ type: "short_answer", prompt, explanation, points: 2, options: [], acceptedAnswers });
+
 const tf = (prompt, answer, explanation) => q(prompt, ["True", "False"], answer ? 0 : 1, explanation, "true_false");
 
 export const COURSES = [
@@ -44,6 +46,7 @@ export const COURSES = [
       q("Which are true about Server Components?", ["They can read the database directly", "They ship no JavaScript to the browser by default", "They can use useState"], [0, 1], "Server Components run on the server; hooks like useState need a Client Component.", "multiple"),
       tf("layout.js wraps every page in its folder.", true, "Layouts persist across navigations between child routes."),
       q("Which directive marks a Client Component?", ['"use server"', '"use client"', '"use cache"'], 1, '"use client" at the top of a file makes it a Client Component.'),
+      sa("Which file name adds a shared UI wrapper around every page in a folder?", ["layout.js", "layout", "layout.jsx"], "layout.js wraps its child routes and keeps state across navigations."),
     ],
   },
   {
@@ -99,6 +102,7 @@ export const COURSES = [
       q("Which pandas method shows the first rows?", ["df.top()", "df.head()", "df.first()"], 1, "head() shows the first five rows by default."),
       q("Which methods help with missing values?", ["dropna()", "fillna()", "sortna()"], [0, 1], "dropna removes and fillna replaces missing values.", "multiple"),
       tf("groupby() is used to aggregate data by category.", true, "Combine it with sum, mean, count and others."),
+      sa("Which pandas method shows the first five rows of a DataFrame?", ["head", "head()", "df.head()"], "head() shows the first rows; pass a number for more."),
     ],
   },
   {
@@ -239,4 +243,32 @@ export const CONTACT_MESSAGES = [
   ["Rabia Saleem", "rabia.s@example.com", "+92 333 4445566", "Payments & refunds", "Can I pay through Easypaisa in two instalments?"],
   ["TechNest Pvt Ltd", "hr@technest.example.com", "+92 42 35556677", "Enrollment", "We would like to enrol 15 employees in the Data Analysis course. Do you offer corporate pricing?"],
   ["Adeel Rafiq", "adeel.r@example.com", "", "Certificates", "How can employers verify my certificate?"],
+];
+
+export const REVIEWS = [
+  [5, "Best course I have taken. The projects made everything click and I deployed my first app in week three."],
+  [5, "Clear explanations in simple English and Urdu examples. Worth every rupee."],
+  [4, "Very practical. I wish there were a few more exercises in the middle section."],
+  [5, "The instructor answers questions fast. I got unstuck many times thanks to the Q&A."],
+  [4, "Good pace for beginners. Videos are short and to the point."],
+  [3, "Content is good but some lessons felt rushed. Still learned a lot."],
+  [5, "Got my first freelance client after finishing this. Thank you!"],
+  [4, "Solid course with real examples. The quizzes helped me revise."],
+];
+
+export const QUESTIONS = [
+  ["I get an error saying module not found after installing. What am I missing?", "Restart the dev server after installing a package, and check the import path matches the file name exactly (it is case sensitive)."],
+  ["Can I follow this course on a 4 GB RAM laptop?", "Yes. Close other apps while the editor runs and you will be fine for everything in this course."],
+  ["Is there a difference between the version in the video and the latest one?", "Only small UI changes. The code in the lesson works the same on the latest version."],
+  ["Where can I download the starter files for this lesson?", "They are in the lesson attachments under the video. Download the zip and open the folder in VS Code."],
+  ["Why do we use this approach instead of the simpler one?", null],
+  ["How long should I spend practising before moving on?", null],
+];
+
+export const NOTES = [
+  "Key idea: keep components small and give each one a single job.",
+  "Revise this part before the quiz.",
+  "Shortcut shown here saves a lot of typing. Try it tomorrow.",
+  "Good example for my portfolio project.",
+  "Remember to handle the empty state.",
 ];

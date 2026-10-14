@@ -5,7 +5,7 @@ import { admin } from "better-auth/plugins";
 import { mongodbAdapter } from "@better-auth/mongo-adapter";
 import { ac, roles } from "../lib/permissions.js";
 import { defaultSiteSettings } from "../features/site-settings/defaults.js";
-import { ANNOUNCEMENTS, CITIES, CONTACT_MESSAGES, COURSES, STREAMS, STUDENTS } from "./demo-data.js";
+import { ANNOUNCEMENTS, CITIES, CONTACT_MESSAGES, COURSES, NOTES, QUESTIONS, REVIEWS, STREAMS, STUDENTS } from "./demo-data.js";
 
 const required = ["MONGODB_URI", "BETTER_AUTH_SECRET", "SEED_ADMIN_EMAIL", "SEED_ADMIN_PASSWORD", "SEED_STUDENT_EMAIL", "SEED_STUDENT_PASSWORD"];
 const missing = required.filter((key) => !process.env[key]);
@@ -53,8 +53,10 @@ const auth = betterAuth({
 });
 
 console.log("resetting demo data…");
-const wipe = ["courses", "sections", "lessons", "quizzes", "questions", "quizattempts", "enrollments", "orders", "paymentEvents", "lessonProgress", "courseProgress", "activityLogs", "certificates", "announcements", "playbackSessions", "contactMessages", "rateLimit", "rateLimits"];
+const wipe = ["courses", "sections", "lessons", "quizzes", "questions", "quizattempts", "enrollments", "orders", "paymentEvents", "lessonProgress", "courseProgress", "activityLogs", "certificates", "announcements", "playbackSessions", "contactMessages", "rateLimit", "rateLimits", "reviews", "discussions", "notes", "studyPlans", "auditLogs"];
 await Promise.all(wipe.map((name) => col(name).deleteMany({})));
+await col("orders").dropIndex("providerRef_1").catch(() => null);
+await col("orders").createIndex({ userId: 1, providerRef: 1 }, { unique: true, partialFilterExpression: { providerRef: { $type: "string" } } });
 const oldUsers = await col("user").find({ role: { $ne: "ADMIN" } }, { projection: { _id: 1 } }).toArray();
 const oldIds = oldUsers.map((u) => u._id);
 await Promise.all([col("account").deleteMany({ userId: { $in: oldIds } }), col("session").deleteMany({ userId: { $in: oldIds } }), col("user").deleteMany({ _id: { $in: oldIds } })]);
@@ -218,6 +220,7 @@ const attempt = (user, b, quiz, date, attemptNo, wantPass) => {
     const right = wantPass ? !(i === list.length - 1 && random() < 0.35) : i === 0;
     maxScore += question.points;
     if (right) score += question.points;
+    if (question.type === "short_answer") return { questionId: question._id, selected: [], text: right ? question.acceptedAnswers[0] : "not sure" };
     return { questionId: question._id, selected: right ? correct : [question.options.find((o) => !o.isCorrect)._id] };
   });
   const percent = Math.round((score / maxScore) * 100);
@@ -419,6 +422,86 @@ await col("contactMessages").insertMany(
     return { name, email, phone, topic, message, status: "new", createdAt: date, updatedAt: date };
   }),
 );
+
+const progressDone = (userId, courseId) => docs.lessonProgress.filter((p) => p.userId === userId && String(p.courseId) === String(courseId) && p.completedAt);
+const lessonOf = (b, id) => b.lessons.find((l) => String(l._id) === String(id));
+const nameOf = new Map([testStudent, ...students].map((u) => [u.id, u.name]));
+
+const reviews = [];
+docs.enrollments.forEach((e) => {
+  const done = progressDone(e.userId, e.courseId);
+  if (!done.length || (e.userId !== testStudent.id && random() < 0.35)) return;
+  const [rating, body] = e.userId === testStudent.id ? [5, "Loved the projects and the quick answers in Q&A."] : pick(REVIEWS);
+  const date = new Date(Math.max(...done.map((p) => p.completedAt.getTime())) + DAY);
+  const at = new Date(Math.min(date.getTime(), NOW - 3600000));
+  const review = { userId: e.userId, courseId: e.courseId, studentName: nameOf.get(e.userId), rating, body, status: rating === 3 && random() < 0.3 ? "hidden" : "published", createdAt: at, updatedAt: at };
+  if (rating >= 4 && random() < 0.4) review.reply = { body: "Thank you! Glad the course helped. Keep building.", at: new Date(Math.min(at.getTime() + DAY, NOW)) };
+  reviews.push(review);
+});
+if (reviews.length) await col("reviews").insertMany(reviews);
+
+const discussions = [];
+published.forEach((b) => {
+  const learners = [...new Set(docs.enrollments.filter((e) => String(e.courseId) === String(b.course._id)).map((e) => e.userId))];
+  [...QUESTIONS.filter(([, answer]) => answer).slice(0, between(2, 4)), ...QUESTIONS.filter(([, answer]) => !answer).slice(0, between(0, 2))].forEach(([body, answer], i) => {
+    const userId = learners[i % Math.max(learners.length, 1)];
+    if (!userId) return;
+    const lesson = b.lessons[i % b.lessons.length];
+    const asked = daysAgo(between(1, 40));
+    const id = new ObjectId();
+    discussions.push({ _id: id, courseId: b.course._id, lessonId: lesson._id, parentId: null, userId, authorName: nameOf.get(userId), instructor: false, body, answered: Boolean(answer), createdAt: asked, updatedAt: asked });
+    if (!answer) return;
+    const at = new Date(Math.min(asked.getTime() + between(2, 20) * 3600000, NOW));
+    discussions.push({ _id: new ObjectId(), courseId: b.course._id, lessonId: lesson._id, parentId: id, userId: adminUser.id, authorName: adminUser.name, instructor: true, body: answer, answered: false, createdAt: at, updatedAt: at });
+  });
+});
+if (discussions.length) await col("discussions").insertMany(discussions);
+
+const notes = [];
+docs.lessonProgress.filter((p) => p.userId === testStudent.id).slice(0, 8).forEach((p, i) => {
+  const b = built.find((x) => String(x.course._id) === String(p.courseId));
+  const lesson = lessonOf(b, p.lessonId);
+  const at = p.completedAt ?? p.updatedAt;
+  notes.push({ userId: testStudent.id, courseId: p.courseId, lessonId: p.lessonId, sec: Math.round(lesson.durationSec * (0.2 + (i % 3) * 0.25)), body: NOTES[i % NOTES.length], createdAt: at, updatedAt: at });
+});
+if (notes.length) await col("notes").insertMany(notes);
+
+const PK = 5 * 3600000;
+const planAt = (dayOffset, hour) => {
+  const d = new Date(NOW + PK);
+  d.setUTCHours(hour, 0, 0, 0);
+  return new Date(d.getTime() - PK + dayOffset * DAY);
+};
+const plans = [
+  [-6, 20, "javascript-for-beginners", "Finish arrays lesson", 45, true],
+  [-3, 21, "freelancing-starter-kit", "Write my Fiverr gig", 30, true],
+  [-1, 19, "javascript-for-beginners", "Practice loops", 30, false],
+  [0, 20, "javascript-for-beginners", "Next JavaScript lesson", 45, false],
+  [0, 22, "python-for-data-analysis", "Python setup", 30, false],
+  [2, 19, "python-for-data-analysis", "Lists and dictionaries", 60, false],
+  [5, 18, "freelancing-starter-kit", "Portfolio review", 30, false],
+  [9, 20, "javascript-for-beginners", "Revise for the quiz", 40, false],
+].map(([offset, hour, slug, title, durationMin, done]) => {
+  const at = new Date(NOW - 7 * DAY);
+  return { userId: testStudent.id, courseId: byslug(slug).course._id, title, startsAt: planAt(offset, hour), durationMin, done, createdAt: at, updatedAt: at };
+});
+await col("studyPlans").insertMany(plans);
+
+const audits = [];
+const log = (date, action, summary, targetType, targetId) => audits.push({ actorId: adminUser.id, actorName: adminUser.name, action, summary, targetType, targetId: targetId ? String(targetId) : undefined, ip: "127.0.0.1", createdAt: date });
+built.forEach((b) => log(b.course.createdAt, "course.create", `Created course "${b.course.title}"`, "course", b.course._id));
+published.forEach((b) => log(new Date(b.course.createdAt.getTime() + DAY), "course.publish_all", `Published all lessons in "${b.course.title}"`, "course", b.course._id));
+docs.orders.filter((o) => o.status === "PAID").slice(-25).forEach((o) => log(o.paidAt, "order.approve", `Approved payment of Rs ${o.amount.toLocaleString("en-PK")} from ${nameOf.get(o.userId)}`, "order", o._id));
+docs.orders.filter((o) => o.status === "FAILED").forEach((o) => log(o.updatedAt, "order.reject", `Rejected payment from ${nameOf.get(o.userId)}: ${o.note}`, "order", o._id));
+docs.orders.filter((o) => o.status === "REFUNDED").forEach((o) => log(o.refundedAt, "order.refund", `Refunded Rs ${o.amount.toLocaleString("en-PK")} to ${nameOf.get(o.userId)}`, "order", o._id));
+ANNOUNCEMENTS.forEach(([slug, title], i) => log(daysAgo(i * 4 + 1), "announcement.create", `Posted "${title}" to ${byslug(slug).course.title}`, "announcement"));
+discussions.filter((d) => d.instructor).forEach((d) => log(d.createdAt, "discussion.answer", `Answered a question from ${discussions.find((x) => String(x._id) === String(d.parentId)).authorName}`, "course", d.courseId));
+reviews.filter((r) => r.reply).forEach((r) => log(r.reply.at, "review.reply", `Replied to ${r.studentName}'s ${r.rating}-star review`, "review"));
+log(daysAgo(12), "settings.update", "Updated site settings (contact, payment)", "settings", "site");
+log(daysAgo(8), "student.enroll", `Enrolled ${students[5].name} manually`, "student", students[5].id);
+log(daysAgo(2), "lesson.update", "Edited lesson details", "lesson");
+await col("auditLogs").insertMany(audits.filter((a) => a.createdAt <= new Date(NOW)));
+console.log({ reviews: reviews.length, discussions: discussions.length, notes: notes.length, studyPlans: plans.length, auditLogs: audits.length });
 
 const counts = Object.fromEntries(await Promise.all(["enrollments", "orders", "lessonProgress", "quizattempts", "certificates", "announcements"].map(async (name) => [name, await col(name).countDocuments()])));
 console.log(counts);

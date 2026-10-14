@@ -2,6 +2,7 @@ import "server-only";
 import { isValidObjectId } from "mongoose";
 import { connectDB } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
+import { TIME_ZONE, dayKey } from "@/lib/format";
 import Course from "@/features/courses/models/course";
 import Lesson from "@/features/courses/models/lesson";
 import Enrollment from "@/features/enrollments/model";
@@ -12,6 +13,10 @@ import Order from "@/features/payments/models/order";
 import Quiz from "@/features/quizzes/models/quiz";
 import QuizAttempt from "@/features/quizzes/models/quiz-attempt";
 import { buildOutline, findLessonInOutline, recomputeProgress } from "@/features/progress/service";
+import { evaluateBadges } from "@/features/progress/badges";
+import Note from "@/features/notes/model";
+import Review from "@/features/reviews/model";
+import Discussion from "@/features/discussions/model";
 
 const plain = (value) => JSON.parse(JSON.stringify(value));
 
@@ -28,8 +33,9 @@ export const getMyCourses = async () => {
   const stale = courses.filter((c) => byCourse.get(String(c._id))?.contentVersion !== c.contentVersion);
   const fresh = await Promise.all(stale.map((c) => recomputeProgress(user.id, c._id).then(() => CourseProgress.findOne({ userId: user.id, courseId: c._id }).lean())));
   fresh.forEach((p) => p && byCourse.set(String(p.courseId), p));
-  const lastLessons = await Lesson.find({ _id: { $in: [...byCourse.values()].map((p) => p.lastLessonId).filter(Boolean) } }, "title").lean();
+  const lastLessons = await Lesson.find({ _id: { $in: [...byCourse.values()].map((p) => p.lastLessonId).filter(Boolean) } }, "title durationSec").lean();
   const titles = new Map(lastLessons.map((l) => [String(l._id), l.title]));
+  const durations = new Map(lastLessons.map((l) => [String(l._id), l.durationSec]));
   return plain(
     enrollments
       .map((e) => {
@@ -50,15 +56,13 @@ export const getMyCourses = async () => {
           totalLessons: p?.totalLessons ?? 0,
           timeSpentSec: p?.timeSpentSec ?? 0,
           lastActiveAt: p?.lastActiveAt ?? null,
-          lastLesson: p?.lastLessonId ? { id: String(p.lastLessonId), title: titles.get(String(p.lastLessonId)) } : null,
+          lastLesson: p?.lastLessonId ? { id: String(p.lastLessonId), title: titles.get(String(p.lastLessonId)), position: p.lastPosition ?? 0, durationSec: durations.get(String(p.lastLessonId)) ?? 0 } : null,
           eligible: p?.eligible ?? false,
         };
       })
       .filter(Boolean),
   );
 };
-
-const dayKey = (date) => date.toISOString().slice(0, 10);
 
 export const getStudentOverview = async () => {
   const user = await requireUser();
@@ -76,7 +80,7 @@ export const getStudentOverview = async () => {
   const seconds = new Map(watch.map((w) => [w.meta.day, w.meta.seconds]));
   const week = Array.from({ length: 7 }, (_, i) => {
     const date = new Date(Date.now() - (6 - i) * 86400000);
-    return { day: dayKey(date), label: date.toLocaleDateString("en-GB", { weekday: "short" }), minutes: Math.round((seconds.get(dayKey(date)) ?? 0) / 60) };
+    return { day: dayKey(date), label: date.toLocaleDateString("en-GB", { weekday: "short", timeZone: TIME_ZONE }), minutes: Math.round((seconds.get(dayKey(date)) ?? 0) / 60) };
   });
   const quizzes = outlines
     .filter(Boolean)
@@ -155,9 +159,13 @@ export const getLearningReport = async () => {
   const user = await requireUser();
   const courses = await getMyCourses();
   const since = new Date(Date.now() - 84 * 86400000);
-  const [attempts, watch] = await Promise.all([
+  const [attempts, watch, certificates, notes, reviews, questions] = await Promise.all([
     QuizAttempt.find({ userId: user.id, status: { $ne: "in_progress" } }, "quizId courseId percent passed submittedAt attemptNo").sort({ submittedAt: -1 }).limit(50).lean(),
     ActivityLog.find({ userId: user.id, type: "lesson_viewed" }, "meta").lean(),
+    Certificate.countDocuments({ userId: user.id, status: "VALID" }),
+    Note.countDocuments({ userId: user.id }),
+    Review.countDocuments({ userId: user.id }),
+    Discussion.countDocuments({ userId: user.id, parentId: null }),
   ]);
   const quizzes = await Quiz.find({ _id: { $in: attempts.map((a) => a.quizId) } }, "title").lean();
   const quizTitles = new Map(quizzes.map((q) => [String(q._id), q.title]));
@@ -166,7 +174,7 @@ export const getLearningReport = async () => {
   const weeks = Array.from({ length: 12 }, (_, i) => {
     const end = new Date(Date.now() - (11 - i) * 7 * 86400000);
     const total = Array.from({ length: 7 }, (_, d) => seconds.get(dayKey(new Date(end.getTime() - d * 86400000))) ?? 0).reduce((a, b) => a + b, 0);
-    return { key: dayKey(end), label: end.toLocaleDateString("en-GB", { day: "numeric", month: "short" }), value: Math.round(total / 60) };
+    return { key: dayKey(end), label: end.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: TIME_ZONE }), value: Math.round(total / 60) };
   });
   let streak = 0;
   for (let d = seconds.has(dayKey(new Date())) ? 0 : 1; seconds.has(dayKey(new Date(Date.now() - d * 86400000))); d += 1) streak += 1;
@@ -179,8 +187,21 @@ export const getLearningReport = async () => {
   });
   const bestByQuiz = new Map();
   attempts.forEach((a) => bestByQuiz.set(String(a.quizId), Math.max(bestByQuiz.get(String(a.quizId)) ?? 0, a.percent ?? 0)));
+  const minutes = Math.round([...seconds.values()].reduce((a, b) => a + b, 0) / 60);
+  const badges = evaluateBadges({
+    lessons: courses.reduce((sum, c) => sum + c.completedLessons, 0),
+    bestStreak: best,
+    quizzesPassed: new Set(attempts.filter((a) => a.passed).map((a) => String(a.quizId))).size,
+    perfectScores: attempts.filter((a) => a.percent === 100).length,
+    minutes,
+    certificates,
+    notes,
+    questions,
+    reviews,
+  });
   return plain({
     courses,
+    badges,
     weeks,
     streak,
     bestStreak: best,

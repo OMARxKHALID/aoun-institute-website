@@ -21,6 +21,7 @@ export const getProfile = async () => {
     notifyNewQuiz: doc.notifyNewQuiz !== false,
     notifyAnnouncement: doc.notifyAnnouncement !== false,
     notifyCertificate: doc.notifyCertificate !== false,
+    notifyReminders: doc.notifyReminders !== false,
     deletionRequestedAt: doc.deletionRequestedAt ? new Date(doc.deletionRequestedAt).toISOString() : null,
     hasPassword: Boolean(await db.collection("account").findOne({ userId: doc._id, providerId: "credential" }, { projection: { _id: 1 } })),
   };

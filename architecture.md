@@ -29,6 +29,8 @@ Skipped: zustand (quiz and player state fit in component state). Rejected: pdf-l
 
 ## Decisions
 - Payments: **manual first** (PKR; bank transfer + JazzCash/Easypaisa with receipt upload; admin approves). Gateway later behind `PaymentProvider` (Safepay/PayFast/JazzCash/Easypaisa to verify).
+- Demo checkout: with `DEMO_PAYMENTS=true` the checkout adds a "Card" tab (`features/payments/providers/demo-card.js`): test card 4242 4242 4242 4242 pays instantly (order `PAID`, provider `demo_card`) and enrolls; 4000 0000 0000 0002 is declined. Never enable it for real customers. A real gateway replaces this provider later.
+- Search: panel header search (`next/form`) → `/admin/search` or `/dashboard/search` (`features/analytics/search.js`) covering pages (from `lib/nav.js`), courses, lessons, quizzes, notes, certificates, students, orders and announcements.
 - Video: **Mux with DRM from day one** (paid add-on ~$100/mo + $0.003/play), Mux Player for all adapters. Fallback adapters: `embed` (YouTube/Vimeo, flagged insecure), `url` (HLS/MP4 testing).
 - Access: lifetime enrollment. One video stream at a time per account.
 - Auth: email+password (verification required) + Google (enabled only when env keys exist).
@@ -98,6 +100,7 @@ Progress staleness: structural course edits bump `contentVersion`; an older `cou
 - One stream: player claims `playbackSessions` on play and heartbeats every 30s; another device claiming the slot pauses the first player. Client-enforced on top of server state (a modified client can ignore it; tokens still expire).
 - Payments: student submits method + transaction ID (+ optional private receipt); one PENDING order per course; admin approve → `PAID` + enrollment; reject → `FAILED` with reason, student can resubmit (same reference reopens their rejected order). Free courses enroll directly.
 - Uploads: server-signed Cloudinary params; after upload the server re-checks format/size via Admin API and deletes invalid assets; old asset destroyed on replace; receipts use `authenticated` delivery.
+- Deterrents in `video-player.jsx`: player pauses behind a cover when the window loses focus, the tab is hidden, a screenshot shortcut (PrintScreen, Win+Shift+S, Cmd+Shift+3/4/5) is pressed or the page is printed; right-click, drag, long-press save, picture-in-picture and casting are disabled; moving watermark plus a faint tiled watermark (email + id) so leaks are traceable.
 - Honest limits (README): no website can block screenshots; DRM blacks out recordings only where hardware DRM exists (not desktop Chrome/Firefox).
 
 ## Phases
@@ -111,10 +114,10 @@ Progress staleness: structural course edits bump `contentVersion`; an older `cou
 8. Admin students/orders/announcements/analytics, notifications, polish, README
 
 ## Panel design
-Dark mode only. Student `/dashboard` and admin `/admin` both follow the "Welcome back" (Eduplex-style) dashboard layout described in `docs/design-refs/README.md`, in the site's own black/orange/cream design system; the second reference only adds student content blocks. Shared shell: `components/ui/panel-shell.jsx`, `panel-nav.jsx`, `panel-header.jsx`; every panel page folder gets a `loading.js` (re-export of `panel-skeleton`) so per-user data stays inside a Suspense boundary.
+Dark mode only. Student `/dashboard` and admin `/admin` both follow the "Welcome back" (Eduplex-style) dashboard layout described in `docs/design-refs/README.md`, in the site's own black/orange/cream design system; the second reference only adds student content blocks. Shared shell: `components/ui/panel-shell.jsx`, `panel-nav.jsx`, `panel-header.jsx`; every panel page folder gets a `loading.js` (spinner from `panel-loader`) so per-user data stays inside a Suspense boundary.
 
 ## UI consistency
-- Every table uses `components/ui/data-table.jsx` (TanStack Table v9: search, sort, pagination 10/25/50; collapsible cards below `md`).
+- Every table uses `components/ui/data-table.jsx` (TanStack Table v9: search, sort, 10 rows per page; collapsible cards below `md`).
 - Every dropdown uses `components/ui/select.jsx` (custom listbox over a hidden native select, works with RHF `register`); every row/section menu uses `components/ui/action-menu.jsx`. Both share `menuPanel`/`menuItem` from `lib/ui.js`.
 - Tabs use `components/ui/tab-list.jsx`; panel cards `panel-card.jsx`; stats `stat-card.jsx`; charts `bar-chart.jsx`; `progress-bar.jsx`, `progress-ring.jsx`, `mini-calendar.jsx`.
 - Sub-pages pass `back` to `PanelHeader`.

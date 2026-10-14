@@ -14,6 +14,7 @@ import FormAlert from "@/components/ui/form-alert";
 import ImageUpload from "@/components/ui/image-upload";
 import PanelCard from "@/components/ui/panel-card";
 import TabList from "@/components/ui/tab-list";
+import { useDialog } from "@/components/ui/dialog-provider";
 
 const applyErrors = (result, setError) => Object.entries(result.errors).forEach(([field, messages]) => setError(field, { message: messages[0] }));
 
@@ -139,10 +140,11 @@ const NotificationsForm = ({ profile }) => {
 };
 
 const DangerZone = ({ requested }) => {
+  const dialog = useDialog();
   const [done, setDone] = useState(Boolean(requested));
 
   const handleRequest = async () => {
-    if (!window.confirm("Ask the institute to delete your account and all your data? This cannot be undone once processed.")) return;
+    if (!(await dialog.confirm({ title: "Delete your account?", message: "The institute will delete your account and data. Your certificates stay verifiable. This cannot be undone once processed.", confirmLabel: "Request deletion", danger: true }))) return;
     const result = await requestAccountDeletion();
     if (result.ok) setDone(true);
   };

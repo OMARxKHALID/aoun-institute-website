@@ -14,6 +14,7 @@ import FormAlert from "@/components/ui/form-alert";
 import PanelCard from "@/components/ui/panel-card";
 import StatusPill from "@/components/ui/status-pill";
 import { formatDate } from "@/lib/format";
+import { useDialog } from "@/components/ui/dialog-provider";
 
 const helper = createColumnHelper();
 
@@ -45,6 +46,7 @@ const IssueForm = ({ courses, onDone }) => {
 };
 
 const CertificateTable = ({ certificates, courses }) => {
+  const dialog = useDialog();
   const router = useRouter();
   const [message, setMessage] = useState(null);
   const [error, setError] = useState(null);
@@ -58,13 +60,13 @@ const CertificateTable = ({ certificates, courses }) => {
     router.refresh();
   };
 
-  const handleRevoke = (c) => {
-    const reason = window.prompt(`Why are you revoking ${c.code}? The public verify page will show this.`);
+  const handleRevoke = async (c) => {
+    const reason = await dialog.prompt({ title: `Revoke ${c.code}?`, message: `${c.studentName} · ${c.courseTitle}. The public verify page will show it as revoked with this reason.`, label: "Reason", placeholder: "e.g. Issued by mistake", minLength: 3, danger: true, confirmLabel: "Revoke" });
     if (reason) run(() => revokeCertificate(c.id, { reason }), `${c.code} revoked.`);
   };
 
-  const handleReissue = (c) => {
-    if (window.confirm(`Revoke ${c.code} and issue a new certificate with a new ID?`)) run(() => reissueCertificate(c.id), (r) => `New certificate ${r.data.code} issued.`);
+  const handleReissue = async (c) => {
+    if ((await dialog.confirm({ title: `Reissue ${c.code}?`, message: "The old ID is revoked and the student gets a new certificate with a new ID by email.", confirmLabel: "Reissue", danger: false }))) run(() => reissueCertificate(c.id), (r) => `New certificate ${r.data.code} issued.`);
   };
 
   const handleIssued = (text) => {

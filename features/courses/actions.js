@@ -17,6 +17,7 @@ import Question from "@/features/quizzes/models/question";
 import Enrollment from "@/features/enrollments/model";
 import LessonProgress from "@/features/progress/models/lesson-progress";
 import { courseDetailsSchema, lessonSchema, outlineOrderSchema, syllabusSchema, titleSchema } from "@/features/courses/schemas";
+import { audit } from "@/features/audit/service";
 
 const CATALOG_TAG = "catalog";
 
@@ -66,7 +67,7 @@ const bulk = (Model, ops) => (ops.length ? Model.bulkWrite(ops) : null);
 const duplicateSlug = (error) => error?.code === 11000 && error?.keyPattern?.slug;
 
 export const createCourse = async (input) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const result = parse(courseDetailsSchema, input);
   if (!result.ok) return result;
   await connectDB();
@@ -75,6 +76,7 @@ export const createCourse = async (input) => {
   try {
     const course = await Course.create(result.data);
     updateTag(CATALOG_TAG);
+    await audit(admin, "course.create", `Created course "${result.data.title}"`, { type: "course", id: course._id });
     return { ok: true, data: { id: String(course._id) } };
   } catch (error) {
     if (duplicateSlug(error)) return fail("This URL slug is already used", "slug");
@@ -83,7 +85,7 @@ export const createCourse = async (input) => {
 };
 
 export const updateCourseDetails = async (id, input) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const result = parse(courseDetailsSchema, input);
   if (!result.ok) return result;
   const course = await loadCourse(id);
@@ -99,11 +101,12 @@ export const updateCourseDetails = async (id, input) => {
   }
   await destroyRemoved("thumbnail", [result.data.thumbnail], previous);
   invalidate(id);
+  await audit(admin, "course.update", `Updated details of "${result.data.title}"`, { type: "course", id });
   return { ok: true };
 };
 
 export const updateSyllabus = async (id, input) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const result = parse(syllabusSchema, input);
   if (!result.ok) return result;
   const course = await loadCourse(id);
@@ -115,11 +118,12 @@ export const updateSyllabus = async (id, input) => {
   await Course.updateOne({ _id: id }, { $set: { ...result.data, syllabusFile: result.data.syllabusFile ?? null }, $inc: { contentVersion: 1 } }, { runValidators: true });
   await destroyRemoved("document", next, previous);
   invalidate(id);
+  await audit(admin, "course.syllabus", `Updated syllabus settings of "${course.title}"`, { type: "course", id });
   return { ok: true };
 };
 
 export const deleteCourse = async (id) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const course = await loadCourse(id);
   if (!course) return fail("Course not found");
   if (await Enrollment.exists({ courseId: id })) return fail("Students are enrolled in this course. Set it to draft instead of deleting.");
@@ -137,22 +141,24 @@ export const deleteCourse = async (id) => {
     ...lessons.map((l) => deleteVideo(l.video)),
   ]);
   invalidate(id);
+  await audit(admin, "course.delete", `Deleted course "${course.title}"`, { type: "course", id });
   return { ok: true };
 };
 
 export const addSection = async (courseId, input) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const result = parse(titleSchema, input);
   if (!result.ok) return result;
   if (!(await loadCourse(courseId))) return fail("Course not found");
   const last = await Section.findOne({ courseId }).sort({ order: -1 }).lean();
   const section = await Section.create({ courseId, title: result.data.title, order: (last?.order ?? -1) + 1 });
   invalidate(courseId);
+  await audit(admin, "section.create", `Added section "${result.data.title}"`, { type: "course", id: courseId });
   return { ok: true, data: { id: String(section._id) } };
 };
 
 export const renameSection = async (sectionId, input) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const result = parse(titleSchema, input);
   if (!result.ok) return result;
   if (!isValidObjectId(sectionId)) return fail("Section not found");
@@ -160,11 +166,12 @@ export const renameSection = async (sectionId, input) => {
   const section = await Section.findByIdAndUpdate(sectionId, { title: result.data.title });
   if (!section) return fail("Section not found");
   invalidate(section.courseId);
+  await audit(admin, "section.rename", `Renamed a section to "${result.data.title}"`, { type: "course", id: section.courseId });
   return { ok: true };
 };
 
 export const deleteSection = async (sectionId) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   if (!isValidObjectId(sectionId)) return fail("Section not found");
   await connectDB();
   const section = await Section.findById(sectionId);
@@ -179,11 +186,12 @@ export const deleteSection = async (sectionId) => {
   ]);
   await Promise.all([destroyRemoved("document", [], lessons.flatMap((l) => l.attachments)), ...lessons.map((l) => deleteVideo(l.video))]);
   await touchCourse(section.courseId);
+  await audit(admin, "section.delete", `Deleted section "${section.title}"`, { type: "course", id: section.courseId });
   return { ok: true };
 };
 
 export const addLesson = async (sectionId, input) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const result = parse(titleSchema, input);
   if (!result.ok) return result;
   if (!isValidObjectId(sectionId)) return fail("Section not found");
@@ -193,11 +201,12 @@ export const addLesson = async (sectionId, input) => {
   const last = await Lesson.findOne({ sectionId }).sort({ order: -1 }).lean();
   const lesson = await Lesson.create({ courseId: section.courseId, sectionId, title: result.data.title, order: (last?.order ?? -1) + 1 });
   invalidate(section.courseId);
+  await audit(admin, "lesson.create", `Added lesson "${result.data.title}"`, { type: "lesson", id: lesson._id });
   return { ok: true, data: { id: String(lesson._id) } };
 };
 
 export const updateLesson = async (lessonId, input) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const result = parse(lessonSchema, input);
   if (!result.ok) return result;
   if (!isValidObjectId(lessonId)) return fail("Lesson not found");
@@ -213,11 +222,12 @@ export const updateLesson = async (lessonId, input) => {
   if (lesson.status === "draft" && result.data.status === "published") await announceLesson({ ...lesson.toObject(), ...result.data });
   if (structural) await touchCourse(lesson.courseId);
   else invalidate(lesson.courseId);
+  await audit(admin, "lesson.update", `Updated lesson "${result.data.title}"`, { type: "lesson", id: lessonId });
   return { ok: true };
 };
 
 export const deleteLesson = async (lessonId) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   if (!isValidObjectId(lessonId)) return fail("Lesson not found");
   await connectDB();
   const lesson = await Lesson.findById(lessonId);
@@ -231,11 +241,12 @@ export const deleteLesson = async (lessonId) => {
   ]);
   await Promise.all([destroyRemoved("document", [], lesson.attachments), deleteVideo(lesson.video)]);
   await touchCourse(lesson.courseId);
+  await audit(admin, "lesson.delete", `Deleted lesson "${lesson.title}"`, { type: "course", id: lesson.courseId });
   return { ok: true };
 };
 
 export const reorderOutline = async (courseId, input) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const result = parse(outlineOrderSchema, input);
   if (!result.ok) return result;
   if (!(await loadCourse(courseId))) return fail("Course not found");
@@ -256,11 +267,12 @@ export const reorderOutline = async (courseId, input) => {
     bulk(Quiz, result.data.flatMap((s) => s.lessonIds.map((id) => ({ updateMany: { filter: { lessonId: id }, update: { sectionId: s.id } } })))),
   ]);
   await touchCourse(courseId);
+  await audit(admin, "course.reorder", "Reordered the course outline", { type: "course", id: courseId });
   return { ok: true };
 };
 
 export const setLessonFlags = async (lessonId, input) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const result = parse(lessonSchema.pick({ status: true, isFreePreview: true }).partial().strict(), input);
   if (!result.ok) return result;
   if (!isValidObjectId(lessonId)) return fail("Lesson not found");
@@ -270,13 +282,15 @@ export const setLessonFlags = async (lessonId, input) => {
   if (lesson.status === "draft" && result.data.status === "published") await announceLesson(lesson);
   if (result.data.status && result.data.status !== lesson.status) await touchCourse(lesson.courseId);
   else invalidate(lesson.courseId);
+  await audit(admin, "lesson.flags", `Changed lesson "${lesson.title}" (${Object.entries(result.data).map(([k, v]) => `${k}: ${v}`).join(", ")})`, { type: "lesson", id: lessonId });
   return { ok: true };
 };
 
 export const publishAllLessons = async (courseId) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   if (!(await loadCourse(courseId))) return fail("Course not found");
   await Lesson.updateMany({ courseId }, { $set: { status: "published" } });
   await touchCourse(courseId);
+  await audit(admin, "course.publish_all", "Published every lesson in a course", { type: "course", id: courseId });
   return { ok: true };
 };

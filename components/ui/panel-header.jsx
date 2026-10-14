@@ -1,6 +1,8 @@
 import Link from "next/link";
+import Form from "next/form";
 import { ArrowLeft, Search } from "lucide-react";
 import { getUser, isAdmin } from "@/lib/dal";
+import { imageUrl } from "@/lib/upload-rules";
 
 const initials = (name = "") =>
   name
@@ -26,23 +28,26 @@ const PanelHeader = async ({ title, subtitle, back, query = "", children }) => {
       </div>
       <div className="flex items-center gap-3">
         {children}
-        <form action={admin ? "/admin/search" : "/dashboard/search"} role="search" className="relative flex-1 md:w-72 md:flex-none">
+        <Form action={admin ? "/admin/search" : "/dashboard/search"} role="search" className="relative flex-1 md:w-72 md:flex-none">
           <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-white/40" />
           <input
+            key={query}
             name="q"
+            required
+            minLength={2}
             type="search"
             defaultValue={query}
-            placeholder={admin ? "Search courses, students, orders…" : "Search your courses…"}
+            placeholder={admin ? "Search courses, students, orders…" : "Search courses, lessons, notes…"}
             aria-label="Search"
             className="w-full rounded-full border border-[#302C2A] bg-[#0C0C0C] py-2.5 pl-11 pr-4 text-base outline-hidden placeholder:text-white/30 focus:border-accent"
           />
-        </form>
+        </Form>
         <Link
           href={admin ? "/admin" : "/dashboard/settings"}
           aria-label="Your account"
           className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-full border-2 border-accent/60 bg-linear-to-br from-accent to-[#4B1E0E] font-semibold"
         >
-          {user?.image ? <img src={user.image} alt="" className="size-full object-cover" /> : initials(user?.name)}
+          {user?.image ? <img src={imageUrl(user.image, 96)} alt="" className="size-full object-cover" /> : initials(user?.name)}
         </Link>
       </div>
     </header>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Lock, PlayCircle, X } from "lucide-react";
 import VideoPlayer from "@/features/video/components/video-player";
-import { formatDuration } from "@/lib/format";
+import { formatDuration, plural } from "@/lib/format";
 
 const CourseCurriculum = ({ outline }) => {
   const [preview, setPreview] = useState(null);
@@ -28,7 +28,7 @@ const CourseCurriculum = ({ outline }) => {
               <span className="text-xl font-medium md:text-2xl">{title}</span>
             </span>
             <span className="flex items-center gap-3 text-black/50">
-              <span className="hidden text-sm sm:inline">{lessons.length} lessons</span>
+              <span className="hidden text-sm sm:inline">{plural(lessons.length, "lesson")}</span>
               <span className="text-2xl transition-transform group-open:rotate-45">+</span>
             </span>
           </summary>

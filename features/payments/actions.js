@@ -4,6 +4,7 @@ import { Types, isValidObjectId } from "mongoose";
 import { requireAdmin, requireUser } from "@/lib/dal";
 import { fail, parse } from "@/lib/validate";
 import { verifyUpload } from "@/lib/cloudinary";
+import { rateLimit } from "@/lib/rate-limit";
 import { linkEmail, sendEmail } from "@/lib/email";
 import { connectDB, db } from "@/lib/db";
 import Course from "@/features/courses/models/course";
@@ -11,7 +12,9 @@ import Order from "@/features/payments/models/order";
 import Enrollment from "@/features/enrollments/model";
 import { grantEnrollment } from "@/features/enrollments/enroll";
 import { getSiteSettings } from "@/features/site-settings/queries";
-import { checkoutSchema, rejectSchema } from "@/features/payments/schemas";
+import { cardSchema, checkoutSchema, rejectSchema } from "@/features/payments/schemas";
+import { chargeDemoCard, demoPaymentsEnabled } from "@/features/payments/providers/demo-card";
+import { audit } from "@/features/audit/service";
 
 const siteUrl = () => process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
 
@@ -29,6 +32,7 @@ const notify = (task) => task.catch((error) => console.error("[payments] email f
 
 export const createManualOrder = async (courseId, input) => {
   const user = await requireUser();
+  if (!(await rateLimit("payment", user.id))) return fail("Too many payment submissions. Try again in a few minutes.");
   const result = parse(checkoutSchema, input);
   if (!result.ok) return result;
   const course = await loadPublishedCourse(courseId);
@@ -62,6 +66,32 @@ export const createManualOrder = async (courseId, input) => {
   return { ok: true };
 };
 
+export const payWithDemoCard = async (courseId, input) => {
+  const user = await requireUser();
+  if (!demoPaymentsEnabled()) return fail("Card payments are not available");
+  if (!(await rateLimit("payment", user.id))) return fail("Too many payment attempts. Try again in a few minutes.");
+  const result = parse(cardSchema, input);
+  if (!result.ok) return result;
+  const course = await loadPublishedCourse(courseId);
+  if (!course) return fail("This course is not available");
+  if (amountOf(course) === 0) return fail("This course is free. Use the enroll button.");
+  if (await Enrollment.exists({ userId: user.id, courseId, status: "active" })) return fail("You are already enrolled in this course");
+  const charge = await chargeDemoCard(result.data);
+  if (!charge.ok) return fail(charge.error, charge.field);
+  const paidAt = new Date();
+  const order = await Order.create({ userId: user.id, courseId, amount: amountOf(course), currency: course.currency, provider: "demo_card", method: `Card •••• ${charge.last4}`, providerRef: charge.ref, status: "PAID", paidAt });
+  await Order.updateMany({ userId: user.id, courseId, status: "PENDING" }, { $set: { status: "FAILED", note: "Paid by card instead" } });
+  await grantEnrollment({ userId: user.id, courseId, source: "order", orderId: order._id });
+  await notify(
+    sendEmail({
+      to: user.email,
+      subject: `You're enrolled in ${course.title}`,
+      html: linkEmail({ title: "Payment received", text: `We charged ${course.currency} ${amountOf(course)} to your card ending ${charge.last4}. You now have lifetime access to ${course.title}.`, url: `${siteUrl()}/dashboard/courses/${course.slug}`, cta: "Start learning" }),
+    }),
+  );
+  return { ok: true, data: { slug: course.slug } };
+};
+
 export const enrollFree = async (courseId) => {
   const user = await requireUser();
   const course = await loadPublishedCourse(courseId);
@@ -93,6 +123,7 @@ export const approveOrder = async (orderId) => {
         html: linkEmail({ title: "Payment approved", text: `Your payment was confirmed. You now have lifetime access to ${order.courseId.title}.`, url: `${siteUrl()}/dashboard/courses/${order.courseId.slug}`, cta: "Start learning" }),
       }),
     );
+  await audit(admin, "order.approve", `Approved ${order.currency} ${order.amount} for "${order.courseId.title}"`, { type: "order", id: order._id });
   return { ok: true };
 };
 
@@ -112,6 +143,7 @@ export const rejectOrder = async (orderId, input) => {
         html: linkEmail({ title: "We could not confirm your payment", text: `Reason: ${result.data.note}. You can submit your payment details again.`, url: `${siteUrl()}/checkout/${order.courseId.slug}`, cta: "Try again" }),
       }),
     );
+  await audit(admin, "order.reject", `Rejected a payment for "${order.courseId.title}": ${result.data.note}`, { type: "order", id: order._id });
   return { ok: true };
 };
 
@@ -136,5 +168,6 @@ export const refundOrder = async (orderId, input) => {
         html: linkEmail({ title: "Your payment was refunded", text: `Reason: ${result.data.note}. Your access to ${order.courseId.title} has been removed.`, url: `${siteUrl()}/dashboard/orders`, cta: "View orders" }),
       }),
     );
+  await audit(admin, "order.refund", `Refunded ${order.currency} ${order.amount} for "${order.courseId.title}"`, { type: "order", id: order._id });
   return { ok: true };
 };

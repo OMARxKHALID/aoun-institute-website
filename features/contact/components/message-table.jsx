@@ -11,12 +11,14 @@ import FormAlert from "@/components/ui/form-alert";
 import StatusPill from "@/components/ui/status-pill";
 import TabList from "@/components/ui/tab-list";
 import { formatDate } from "@/lib/format";
+import { useDialog } from "@/components/ui/dialog-provider";
 
 const helper = createColumnHelper();
 
 const filters = ["new", "read", "archived", "all"];
 
 const MessageTable = ({ messages }) => {
+  const dialog = useDialog();
   const router = useRouter();
   const [filter, setFilter] = useState("new");
   const [error, setError] = useState(null);
@@ -56,7 +58,7 @@ const MessageTable = ({ messages }) => {
               { label: "Reply by email", icon: Mail, href: `mailto:${m.email}?subject=${encodeURIComponent(`Re: ${m.topic || "Your message"}`)}`, external: true },
               m.status === "new" ? { label: "Mark as read", icon: MailOpen, onClick: () => run(() => setMessageStatus(m.id, "read")) } : { label: "Mark as new", icon: Mail, onClick: () => run(() => setMessageStatus(m.id, "new")) },
               m.status !== "archived" && { label: "Archive", icon: Archive, onClick: () => run(() => setMessageStatus(m.id, "archived")) },
-              { label: "Delete", icon: Trash2, danger: true, onClick: () => window.confirm("Delete this message?") && run(() => deleteMessage(m.id)) },
+              { label: "Delete", icon: Trash2, danger: true, onClick: async () => (await dialog.confirm({ title: "Delete this message?", message: `From ${m.name}. This cannot be undone.`, confirmLabel: "Delete", danger: true })) && run(() => deleteMessage(m.id)) },
             ]}
           />
         );

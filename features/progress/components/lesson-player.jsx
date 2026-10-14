@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { createContext, use, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import VideoPlayer from "@/features/video/components/video-player";
 import { markLessonComplete } from "@/features/progress/actions";
+import { buttonClass } from "@/lib/ui";
 
 export const CompleteButton = ({ lessonId, completed }) => {
   const router = useRouter();
@@ -29,7 +30,7 @@ export const CompleteButton = ({ lessonId, completed }) => {
 
   return (
     <div className="flex flex-col items-start gap-1">
-      <button type="button" onClick={handleClick} disabled={busy} className="flex items-center gap-2 rounded-full border border-[#302C2A] px-4 py-2 text-sm transition hover:border-accent hover:text-accent disabled:opacity-50">
+      <button type="button" onClick={handleClick} disabled={busy} className={buttonClass("outline")}>
         {busy ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />} Mark as complete
       </button>
       {error && <p className="text-xs text-red-400">{error}</p>}
@@ -37,10 +38,20 @@ export const CompleteButton = ({ lessonId, completed }) => {
   );
 };
 
-const LessonPlayer = ({ lessonId, title }) => {
-  const router = useRouter();
-  const handleComplete = () => router.refresh();
-  return <VideoPlayer lessonId={lessonId} title={title} onComplete={handleComplete} />;
+const PlayerContext = createContext(null);
+
+export const PlayerProvider = ({ children }) => {
+  const controllerRef = useRef(null);
+  return <PlayerContext value={controllerRef}>{children}</PlayerContext>;
 };
+
+const LessonPlayer = ({ lessonId, title, startAt }) => {
+  const router = useRouter();
+  const controllerRef = use(PlayerContext);
+  const handleComplete = () => router.refresh();
+  return <VideoPlayer lessonId={lessonId} title={title} onComplete={handleComplete} controllerRef={controllerRef} startAt={startAt} />;
+};
+
+export const usePlayerController = () => use(PlayerContext);
 
 export default LessonPlayer;

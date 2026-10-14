@@ -13,6 +13,9 @@ import Checkbox from "@/components/ui/checkbox";
 import FormAlert from "@/components/ui/form-alert";
 import StatusPill from "@/components/ui/status-pill";
 import TabList from "@/components/ui/tab-list";
+import { useDialog } from "@/components/ui/dialog-provider";
+import { inputClass } from "@/lib/ui";
+import { plural } from "@/lib/format";
 
 const firstError = (result) => Object.values(result.errors ?? {}).flat()[0] ?? "Something went wrong";
 
@@ -72,7 +75,7 @@ const SettingsForm = ({ quiz }) => {
   );
 };
 
-const blankQuestion = { type: "single", prompt: "", options: [{ text: "", isCorrect: true }, { text: "", isCorrect: false }], points: 1, explanation: "" };
+const blankQuestion = { type: "single", prompt: "", options: [{ text: "", isCorrect: true }, { text: "", isCorrect: false }], acceptedAnswers: [], points: 1, explanation: "" };
 
 const trueFalse = [
   { text: "True", isCorrect: true },
@@ -83,7 +86,7 @@ const QuestionForm = ({ quizId, question, onDone }) => {
   const router = useRouter();
   const { register, control, handleSubmit, setError, setValue, getValues, formState } = useForm({
     resolver: zodResolver(questionSchema),
-    defaultValues: question ? { type: question.type, prompt: question.prompt, options: question.options, points: question.points, explanation: question.explanation ?? "" } : blankQuestion,
+    defaultValues: question ? { type: question.type, prompt: question.prompt, options: question.options, acceptedAnswers: question.acceptedAnswers ?? [], points: question.points, explanation: question.explanation ?? "" } : blankQuestion,
   });
   const { fields, append, remove, replace } = useFieldArray({ control, name: "options" });
   const type = useWatch({ control, name: "type" });
@@ -94,6 +97,7 @@ const QuestionForm = ({ quizId, question, onDone }) => {
     const next = e.target.value;
     setValue("type", next);
     if (next === "true_false") replace(trueFalse);
+    else if (next === "short_answer") replace([]);
     else if (getValues("options").length < 2) replace(blankQuestion.options);
   };
 
@@ -120,6 +124,23 @@ const QuestionForm = ({ quizId, question, onDone }) => {
       </div>
       <Field label="Question" rows={3} error={errors.prompt?.message} {...register("prompt")} />
 
+      {type === "short_answer" ? (
+        <div className="flex flex-col gap-2">
+          <label htmlFor="accepted-answers" className="text-base text-white/70">
+            Accepted answers (one per line)
+          </label>
+          <textarea
+            id="accepted-answers"
+            rows={3}
+            defaultValue={(question?.acceptedAnswers ?? []).join("\n")}
+            onChange={(e) => setValue("acceptedAnswers", e.target.value.split("\n").map((line) => line.trim()).filter(Boolean), { shouldValidate: false })}
+            placeholder={"const\nthe const keyword"}
+            className={inputClass}
+          />
+          <p className="text-xs text-white/45">Answers are matched ignoring capital letters, extra spaces and punctuation.</p>
+          {errors.acceptedAnswers && <p className="text-sm text-red-400">{errors.acceptedAnswers.message ?? errors.acceptedAnswers.root?.message}</p>}
+        </div>
+      ) : (
       <div className="flex flex-col gap-2">
         <p className="text-base text-white/70">Answers {type === "multiple" ? "(tick every correct answer)" : "(tick the correct answer)"}</p>
         {fields.map((field, index) => {
@@ -142,7 +163,7 @@ const QuestionForm = ({ quizId, question, onDone }) => {
                 placeholder={`Option ${index + 1}`}
                 aria-label={`Option ${index + 1}`}
                 aria-invalid={Boolean(errors.options?.[index]?.text)}
-                className="min-w-0 flex-1 rounded-xl border border-[#302C2A] bg-[#0C0C0C] px-4 py-2.5 outline-hidden placeholder:text-white/30 focus:border-accent aria-invalid:border-red-500/70"
+                className={`min-w-0 flex-1 ${inputClass}`}
               />
               {type !== "true_false" && fields.length > 2 && (
                 <button type="button" onClick={() => remove(index)} aria-label={`Remove option ${index + 1}`} className="grid size-10 shrink-0 place-items-center rounded-xl text-white/40 hover:bg-red-500/10 hover:text-red-300">
@@ -159,6 +180,7 @@ const QuestionForm = ({ quizId, question, onDone }) => {
           </button>
         )}
       </div>
+      )}
 
       <Field label="Explanation shown after answering (optional)" rows={2} error={errors.explanation?.message} {...register("explanation")} />
       <div className="flex flex-wrap gap-3">
@@ -174,6 +196,7 @@ const QuestionForm = ({ quizId, question, onDone }) => {
 };
 
 const QuestionList = ({ quizId, questions }) => {
+  const dialog = useDialog();
   const router = useRouter();
   const [editing, setEditing] = useState(null);
   const [list, setList] = useState(questions);
@@ -196,7 +219,7 @@ const QuestionList = ({ quizId, questions }) => {
   };
 
   const handleDelete = (question) => async () => {
-    if (!window.confirm("Delete this question?")) return;
+    if (!(await dialog.confirm({ title: "Delete this question?", message: "Past attempts keep their scores.", confirmLabel: "Delete", danger: true }))) return;
     const result = await deleteQuestion(quizId, question.id);
     if (!result.ok) return setError(firstError(result));
     router.refresh();
@@ -207,24 +230,31 @@ const QuestionList = ({ quizId, questions }) => {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-white/50">
-        {list.length} questions · {total} points
+        {plural(list.length, "question")} · {plural(total, "point")}
       </p>
       <FormAlert>{error}</FormAlert>
       {list.map((q, index) =>
         editing === q.id ? (
           <QuestionForm key={q.id} quizId={quizId} question={q} onDone={() => setEditing(null)} />
         ) : (
-          <article key={q.id} className="flex gap-3 rounded-2xl border border-[#302C2A] bg-[#070707] p-4">
+          <article key={q.id} className="flex gap-3 rounded-2xl border border-white/5 bg-[#070707] p-4">
             <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent/15 text-sm font-semibold text-accent">{index + 1}</span>
             <div className="min-w-0 flex-1">
               <p className="whitespace-pre-line break-words">{q.prompt}</p>
               <ul className="mt-2 flex flex-col gap-1 text-sm">
-                {q.options.map((o, i) => (
-                  <li key={i} className={`flex items-start gap-2 ${o.isCorrect ? "text-green-400" : "text-white/55"}`}>
-                    {o.isCorrect ? <CheckCircle2 className="mt-0.5 size-4 shrink-0" /> : <Circle className="mt-0.5 size-4 shrink-0" />}
-                    <span className="break-words">{o.text}</span>
-                  </li>
-                ))}
+                {q.type === "short_answer"
+                  ? (q.acceptedAnswers ?? []).map((a, i) => (
+                      <li key={i} className="flex items-start gap-2 text-green-400">
+                        <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
+                        <span className="break-words">{a}</span>
+                      </li>
+                    ))
+                  : q.options.map((o, i) => (
+                      <li key={i} className={`flex items-start gap-2 ${o.isCorrect ? "text-green-400" : "text-white/55"}`}>
+                        {o.isCorrect ? <CheckCircle2 className="mt-0.5 size-4 shrink-0" /> : <Circle className="mt-0.5 size-4 shrink-0" />}
+                        <span className="break-words">{o.text}</span>
+                      </li>
+                    ))}
               </ul>
               <p className="mt-2 text-xs text-white/40">
                 {QUESTION_TYPES.find((t) => t.value === q.type)?.label} · {q.points} {q.points === 1 ? "point" : "points"}
@@ -262,12 +292,13 @@ const QuestionList = ({ quizId, questions }) => {
 const tabs = ["Questions", "Settings"];
 
 const QuizBuilder = ({ courseId, quiz, questions, attempts }) => {
+  const dialog = useDialog();
   const router = useRouter();
   const [tab, setTab] = useState(tabs[0]);
   const [error, setError] = useState(null);
 
   const handleDelete = async () => {
-    if (!window.confirm(`Delete "${quiz.title}"${attempts ? ` and ${attempts} student attempts` : ""}? This cannot be undone.`)) return;
+    if (!(await dialog.confirm({ title: `Delete "${quiz.title}"?`, message: `Its questions${attempts ? ` and ${attempts} student attempts` : ""} are deleted too. This cannot be undone.`, confirmLabel: "Delete quiz", danger: true }))) return;
     const result = await deleteQuiz(quiz.id);
     if (!result.ok) return setError(firstError(result));
     router.push(`/admin/courses/${courseId}`);
@@ -278,7 +309,7 @@ const QuizBuilder = ({ courseId, quiz, questions, attempts }) => {
       <div className="flex flex-wrap items-center gap-3">
         <StatusPill status={quiz.status} />
         <span className="text-sm text-white/50">
-          Pass mark {quiz.passingPercent}% · {quiz.maxAttempts ? `${quiz.maxAttempts} attempts` : "unlimited attempts"}
+          Pass mark {quiz.passingPercent}% · {quiz.maxAttempts ? plural(quiz.maxAttempts, "attempt") : "unlimited attempts"}
           {quiz.timeLimitSec ? ` · ${Math.round(quiz.timeLimitSec / 60)} min` : ""}
         </span>
         {quiz.status === "draft" && questions.length > 0 && <span className="text-sm text-amber-300/80">Draft: publish it in Settings so students can take it.</span>}

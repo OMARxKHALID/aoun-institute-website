@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+@custom-variant short (@media (max-height: 800px));
+@custom-variant tiny (@media (max-height: 660px));
+
 @theme inline {
   --font-manrope: var(--font-manrope-src);
   --font-machina: var(--font-display-src);

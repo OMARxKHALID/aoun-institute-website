@@ -2,12 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookOpen, CircleCheck, Clock3, XCircle } from "lucide-react";
 import { requireUser } from "@/lib/dal";
-import { formatDate, formatDuration, formatPrice } from "@/lib/format";
+import { formatDate, formatDuration, formatPrice, plural } from "@/lib/format";
 import { getPublicCourse } from "@/features/courses/queries";
 import { getSiteSettings } from "@/features/site-settings/queries";
 import { getCourseAccess } from "@/features/enrollments/queries";
 import CheckoutForm, { FreeEnrollButton } from "@/features/payments/components/checkout-form";
 import { coursePriceLabel } from "@/features/courses/components/course-cta";
+import { buttonClass } from "@/lib/ui";
+import { imageUrl } from "@/lib/upload-rules";
 
 export const instant = false;
 
@@ -34,7 +36,7 @@ const CheckoutPage = async ({ params }) => {
       return (
         <StateCard icon={CircleCheck} tone="text-green-400" title="You're enrolled">
           <p>You have lifetime access to this course.</p>
-          <Link href={`/dashboard/courses/${course.slug}`} className="self-start rounded-2xl bg-accent px-6 py-3 font-semibold text-white">
+          <Link href={`/dashboard/courses/${course.slug}`} className={`${buttonClass("primary", "lg")} self-start`}>
             Go to my course
           </Link>
         </StateCard>
@@ -56,7 +58,7 @@ const CheckoutPage = async ({ params }) => {
           </StateCard>
         )}
         <div className="rounded-3xl border border-[#302C2A] bg-[#0C0C0C] p-6 md:p-8">
-          {free ? <FreeEnrollButton courseId={course.id} /> : <CheckoutForm courseId={course.id} payment={payment} />}
+          {free ? <FreeEnrollButton courseId={course.id} /> : <CheckoutForm courseId={course.id} payment={payment} demoCard={process.env.DEMO_PAYMENTS === "true"} amount={coursePriceLabel(course)} />}
         </div>
       </div>
     );
@@ -69,13 +71,13 @@ const CheckoutPage = async ({ params }) => {
         {body()}
         <aside className="flex flex-col gap-4 rounded-3xl border border-[#302C2A] bg-[#0C0C0C] p-6 lg:sticky lg:top-36">
           <div className="aspect-video overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#f97316,#7c2d12_55%,#1c1917)]">
-            {course.thumbnail?.url && <img src={course.thumbnail.url} alt="" loading="lazy" decoding="async" className="size-full object-cover" />}
+            {course.thumbnail?.url && <img src={imageUrl(course.thumbnail.url, 800)} alt="" loading="lazy" decoding="async" className="size-full object-cover" />}
           </div>
           <Link href={`/courses/${course.slug}`} className="font-machina text-2xl leading-tight hover:text-accent">
             {course.title}
           </Link>
           <p className="flex items-center gap-2 text-white/60">
-            <BookOpen className="size-4 text-accent" /> {course.lessons} lessons
+            <BookOpen className="size-4 text-accent" /> {plural(course.lessons, "lesson")}
             {course.estimatedDuration > 0 && <span>· {formatDuration(course.estimatedDuration)}</span>}
           </p>
           <div className="flex items-baseline justify-between border-t border-white/10 pt-4">

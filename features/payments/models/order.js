@@ -21,6 +21,6 @@ const orderSchema = new Schema(
 
 orderSchema.index({ userId: 1, createdAt: -1 });
 orderSchema.index({ status: 1, createdAt: -1 });
-orderSchema.index({ providerRef: 1 }, { unique: true, sparse: true });
+orderSchema.index({ userId: 1, providerRef: 1 }, { unique: true, partialFilterExpression: { providerRef: { $type: "string" } } });
 
 export default models.Order || model("Order", orderSchema);

@@ -8,6 +8,8 @@ import Section from "@/features/courses/models/section";
 import Lesson from "@/features/courses/models/lesson";
 import Quiz from "@/features/quizzes/models/quiz";
 import Enrollment from "@/features/enrollments/model";
+import Review from "@/features/reviews/model";
+import { reviewStats } from "@/features/reviews/queries";
 
 const plain = (value) => JSON.parse(JSON.stringify(value));
 
@@ -65,7 +67,8 @@ export const getCatalog = async () => {
     { $group: { _id: "$courseId", count: { $sum: 1 } } },
   ]);
   const lessons = new Map(counts.map((c) => [String(c._id), c.count]));
-  return plain(courses.map((c) => ({ ...c, id: String(c._id), lessons: lessons.get(String(c._id)) ?? 0 })));
+  const ratings = await reviewStats(courses.map((c) => c._id));
+  return plain(courses.map((c) => ({ ...c, id: String(c._id), lessons: lessons.get(String(c._id)) ?? 0, rating: ratings.get(String(c._id)) ?? null })));
 };
 
 export const getPublicCourse = async (slug) => {
@@ -89,7 +92,11 @@ export const getPublicCourse = async (slug) => {
         .map((l) => ({ id: String(l._id), title: l.title, durationSec: l.durationSec, preview: l.isFreePreview && l.video?.status === "ready" })),
     }))
     .filter((s) => s.lessons.length);
-  return plain({ ...course, id: String(course._id), outline, lessons: lessons.length });
+  const [ratings, reviews] = await Promise.all([
+    reviewStats([course._id]),
+    Review.find({ courseId: course._id, status: "published" }, "studentName rating body reply createdAt").sort({ createdAt: -1 }).limit(12).lean(),
+  ]);
+  return plain({ ...course, id: String(course._id), outline, lessons: lessons.length, rating: ratings.get(String(course._id)) ?? null, reviews: reviews.map((r) => ({ ...r, id: String(r._id) })) });
 };
 
 export const getLessonForEdit = async (courseId, lessonId) => {

@@ -4,12 +4,15 @@ import { Award, CheckCircle2, Clock, FileDown, FileQuestion, PlayCircle } from "
 import { getStudentCourse } from "@/features/progress/queries";
 import { getMyAnnouncements } from "@/features/announcements/queries";
 import AnnouncementList from "@/features/announcements/components/announcement-list";
+import { getMyReview } from "@/features/reviews/queries";
+import ReviewForm from "@/features/reviews/components/review-form";
 import CourseOutline from "@/features/progress/components/course-outline";
 import PanelHeader from "@/components/ui/panel-header";
 import PanelCard from "@/components/ui/panel-card";
 import ProgressBar from "@/components/ui/progress-bar";
 import { formatDuration } from "@/lib/format";
 import { btn } from "@/lib/ui";
+import { fileHref } from "@/lib/upload-rules";
 
 export const metadata = { title: "Course" };
 
@@ -18,7 +21,7 @@ const StudentCoursePage = async ({ params }) => {
   const data = await getStudentCourse(slug);
   if (!data) notFound();
   const { course, outline, stats, resume, certificate } = data;
-  const announcements = await getMyAnnouncements(course.id, 5);
+  const [announcements, myReview] = await Promise.all([getMyAnnouncements(course.id, 5), getMyReview(course.id)]);
   const materials = [course.syllabusFile?.url && { ...course.syllabusFile, name: course.syllabusFile.name || "Syllabus.pdf" }, ...(course.attachments ?? [])].filter(Boolean);
 
   return (
@@ -96,12 +99,16 @@ const StudentCoursePage = async ({ params }) => {
             )}
           </PanelCard>
 
+          <PanelCard title={myReview ? "Your review" : "Rate this course"}>
+            <ReviewForm courseId={course.id} review={myReview} canReview={stats.completedLessons > 0} />
+          </PanelCard>
+
           {materials.length > 0 && (
             <PanelCard title="Course materials">
               <ul className="flex flex-col gap-2">
                 {materials.map((file) => (
                   <li key={file.publicId ?? file.url}>
-                    <a href={file.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-xl border border-white/5 bg-[#070707] p-3 text-sm hover:border-accent/50">
+                    <a href={fileHref(file)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-xl border border-white/5 bg-[#070707] p-3 text-sm hover:border-accent/50">
                       <FileDown className="size-4 shrink-0 text-accent" />
                       <span className="min-w-0 flex-1 truncate">{file.name}</span>
                     </a>

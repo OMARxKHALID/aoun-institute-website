@@ -8,6 +8,7 @@ import Course from "@/features/courses/models/course";
 import Announcement from "@/features/announcements/model";
 import { announcementSchema } from "@/features/announcements/schemas";
 import { notifyCourseStudents } from "@/features/notifications/service";
+import { audit } from "@/features/audit/service";
 
 export const createAnnouncement = async (input) => {
   const admin = await requireAdmin();
@@ -21,13 +22,15 @@ export const createAnnouncement = async (input) => {
   const sent = email
     ? await notifyCourseStudents(course._id, "notifyAnnouncement", { subject: `${course.title}: ${data.title}`, title: data.title, text: data.body, path: `/dashboard/courses/${course.slug}` })
     : 0;
+  await audit(admin, "announcement.create", `Posted "${data.title}" to ${course.title}`, { type: "course", id: course._id });
   return { ok: true, data: { sent } };
 };
 
 export const deleteAnnouncement = async (id) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   if (!isValidObjectId(id)) return fail("Announcement not found");
   await connectDB();
   await Announcement.deleteOne({ _id: id });
+  await audit(admin, "announcement.delete", "Deleted an announcement", { type: "announcement", id });
   return { ok: true };
 };

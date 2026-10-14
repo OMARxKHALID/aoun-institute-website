@@ -14,9 +14,12 @@ const denied = (reason) => ({ ok: false, reason });
 const access = async (lesson, user) => {
   if (isAdmin(user)) return { enrolled: false };
   const course = await Course.findById(lesson.courseId, "status sequentialUnlock").lean();
-  if (lesson.status !== "published" || course?.status !== "published") return { reason: "not-found" };
+  if (!course || lesson.status !== "published") return { reason: "not-found" };
   const enrolled = user && (await Enrollment.exists({ userId: user.id, courseId: lesson.courseId, status: "active" }));
-  if (!enrolled) return lesson.isFreePreview ? { enrolled: false } : { reason: user ? "locked" : "login" };
+  if (!enrolled) {
+    if (course.status !== "published") return { reason: "not-found" };
+    return lesson.isFreePreview ? { enrolled: false } : { reason: user ? "locked" : "login" };
+  }
   if (course.sequentialUnlock) {
     const result = await buildOutline(user.id, lesson.courseId);
     const target = result?.outline.flatMap((s) => s.lessons).find((l) => l.id === String(lesson._id));

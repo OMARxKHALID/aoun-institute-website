@@ -8,6 +8,7 @@ import { destroyAsset, verifyUpload } from "@/lib/cloudinary";
 import SiteSettings from "@/features/site-settings/model";
 import { siteSettingsSchema } from "@/features/site-settings/schemas";
 import { SITE_SETTINGS_TAG } from "@/features/site-settings/queries";
+import { audit } from "@/features/audit/service";
 
 const collectPublicIds = (value) => {
   if (!value || typeof value !== "object") return [];
@@ -16,7 +17,7 @@ const collectPublicIds = (value) => {
 };
 
 export const updateSiteSettings = async (input) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const result = parse(siteSettingsSchema, input);
   if (!result.ok) return result;
   await connectDB();
@@ -31,5 +32,6 @@ export const updateSiteSettings = async (input) => {
   const removed = [...before].filter((id) => !after.includes(id));
   await Promise.all(removed.map((id) => destroyAsset(id, "brand")));
   updateTag(SITE_SETTINGS_TAG);
+  await audit(admin, "settings.update", "Updated site settings", { type: "settings", id: "site" });
   return { ok: true };
 };

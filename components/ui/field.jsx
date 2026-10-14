@@ -12,7 +12,7 @@ const Field = ({ label, name, type = "text", options, rows, error, className = "
         {label}
       </label>
       {options ? (
-        <Select defaultValue="" placeholder="Select…" options={options} {...shared} />
+        <Select defaultValue="" placeholder={options.some((o) => (typeof o === "object" ? o.value : o) === "") ? undefined : "Select…"} options={options} {...shared} />
       ) : rows ? (
         <textarea rows={rows} {...shared} />
       ) : (

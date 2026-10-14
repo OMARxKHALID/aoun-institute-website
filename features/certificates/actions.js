@@ -8,6 +8,7 @@ import { fail, parse } from "@/lib/validate";
 import Certificate from "@/features/certificates/model";
 import Course from "@/features/courses/models/course";
 import { createCertificate, notifyCertificate } from "@/features/certificates/service";
+import { audit } from "@/features/audit/service";
 
 const reasonSchema = z.strictObject({ reason: z.string().trim().min(3, { error: "Give a reason" }).max(300) });
 
@@ -23,18 +24,19 @@ const loadUser = async (userId) => {
 };
 
 export const revokeCertificate = async (certificateId, input) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const result = parse(reasonSchema, input);
   if (!result.ok) return result;
   if (!isValidObjectId(certificateId)) return fail("Certificate not found");
   await connectDB();
   const updated = await Certificate.updateOne({ _id: certificateId, status: "VALID" }, { $set: { status: "REVOKED", revokedAt: new Date(), reason: result.data.reason } });
   if (!updated.modifiedCount) return fail("Certificate is already revoked");
+  await audit(admin, "certificate.revoke", `Revoked a certificate: ${result.data.reason}`, { type: "certificate", id: certificateId });
   return { ok: true };
 };
 
 export const reissueCertificate = async (certificateId) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   if (!isValidObjectId(certificateId)) return fail("Certificate not found");
   await connectDB();
   const old = await Certificate.findById(certificateId).lean();
@@ -44,11 +46,12 @@ export const reissueCertificate = async (certificateId) => {
   await Certificate.updateOne({ _id: old._id, status: "VALID" }, { $set: { status: "REVOKED", revokedAt: new Date(), reason: "Reissued" } });
   const certificate = await createCertificate({ user, course, reissuedFrom: old._id });
   await notifyCertificate(user, certificate);
+  await audit(admin, "certificate.reissue", `Reissued certificate ${old.code} as ${certificate.code}`, { type: "certificate", id: certificate._id });
   return { ok: true, data: { code: certificate.code } };
 };
 
 export const issueCertificateManually = async (input) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const result = parse(issueSchema, input);
   if (!result.ok) return result;
   await connectDB();
@@ -60,5 +63,6 @@ export const issueCertificateManually = async (input) => {
   if (await Certificate.exists({ userId: user.id, courseId: course._id, status: "VALID" })) return fail("This student already has a valid certificate for this course", "email");
   const certificate = await createCertificate({ user, course });
   await notifyCertificate(user, certificate);
+  await audit(admin, "certificate.issue", `Issued certificate ${certificate.code} to ${user.email}`, { type: "certificate", id: certificate._id });
   return { ok: true, data: { code: certificate.code } };
 };

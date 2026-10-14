@@ -8,6 +8,7 @@ import QuizAttempt from "@/features/quizzes/models/quiz-attempt";
 import ActivityLog from "@/features/progress/models/activity-log";
 import { buildOutline, recomputeProgress } from "@/features/progress/service";
 import { issueCertificateIfEligible } from "@/features/certificates/service";
+import { scoreAttempt } from "@/features/quizzes/grading";
 
 const GRACE_MS = 10_000;
 
@@ -19,8 +20,6 @@ const shuffle = (list) => {
   }
   return next;
 };
-
-const sameSet = (a, b) => a.length === b.length && a.every((x) => b.includes(x));
 
 export const findQuizState = async (user, quizId) => {
   if (!isValidObjectId(quizId)) return null;
@@ -62,30 +61,22 @@ export const cleanAnswers = (attempt, answers) => {
     .filter((a) => allowed.has(String(a?.questionId)))
     .map((a) => {
       const options = allowed.get(String(a.questionId)).map(String);
-      return { questionId: a.questionId, selected: [...new Set((a.selected ?? []).map(String))].filter((id) => options.includes(id)) };
+      return {
+        questionId: a.questionId,
+        selected: [...new Set((a.selected ?? []).map(String))].filter((id) => options.includes(id)),
+        text: typeof a.text === "string" ? a.text.slice(0, 500) : undefined,
+      };
     });
 };
 
 export const gradeAttempt = async (user, attempt, expired = false) => {
   const quiz = await Quiz.findById(attempt.quizId).lean();
   const questions = await Question.find({ quizId: attempt.quizId }).lean();
-  const byId = new Map(questions.map((q) => [String(q._id), q]));
-  let score = 0;
-  let maxScore = 0;
-  attempt.questionOrder.forEach((questionId) => {
-    const question = byId.get(String(questionId));
-    if (!question) return;
-    maxScore += question.points;
-    const answer = attempt.answers.find((a) => String(a.questionId) === String(questionId));
-    const correct = question.options.filter((o) => o.isCorrect).map((o) => String(o._id));
-    if (answer && sameSet(answer.selected.map(String), correct)) score += question.points;
-  });
-  const percent = maxScore ? Math.round((score / maxScore) * 100) : 0;
-  const passed = percent >= (quiz?.passingPercent ?? 0);
+  const { score, maxScore, percent, passed } = scoreAttempt(questions, attempt.questionOrder, attempt.answers, quiz?.passingPercent ?? 0);
   const updated = await QuizAttempt.findOneAndUpdate(
     { _id: attempt._id, status: "in_progress" },
     { $set: { score, maxScore, percent, passed, submittedAt: new Date(), status: expired ? "expired" : "submitted" } },
-    { new: true },
+    { returnDocument: "after" },
   );
   if (!updated) return QuizAttempt.findById(attempt._id);
   await ActivityLog.create({ userId: user.id, courseId: attempt.courseId, type: "quiz_submitted", refId: attempt.quizId, meta: { percent, passed } });

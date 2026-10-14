@@ -1,5 +1,5 @@
-import PanelSkeleton from "@/components/ui/panel-skeleton";
+import PanelLoader from "@/components/ui/panel-loader";
 
-const Loading = () => <PanelSkeleton variant="list" />;
+const Loading = () => <PanelLoader />;
 
 export default Loading;

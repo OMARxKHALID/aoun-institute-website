@@ -8,6 +8,7 @@ import BarChart from "@/components/ui/bar-chart";
 import ProgressBar from "@/components/ui/progress-bar";
 import StatusPill from "@/components/ui/status-pill";
 import EmptyState from "@/components/ui/empty-state";
+import BadgeGrid from "@/features/progress/components/badge-grid";
 import { formatDate, formatDuration } from "@/lib/format";
 
 export const metadata = { title: "Progress" };
@@ -24,6 +25,10 @@ const ProgressPage = async () => {
           <StatCard icon={CheckCircle2} label="Lessons completed" value={r.totals.lessons} />
           <StatCard icon={Percent} label="Average quiz score" value={r.totals.averageScore == null ? "—" : `${r.totals.averageScore}%`} hint={`${r.totals.quizzesPassed} quizzes passed`} />
         </div>
+
+        <PanelCard title="Badges" action={<span className="text-sm text-white/50">{r.badges.filter((b) => b.earned).length} of {r.badges.length} earned</span>}>
+          <BadgeGrid badges={r.badges} />
+        </PanelCard>
 
         <PanelCard title="Weekly study time" action={<span className="text-sm text-white/50">Last 12 weeks, minutes</span>}>
           <BarChart label="Minutes studied per week for the last twelve weeks" data={r.weeks} format={(v) => `${v}m`} />

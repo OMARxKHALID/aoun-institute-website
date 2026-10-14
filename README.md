@@ -23,13 +23,15 @@ bun dev
 bun run demo
 ```
 
-Resets courses, orders, progress and students, then loads a realistic demo: 8 courses (7 published, 1 draft, 1 free) with playable sample videos, quizzes, 24 students in Pakistani cities, paid/pending/failed/refunded orders over six months, progress, quiz results, 15 certificates, announcements and contact messages. The admin account is kept.
+Resets courses, orders, progress and students, then loads a realistic demo: 8 courses (7 published, 1 draft, 1 free) with playable sample videos, quizzes, 24 students in Pakistani cities, paid/pending/failed/refunded orders over six months, progress, quiz results (including written answers), certificates, course reviews, lesson Q&A with instructor answers, timestamped notes, study plans, an admin activity log, announcements and contact messages. The admin account is kept.
 
 - Admin: `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`
 - Showcase student: `SEED_STUDENT_EMAIL` / `SEED_STUDENT_PASSWORD` (one finished course with certificate, one half done, one just started, a free course and a pending payment)
 - Other students: any `*@demo.pk` address, e.g. `ayesha.khan@demo.pk`, password `DEMO_STUDENT_PASSWORD` (default `demo1234`)
 
 Every course starts with a 1-minute intro lesson, so you can show a lesson completing and its quiz unlocking live. Sample videos are public test streams; the course artwork lives in `public/demo/`.
+
+Demo payments: set `DEMO_PAYMENTS=true` and the checkout shows a **Card** tab. Pay with `4242 4242 4242 4242`, any future expiry and any CVC to enroll instantly (`4000 0000 0000 0002` shows a declined card). No money moves. Keep it off for real customers.
 
 The script only runs against a local database. To load the demo into a hosted database, run `bun run demo -- --force` with that `MONGODB_URI`.
 
@@ -61,11 +63,13 @@ Every variable is documented in `.env.example`. The site runs without the option
 
 - Mux videos use signed playback tokens that expire shortly after the video length, and DRM when `MUX_DRM_CONFIGURATION_ID` is set (paid Mux add-on).
 - Every viewer sees a moving watermark with their name, email and a short ID, also in fullscreen.
+- A faint tiled watermark covers the whole frame, so cropping cannot remove it.
+- The video pauses behind a cover when the window loses focus, the tab is hidden, a screenshot shortcut is pressed (PrintScreen, Win+Shift+S, Cmd+Shift+3/4/5) or the page is printed. Right-click, drag-to-save, picture-in-picture and casting are disabled. There is no download button.
 - One account can stream on one device at a time; a second device pauses the first.
 - Lessons can only be played by enrolled students (or anyone, for free previews), and sequential unlock is enforced on the server.
 
 Honest limits:
-- No website can block screenshots or phone cameras. The watermark makes leaks traceable.
+- No website can fully block screenshots, screen recorders or phone cameras. The shortcuts above are deterrents a determined user can get around; the watermark makes any leak traceable to the account.
 - DRM blacks out screen recordings only where hardware DRM exists (Safari, iOS, Android, Edge on Windows). Desktop Chrome and Firefox use software DRM, which stops downloading but not every screen recorder.
 - YouTube/Vimeo embeds and direct links are not protected; use them only for free or low-value content.
 

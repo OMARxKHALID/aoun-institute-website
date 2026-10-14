@@ -2,7 +2,7 @@
 
 import { CldUploadWidget } from "next-cloudinary";
 import { FileText, ImagePlus, X } from "lucide-react";
-import { UPLOAD_RULES } from "@/lib/upload-rules";
+import { MAX_SOURCE_IMAGE, UPLOAD_RULES, fileHref, imageUrl } from "@/lib/upload-rules";
 
 const cloudConfigured = Boolean(process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME && process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY);
 
@@ -28,7 +28,7 @@ const ImageUpload = ({ kind, value, onChange, label, aspect }) => {
       <span className="text-base text-white/70">{label}</span>
       <div className="flex flex-wrap items-center gap-4">
         <div style={{ aspectRatio: !isDocument && aspect ? aspect : 1 }} className="grid h-20 max-w-40 shrink-0 place-items-center overflow-hidden rounded-xl border border-[#302C2A] bg-[#0C0C0C]">
-          {value?.url && !isDocument ? <img src={value.url} alt="" className="size-full object-cover" /> : isDocument ? <FileText className={`size-6 ${value?.url ? "text-accent" : "text-white/30"}`} /> : <ImagePlus className="size-6 text-white/30" />}
+          {value?.url && !isDocument ? <img src={imageUrl(value.url, 320)} alt="" className="size-full object-cover" /> : isDocument ? <FileText className={`size-6 ${value?.url ? "text-accent" : "text-white/30"}`} /> : <ImagePlus className="size-6 text-white/30" />}
         </div>
         <CldUploadWidget
           uploadPreset={rule.preset}
@@ -38,7 +38,8 @@ const ImageUpload = ({ kind, value, onChange, label, aspect }) => {
             multiple: false,
             maxFiles: 1,
             clientAllowedFormats: rule.formats,
-            maxFileSize: rule.maxBytes,
+            maxFileSize: rule.maxDimension ? MAX_SOURCE_IMAGE : rule.maxBytes,
+            ...(rule.maxDimension && { maxImageWidth: rule.maxDimension, maxImageHeight: rule.maxDimension, maxImageFileSize: MAX_SOURCE_IMAGE }),
             cropping: Boolean(aspect),
             croppingAspectRatio: aspect,
             showSkipCropButton: false,
@@ -57,14 +58,21 @@ const ImageUpload = ({ kind, value, onChange, label, aspect }) => {
           </button>
         )}
       </div>
-      {isPrivate && value?.name && <p className="truncate text-sm text-accent">{value.name}</p>}
+      {isPrivate && value?.name &&
+        (kind === "document" ? (
+          <a href={fileHref(value)} target="_blank" rel="noopener noreferrer" className="truncate text-sm text-accent hover:underline">
+            {value.name}
+          </a>
+        ) : (
+          <p className="truncate text-sm text-accent">{value.name}</p>
+        ))}
       {isDocument && !isPrivate && value?.name && (
         <a href={value.url} target="_blank" rel="noopener noreferrer" className="truncate text-sm text-accent hover:underline">
           {value.name}
         </a>
       )}
       <p className="text-xs text-white/40">
-        {rule.formats.join(", ").toUpperCase()} · max {rule.maxBytes / 1024 / 1024} MB
+        {rule.formats.join(", ").toUpperCase()} · {rule.maxDimension ? "large photos are resized automatically" : `max ${rule.maxBytes / 1024 / 1024} MB`}
       </p>
     </div>
   );

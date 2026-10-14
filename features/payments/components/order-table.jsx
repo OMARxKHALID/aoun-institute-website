@@ -6,6 +6,7 @@ import { createColumnHelper } from "@tanstack/react-table";
 import { Check, FileText, Undo2, X } from "lucide-react";
 import { approveOrder, refundOrder, rejectOrder } from "@/features/payments/actions";
 import ActionMenu from "@/components/ui/action-menu";
+import { useDialog } from "@/components/ui/dialog-provider";
 import DataTable from "@/components/ui/data-table";
 import FormAlert from "@/components/ui/form-alert";
 import StatusPill from "@/components/ui/status-pill";
@@ -17,6 +18,7 @@ const helper = createColumnHelper();
 const filters = ["PENDING", "PAID", "FAILED", "REFUNDED", "ALL"];
 
 const OrderActions = ({ order, onResult }) => {
+  const dialog = useDialog();
   const [busy, setBusy] = useState(false);
 
   const run = async (action) => {
@@ -25,17 +27,49 @@ const OrderActions = ({ order, onResult }) => {
     setBusy(false);
   };
 
-  const handleApprove = () => {
-    if (window.confirm(`Approve ${formatPrice(order.amount, order.currency)} from ${order.student} and enroll them in ${order.course}?`)) run(() => approveOrder(order.id));
+  const details = [
+    ["Student", order.student],
+    ["Course", order.course],
+    ["Amount", formatPrice(order.amount, order.currency)],
+    ["Method", order.method],
+    ["Reference", order.reference || "—"],
+  ];
+
+  const handleApprove = async () => {
+    const ok = await dialog.confirm({
+      title: "Approve this payment?",
+      message: "Only approve after you see the money in your account. The student is enrolled and emailed right away.",
+      details,
+      confirmLabel: "Approve & enroll",
+    });
+    if (ok) run(() => approveOrder(order.id));
   };
 
-  const handleReject = () => {
-    const note = window.prompt("Why is this payment rejected? The student will see this.");
+  const handleReject = async () => {
+    const note = await dialog.prompt({
+      title: "Reject this payment?",
+      message: "The student is emailed this reason and can submit their payment again.",
+      details,
+      label: "Reason",
+      placeholder: "e.g. Transaction ID not found in our bank statement",
+      minLength: 3,
+      danger: true,
+      confirmLabel: "Reject payment",
+    });
     if (note) run(() => rejectOrder(order.id, { note }));
   };
 
-  const handleRefund = () => {
-    const note = window.prompt(`Refund ${formatPrice(order.amount, order.currency)} to ${order.student}? Their access to ${order.course} will be removed. Reason:`);
+  const handleRefund = async () => {
+    const note = await dialog.prompt({
+      title: "Refund and remove access?",
+      message: "Send the money back first. The student loses access to the course and is emailed this reason.",
+      details,
+      label: "Reason",
+      placeholder: "e.g. Duplicate payment",
+      minLength: 3,
+      danger: true,
+      confirmLabel: "Mark refunded",
+    });
     if (note) run(() => refundOrder(order.id, { note }));
   };
 
@@ -54,9 +88,9 @@ const OrderActions = ({ order, onResult }) => {
   );
 };
 
-const OrderTable = ({ orders }) => {
+const OrderTable = ({ orders, initialSearch = "" }) => {
   const router = useRouter();
-  const [filter, setFilter] = useState("PENDING");
+  const [filter, setFilter] = useState(initialSearch ? "ALL" : "PENDING");
   const [error, setError] = useState(null);
   const shown = filter === "ALL" ? orders : orders.filter((o) => o.status === filter);
 
@@ -89,6 +123,7 @@ const OrderTable = ({ orders }) => {
     helper.accessor("hasReceipt", {
       header: "Receipt",
       enableSorting: false,
+      meta: { className: "hidden xl:table-cell" },
       cell: ({ row }) =>
         row.original.hasReceipt ? (
           <a href={`/api/admin/orders/${row.original.id}/receipt`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-accent hover:underline">
@@ -98,7 +133,7 @@ const OrderTable = ({ orders }) => {
           <span className="text-white/30">None</span>
         ),
     }),
-    helper.accessor("createdAt", { header: "Date", sortingFn: "datetime", cell: ({ getValue }) => <span className="text-white/60">{formatDate(getValue())}</span> }),
+    helper.accessor("createdAt", { header: "Date", sortingFn: "datetime", meta: { className: "hidden xl:table-cell" }, cell: ({ getValue }) => <span className="text-white/60">{formatDate(getValue())}</span> }),
     helper.accessor("status", { header: "Status", cell: ({ getValue }) => <StatusPill status={getValue()} /> }),
     helper.display({ id: "actions", header: "", cell: ({ row }) => <OrderActions order={row.original} onResult={handleResult} /> }),
   ]);
@@ -107,7 +142,7 @@ const OrderTable = ({ orders }) => {
     <div className="flex flex-col gap-4">
       <TabList tabs={filters.map((f) => ({ value: f, label: `${f.charAt(0)}${f.slice(1).toLowerCase()} (${f === "ALL" ? orders.length : orders.filter((o) => o.status === f).length})` }))} value={filter} onChange={setFilter} label="Order status" size="sm" />
       <FormAlert>{error}</FormAlert>
-      <DataTable key={filter} columns={columns} data={shown} searchPlaceholder="Search student, course or reference" empty="No orders here." />
+      <DataTable key={filter} columns={columns} data={shown} searchPlaceholder="Search student, course or reference" initialSearch={initialSearch} empty="No orders here." />
     </div>
   );
 };

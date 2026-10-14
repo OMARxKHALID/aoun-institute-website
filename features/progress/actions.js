@@ -4,6 +4,8 @@ import { isValidObjectId } from "mongoose";
 import { connectDB } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
 import { fail } from "@/lib/validate";
+import { rateLimit } from "@/lib/rate-limit";
+import { dayKey } from "@/lib/format";
 import Lesson from "@/features/courses/models/lesson";
 import Enrollment from "@/features/enrollments/model";
 import LessonProgress from "@/features/progress/models/lesson-progress";
@@ -38,6 +40,7 @@ const complete = async (user, lesson) => {
 
 export const saveProgress = async (lessonId, input) => {
   const user = await requireUser();
+  if (!(await rateLimit("progress", user.id))) return fail("Slow down");
   const lesson = await loadForUser(user, lessonId);
   if (!lesson) return fail("Lesson not available");
   const position = Math.max(0, Number(input?.position) || 0);
@@ -48,14 +51,14 @@ export const saveProgress = async (lessonId, input) => {
   const doc = await LessonProgress.findOneAndUpdate(
     { userId: user.id, lessonId: lesson._id },
     { $set: { lastPosition: position }, $inc: { watchedSeconds: watched }, $setOnInsert: { courseId: lesson.courseId } },
-    { upsert: true, new: true },
+    { upsert: true, returnDocument: "after" },
   );
   const percent = duration ? Math.min(1, doc.watchedSeconds / duration) : 0;
   await Promise.all([
     LessonProgress.updateOne({ _id: doc._id, completedAt: null }, { $set: { percent } }),
     watched > 0 &&
       ActivityLog.updateOne(
-        { userId: user.id, type: "lesson_viewed", "meta.day": new Date().toISOString().slice(0, 10) },
+        { userId: user.id, type: "lesson_viewed", "meta.day": dayKey() },
         { $inc: { "meta.seconds": watched }, $set: { courseId: lesson.courseId, refId: lesson._id } },
         { upsert: true },
       ),
@@ -71,6 +74,7 @@ export const saveProgress = async (lessonId, input) => {
 
 export const markLessonComplete = async (lessonId) => {
   const user = await requireUser();
+  if (!(await rateLimit("progress", user.id))) return fail("Too many requests. Try again in a minute.");
   const lesson = await loadForUser(user, lessonId);
   if (!lesson) return fail("Lesson not available");
   const trackable = lesson.video?.provider === "mux" || lesson.video?.provider === "url";

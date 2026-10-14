@@ -3,6 +3,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { formatDate } from "@/lib/format";
 import { getCertificateByCode } from "@/features/certificates/queries";
 import VerifyForm from "@/features/certificates/components/verify-form";
+import { buttonClass } from "@/lib/ui";
 
 export const instant = false;
 
@@ -53,7 +54,7 @@ const VerifyCodePage = async ({ params }) => {
             {!valid && certificate.revokedAt && <Row label="Revoked on" value={formatDate(certificate.revokedAt)} />}
           </dl>
           {valid && (
-            <a href={`/api/certificates/${certificate.code}/pdf`} className="rounded-2xl bg-linear-to-b from-[#E8602E] to-[#A8401A] px-8 py-3 font-semibold">
+            <a href={`/api/certificates/${certificate.code}/pdf`} className={buttonClass("primary", "lg")}>
               View certificate PDF
             </a>
           )}

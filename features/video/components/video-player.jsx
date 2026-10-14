@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import MuxPlayer from "@mux/mux-player-react/lazy";
-import { Loader2, Lock, MonitorX } from "lucide-react";
+import { Loader2, Lock, MonitorX, ShieldCheck } from "lucide-react";
 import { claimStream, streamHeartbeat } from "@/features/video/actions";
 import { saveProgress } from "@/features/progress/actions";
 import { btn } from "@/lib/ui";
@@ -20,6 +20,7 @@ const messages = {
   "no-video": "No video has been added to this lesson yet.",
   unavailable: "Video playback is not configured yet.",
   sequence: "Finish the previous lesson to unlock this one.",
+  busy: "Too many requests. Wait a moment and reload.",
 };
 
 const getDeviceId = () => {
@@ -37,7 +38,7 @@ const getDeviceId = () => {
 const fetchPlayback = (lessonId) => fetch(`/api/lessons/${lessonId}/playback`).then((res) => res.json());
 
 const Notice = ({ icon: Icon, children }) => (
-  <div className="grid aspect-video w-full place-items-center rounded-2xl border border-white/10 bg-[#0C0C0C] p-6 text-center text-white/60">
+  <div className="grid aspect-video w-full place-items-center rounded-2xl border border-[#302C2A] bg-[#0C0C0C] p-6 text-center text-white/60">
     <div className="flex flex-col items-center gap-3">
       <Icon className="size-8 text-accent" />
       {children}
@@ -49,7 +50,7 @@ const Watermark = ({ viewer }) => {
   const [pos, setPos] = useState({ top: 8, left: 6 });
 
   useEffect(() => {
-    const id = setInterval(() => setPos({ top: 5 + Math.random() * 80, left: 5 + Math.random() * 60 }), 7000);
+    const id = setInterval(() => setPos({ top: 5 + Math.random() * 80, left: 5 + Math.random() * 60 }), 4000);
     return () => clearInterval(id);
   }, []);
 
@@ -66,7 +67,52 @@ const Watermark = ({ viewer }) => {
   );
 };
 
-const VideoPlayer = ({ lessonId, title, onComplete }) => {
+const TiledMark = ({ viewer }) => (
+  <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-10 grid select-none grid-cols-3 grid-rows-3 place-items-center overflow-hidden text-[10px] text-white/[0.07] sm:text-sm">
+    {Array.from({ length: 9 }, (_, i) => (
+      <span key={i} className="-rotate-[20deg] whitespace-nowrap">
+        {viewer.email} · #{viewer.tag}
+      </span>
+    ))}
+  </div>
+);
+
+const SCREENSHOT_KEYS = (e) => e.key === "PrintScreen" || (e.metaKey && e.shiftKey && ["3", "4", "5", "6"].includes(e.key)) || (e.key?.toLowerCase() === "s" && e.shiftKey && (e.metaKey || e.getModifierState?.("OS")));
+
+const useShield = (enabled, playerRef) => {
+  const [shield, setShield] = useState(false);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const raise = () => {
+      playerRef.current?.pause();
+      setShield(true);
+    };
+    const handleVisibility = () => document.hidden && raise();
+    const handleKey = (e) => {
+      if (!SCREENSHOT_KEYS(e)) return;
+      raise();
+      navigator.clipboard?.writeText("").catch(() => null);
+    };
+    const handleBeforePrint = () => raise();
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("blur", raise);
+    window.addEventListener("keydown", handleKey);
+    window.addEventListener("keyup", handleKey);
+    window.addEventListener("beforeprint", handleBeforePrint);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("blur", raise);
+      window.removeEventListener("keydown", handleKey);
+      window.removeEventListener("keyup", handleKey);
+      window.removeEventListener("beforeprint", handleBeforePrint);
+    };
+  }, [enabled, playerRef]);
+
+  return [shield, () => setShield(false)];
+};
+
+const VideoPlayer = ({ lessonId, title, onComplete, controllerRef, startAt }) => {
   const playerRef = useRef(null);
   const deviceRef = useRef(null);
   const trackRef = useRef({ last: null, watched: 0 });
@@ -81,6 +127,7 @@ const VideoPlayer = ({ lessonId, title, onComplete }) => {
     refetchOnWindowFocus: false,
   });
   const guarded = Boolean(data?.viewer);
+  const [shield, lowerShield] = useShield(guarded && data?.provider !== "embed", playerRef);
 
   useEffect(() => {
     if (!guarded || !playing) return;
@@ -107,6 +154,19 @@ const VideoPlayer = ({ lessonId, title, onComplete }) => {
     if (!data?.track || !playing) return;
     const id = setInterval(flush, SAVE_MS);
     return () => clearInterval(id);
+  });
+
+  useEffect(() => {
+    if (!controllerRef) return;
+    controllerRef.current = {
+      getTime: () => Math.floor(playerRef.current?.currentTime ?? 0),
+      seek: (sec) => {
+        const player = playerRef.current;
+        if (!player) return;
+        player.currentTime = sec;
+        player.play?.();
+      },
+    };
   });
 
   const handleTimeUpdate = () => {
@@ -141,6 +201,11 @@ const VideoPlayer = ({ lessonId, title, onComplete }) => {
 
   const handleContextMenu = (e) => e.preventDefault();
 
+  const handleShieldResume = () => {
+    lowerShield();
+    playerRef.current?.play();
+  };
+
   if (isPending)
     return (
       <Notice icon={Loader2}>
@@ -163,7 +228,7 @@ const VideoPlayer = ({ lessonId, title, onComplete }) => {
   const containerId = `video-${lessonId}`;
 
   return (
-    <div id={containerId} onContextMenu={handleContextMenu} className="relative aspect-video w-full overflow-hidden rounded-2xl bg-black">
+    <div id={containerId} onContextMenu={handleContextMenu} onDragStart={handleContextMenu} className="relative aspect-video w-full select-none overflow-hidden rounded-2xl bg-black [-webkit-touch-callout:none] print:hidden">
       {data.provider === "embed" ? (
         <iframe src={data.src} title={title ?? data.title} allow="autoplay; fullscreen; encrypted-media" allowFullScreen className="size-full" />
       ) : (
@@ -178,16 +243,30 @@ const VideoPlayer = ({ lessonId, title, onComplete }) => {
           metadataViewerUserId={data.viewer?.tag}
           accentColor="#E8602E"
           fullscreenElement={containerId}
-          startTime={data.startTime || undefined}
+          startTime={startAt ?? (data.startTime || undefined)}
           onPlay={handlePlay}
           onPause={handlePause}
           onEnded={handlePause}
           onTimeUpdate={handleTimeUpdate}
           onSeeking={handleSeeking}
-          className="size-full [--pip-button:none]"
+          disablePictureInPicture
+          disableRemotePlayback
+          className="size-full [--airplay-button:none] [--cast-button:none] [--pip-button:none]"
         />
       )}
       {data.viewer && <Watermark viewer={data.viewer} />}
+      {data.viewer && <TiledMark viewer={data.viewer} />}
+      {shield && (
+        <div className="absolute inset-0 z-30 grid place-items-center bg-black p-6 text-center">
+          <div className="flex flex-col items-center gap-3">
+            <ShieldCheck className="size-8 text-accent" />
+            <p className="max-w-sm text-white/80">Paused. This video is protected and only plays while this window is in focus.</p>
+            <button type="button" onClick={handleShieldResume} className={btn.primary}>
+              Resume
+            </button>
+          </div>
+        </div>
+      )}
       {blocked && (
         <div className="absolute inset-0 z-20 grid place-items-center bg-black/85 p-6 text-center">
           <div className="flex flex-col items-center gap-3">

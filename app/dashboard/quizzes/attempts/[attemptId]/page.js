@@ -6,6 +6,7 @@ import QuizTaker from "@/features/quizzes/components/quiz-taker";
 import PanelHeader from "@/components/ui/panel-header";
 import PanelCard from "@/components/ui/panel-card";
 import { btn } from "@/lib/ui";
+import { plural } from "@/lib/format";
 
 export const metadata = { title: "Quiz Attempt" };
 
@@ -35,7 +36,7 @@ const AttemptPage = async ({ params }) => {
           <div className="min-w-0 flex-1">
             <p className="font-machina text-4xl">{attempt.percent}%</p>
             <p className="text-white/70">
-              {attempt.score} of {attempt.maxScore} points · pass mark {quiz.passingPercent}% · {attempt.passed ? "Passed" : "Not passed"}
+              {attempt.score} of {plural(attempt.maxScore, "point")} · pass mark {quiz.passingPercent}% · {attempt.passed ? "Passed" : "Not passed"}
               {attempt.status === "expired" && " · submitted when time ran out"}
             </p>
           </div>
@@ -55,6 +56,15 @@ const AttemptPage = async ({ params }) => {
                 {q.prompt}
               </p>
             </div>
+            {q.type === "short_answer" && (
+              <div className="flex flex-col gap-2 text-sm">
+                <p className={`rounded-xl border p-3 ${q.correct ? "border-green-500/50 bg-green-500/10" : "border-red-500/40 bg-red-500/5"}`}>
+                  <span className="block text-xs text-white/50">Your answer</span>
+                  {q.text || <span className="text-white/40">No answer</span>}
+                </p>
+                {reveal && q.acceptedAnswers?.length > 0 && <p className="text-white/60">Accepted: {q.acceptedAnswers.join(" · ")}</p>}
+              </div>
+            )}
             <ul className="flex flex-col gap-2">
               {q.options.map((o) => {
                 const picked = q.selected.includes(o.id);

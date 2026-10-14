@@ -16,8 +16,10 @@ import {
   tableFeatures,
   useTable,
 } from "@tanstack/react-table";
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, Search } from "lucide-react";
 import Select from "@/components/ui/select";
+import Pager from "@/components/ui/pager";
+import { PAGE_SIZE } from "@/hooks/use-pager";
 
 export const tableFeatureSet = tableFeatures({
   rowSortingFeature,
@@ -33,48 +35,14 @@ export const tableFeatureSet = tableFeatures({
 
 const sortIcons = { asc: ArrowUp, desc: ArrowDown };
 
-const PAGE_SIZES = [10, 25, 50];
 
 const headerText = (column) => (typeof column.columnDef.header === "string" ? column.columnDef.header : column.id);
-
-const pageButton = "grid size-9 place-items-center rounded-full border border-[#302C2A] transition hover:border-accent hover:text-accent disabled:pointer-events-none disabled:opacity-30";
 
 const Pagination = ({ table }) => {
   const { pageIndex, pageSize } = table.state.pagination;
   const total = table.getPrePaginatedRowModel().rows.length;
-  const pages = table.getPageCount();
-  if (total === 0) return null;
   const from = pageIndex * pageSize + 1;
-  const to = Math.min(total, from + pageSize - 1);
-
-  return (
-    <div className="flex flex-col items-center justify-between gap-3 text-sm text-white/60 sm:flex-row">
-      <p>
-        Showing <span className="text-white">{from}</span>–<span className="text-white">{to}</span> of <span className="text-white">{total}</span>
-      </p>
-      <div className="flex items-center gap-3">
-        <label className="flex items-center gap-2">
-          <span className="hidden sm:inline">Rows</span>
-          <Select
-            value={pageSize}
-            onChange={(e) => table.setPageSize(Number(e.target.value))}
-            aria-label="Rows per page"
-            options={PAGE_SIZES.map((size) => ({ value: size, label: String(size) }))}
-            className="rounded-full border border-[#302C2A] bg-[#0C0C0C] py-1.5 pl-3 text-white outline-hidden focus:border-accent"
-          />
-        </label>
-        <button type="button" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} aria-label="Previous page" className={pageButton}>
-          <ChevronLeft className="size-4" />
-        </button>
-        <span className="min-w-16 text-center">
-          {pageIndex + 1} / {Math.max(pages, 1)}
-        </span>
-        <button type="button" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()} aria-label="Next page" className={pageButton}>
-          <ChevronRight className="size-4" />
-        </button>
-      </div>
-    </div>
-  );
+  return <Pager from={from} to={Math.min(total, from + pageSize - 1)} total={total} page={pageIndex} pages={Math.max(table.getPageCount(), 1)} onPrev={() => table.previousPage()} onNext={() => table.nextPage()} />;
 };
 
 const MobileSort = ({ table }) => {
@@ -146,14 +114,14 @@ const RowCard = ({ row, table }) => {
   );
 };
 
-const DataTable = ({ columns, data, searchPlaceholder = "Search", initialSearch = "", empty = "Nothing here yet.", pageSize = 10 }) => {
+const DataTable = ({ columns, data, searchPlaceholder = "Search", initialSearch = "", empty = "Nothing here yet." }) => {
   const [search, setSearch] = useState(initialSearch);
   const table = useTable({
     features: tableFeatureSet,
     columns,
     data,
     globalFilterFn: "includesString",
-    initialState: { globalFilter: initialSearch, pagination: { pageIndex: 0, pageSize } },
+    initialState: { globalFilter: initialSearch, pagination: { pageIndex: 0, pageSize: PAGE_SIZE } },
   });
 
   const handleSearch = (e) => {
@@ -190,7 +158,7 @@ const DataTable = ({ columns, data, searchPlaceholder = "Search", initialSearch 
                   const sorted = header.column.getIsSorted();
                   const SortIcon = sortIcons[sorted] ?? ArrowUpDown;
                   return (
-                    <th key={header.id} scope="col" aria-sort={sorted ? (sorted === "asc" ? "ascending" : "descending") : undefined} className="whitespace-nowrap px-4 py-3 font-medium">
+                    <th key={header.id} scope="col" aria-sort={sorted ? (sorted === "asc" ? "ascending" : "descending") : undefined} className={`whitespace-nowrap px-4 py-3 font-medium ${header.column.columnDef.meta?.className ?? ""}`}>
                       {header.isPlaceholder ? null : header.column.getCanSort() ? (
                         <button type="button" onClick={header.column.getToggleSortingHandler()} className="flex items-center gap-1.5 hover:text-white">
                           <table.FlexRender header={header} />
@@ -209,7 +177,7 @@ const DataTable = ({ columns, data, searchPlaceholder = "Search", initialSearch 
             {rows.map((row) => (
               <tr key={row.id} className="border-t border-[#302C2A] transition hover:bg-white/[0.02]">
                 {row.getAllCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-3 align-middle">
+                  <td key={cell.id} className={`px-4 py-3 align-middle ${cell.column.columnDef.meta?.className ?? ""}`}>
                     <table.FlexRender cell={cell} />
                   </td>
                 ))}

@@ -5,11 +5,13 @@ import { isValidObjectId } from "mongoose";
 import { connectDB } from "@/lib/db";
 import { requireAdmin, requireUser } from "@/lib/dal";
 import { fail, parse } from "@/lib/validate";
+import { rateLimit } from "@/lib/rate-limit";
 import Lesson from "@/features/courses/models/lesson";
 import PlaybackSession from "@/features/video/playback-session";
 import { createDirectUpload, deleteVideo, muxEnabled } from "@/features/video/mux";
 import { syncLessonVideo } from "@/features/video/sync";
 import { deviceIdSchema, videoLinkSchema } from "@/features/video/schemas";
+import { audit } from "@/features/audit/service";
 
 const loadLesson = async (lessonId) => {
   if (!isValidObjectId(lessonId)) return null;
@@ -23,7 +25,7 @@ const invalidate = (lesson) => {
 };
 
 export const startVideoUpload = async (lessonId) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   if (!muxEnabled) return fail("Mux is not configured. Add MUX_TOKEN_ID and MUX_TOKEN_SECRET to the environment.");
   const lesson = await loadLesson(lessonId);
   if (!lesson) return fail("Lesson not found");
@@ -31,6 +33,7 @@ export const startVideoUpload = async (lessonId) => {
   await deleteVideo(lesson.video);
   await Lesson.updateOne({ _id: lesson._id }, { $set: { video: { provider: "mux", uploadId: upload.id, status: "uploading" } } });
   invalidate(lesson);
+  await audit(admin, "video.upload", `Started a video upload for "${lesson.title}"`, { type: "lesson", id: lesson._id });
   return { ok: true, data: { url: upload.url } };
 };
 
@@ -44,7 +47,7 @@ export const refreshVideoStatus = async (lessonId) => {
 };
 
 export const setVideoLink = async (lessonId, input) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const result = parse(videoLinkSchema, input);
   if (!result.ok) return result;
   const lesson = await loadLesson(lessonId);
@@ -52,21 +55,24 @@ export const setVideoLink = async (lessonId, input) => {
   await deleteVideo(lesson.video);
   await Lesson.updateOne({ _id: lesson._id }, { $set: { video: { ...result.data, status: "ready", drm: false } } });
   invalidate(lesson);
+  await audit(admin, "video.link", `Set a ${result.data.provider} video for "${lesson.title}"`, { type: "lesson", id: lesson._id });
   return { ok: true };
 };
 
 export const removeVideo = async (lessonId) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const lesson = await loadLesson(lessonId);
   if (!lesson) return fail("Lesson not found");
   await deleteVideo(lesson.video);
   await Lesson.updateOne({ _id: lesson._id }, { $set: { video: { status: "none" } } });
   invalidate(lesson);
+  await audit(admin, "video.remove", `Removed the video from "${lesson.title}"`, { type: "lesson", id: lesson._id });
   return { ok: true };
 };
 
 export const claimStream = async (lessonId, deviceId) => {
   const user = await requireUser();
+  if (!(await rateLimit("stream", user.id))) return fail("Too many requests");
   if (!isValidObjectId(lessonId) || !deviceIdSchema.safeParse(deviceId).success) return fail("Invalid request");
   await connectDB();
   const now = new Date();
@@ -76,6 +82,7 @@ export const claimStream = async (lessonId, deviceId) => {
 
 export const streamHeartbeat = async (lessonId, deviceId) => {
   const user = await requireUser();
+  if (!(await rateLimit("stream", user.id))) return { ok: true };
   if (!isValidObjectId(lessonId) || !deviceIdSchema.safeParse(deviceId).success) return fail("Invalid request");
   await connectDB();
   const session = await PlaybackSession.findOne({ userId: user.id }, "deviceId").lean();

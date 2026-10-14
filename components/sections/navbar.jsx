@@ -72,7 +72,7 @@ const Navbar = ({ brand }) => {
         <div className="hidden items-center justify-end gap-3.5 min-[880px]:flex">
           <Link href="/contact" className="flex items-center gap-2 rounded-full border border-accent bg-[#4B1E0E] px-4 py-2 text-white">
             <Phone className="size-4" />
-            <span>Request Call</span>
+            <span>Contact us</span>
           </Link>
           <Link href={account.href} className="group rounded-lg px-4 py-2 transition hover:bg-accent">
             <RollText className="text-lg font-light">{account.label}</RollText>
@@ -80,7 +80,7 @@ const Navbar = ({ brand }) => {
         </div>
 
         <div className="flex items-center gap-3.5 min-[880px]:hidden">
-          <Link href="/contact" aria-label="Request call" className="flex size-10 items-center justify-center rounded-full border border-accent bg-[#4B1E0E] text-white active:scale-95">
+          <Link href="/contact" aria-label="Contact us" className="flex size-10 items-center justify-center rounded-full border border-accent bg-[#4B1E0E] text-white active:scale-95">
             <Phone className="size-4" />
           </Link>
           <button onClick={handleToggle} aria-label="Toggle menu" aria-expanded={open} className="relative flex size-8 items-center justify-center">

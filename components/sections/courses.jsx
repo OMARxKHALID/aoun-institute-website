@@ -4,6 +4,7 @@ import SectionHeading from "@/components/ui/section-heading";
 import GlowButton from "@/components/ui/glow-button";
 import RollText from "@/components/ui/roll-text";
 import Link from "next/link";
+import { imageUrl } from "@/lib/upload-rules";
 
 const CourseCard = ({ slug, title, subtitle, thumbnail, price, discountPrice, currency, estimatedDuration, lessons, light, index }) => {
   const meta = [
@@ -52,7 +53,7 @@ const CourseCard = ({ slug, title, subtitle, thumbnail, price, discountPrice, cu
         </div>
       </div>
       <div className="relative aspect-video w-full shrink-0 self-center overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#f97316,#7c2d12_55%,#1c1917)] lg:w-[45%]">
-        {thumbnail?.url && <img src={thumbnail.url} alt="" loading="lazy" decoding="async" className="size-full object-cover" />}
+        {thumbnail?.url && <img src={imageUrl(thumbnail.url, 800)} alt="" loading="lazy" decoding="async" className="size-full object-cover" />}
       </div>
     </div>
   </article>

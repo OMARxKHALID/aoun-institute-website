@@ -4,8 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createManualOrder, enrollFree } from "@/features/payments/actions";
-import { checkoutSchema } from "@/features/payments/schemas";
+import { CreditCard, Landmark, Lock } from "lucide-react";
+import { createManualOrder, enrollFree, payWithDemoCard } from "@/features/payments/actions";
+import { cardSchema, checkoutSchema } from "@/features/payments/schemas";
+import TabList from "@/components/ui/tab-list";
 import Field from "@/components/ui/field";
 import Button from "@/components/ui/button";
 import FormAlert from "@/components/ui/form-alert";
@@ -44,7 +46,7 @@ export const FreeEnrollButton = ({ courseId }) => {
   );
 };
 
-const CheckoutForm = ({ courseId, payment }) => {
+const ManualForm = ({ courseId, payment }) => {
   const router = useRouter();
   const bank = payment.bank ?? {};
   const methods = [...(bank.accountNumber || bank.iban ? [BANK] : []), ...payment.wallets.map((w) => w.name)];
@@ -113,6 +115,78 @@ const CheckoutForm = ({ courseId, payment }) => {
         Submit payment for review
       </Button>
     </form>
+  );
+};
+
+const TEST_CARD = { name: "Test Student", number: "4242 4242 4242 4242", expiry: "12/30", cvc: "123" };
+
+const formatCardNumber = (value) =>
+  value
+    .replace(/\D/g, "")
+    .slice(0, 19)
+    .replace(/(\d{4})(?=\d)/g, "$1 ");
+
+const formatExpiry = (value) => {
+  const digits = value.replace(/\D/g, "").slice(0, 4);
+  return digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+};
+
+const CardForm = ({ courseId, amount }) => {
+  const router = useRouter();
+  const { register, handleSubmit, setError, setValue, formState } = useForm({
+    resolver: zodResolver(cardSchema),
+    defaultValues: { name: "", number: "", expiry: "", cvc: "" },
+  });
+  const { errors, isSubmitting } = formState;
+
+  const handleTestCard = () => Object.entries(TEST_CARD).forEach(([key, value]) => setValue(key, value, { shouldValidate: true }));
+
+  const handlePay = async (values) => {
+    const result = await payWithDemoCard(courseId, values);
+    if (!result.ok) return Object.entries(result.errors).forEach(([field, messages]) => setError(field, { message: messages[0] }));
+    router.push(`/dashboard/courses/${result.data.slug}`);
+  };
+
+  return (
+    <form onSubmit={handleSubmit(handlePay)} noValidate className="flex flex-col gap-5">
+      <div className="flex flex-col gap-3 rounded-2xl border border-accent/30 bg-accent/[0.06] p-4 text-sm text-white/70 sm:flex-row sm:items-center sm:justify-between">
+        <p>
+          Demo mode: no real money is charged. Use <span className="font-mono text-white">4242 4242 4242 4242</span>, any future date and any CVC.
+        </p>
+        <button type="button" onClick={handleTestCard} className="shrink-0 self-start rounded-full border border-accent/50 px-3.5 py-1.5 text-accent transition hover:bg-accent hover:text-white sm:self-auto">
+          Use test card
+        </button>
+      </div>
+      <FormAlert>{errors.root?.message}</FormAlert>
+      <Field label="Name on card" autoComplete="cc-name" error={errors.name?.message} {...register("name")} />
+      <Field label="Card number" inputMode="numeric" autoComplete="cc-number" placeholder="1234 1234 1234 1234" error={errors.number?.message} {...register("number", { onChange: (e) => setValue("number", formatCardNumber(e.target.value)) })} />
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="Expiry" inputMode="numeric" autoComplete="cc-exp" placeholder="MM/YY" error={errors.expiry?.message} {...register("expiry", { onChange: (e) => setValue("expiry", formatExpiry(e.target.value)) })} />
+        <Field label="CVC" inputMode="numeric" autoComplete="cc-csc" placeholder="123" maxLength={4} error={errors.cvc?.message} {...register("cvc")} />
+      </div>
+      <Button size="lg" type="submit" loading={isSubmitting} className="self-start">
+        <Lock className="size-4" /> Pay {amount}
+      </Button>
+    </form>
+  );
+};
+
+const CheckoutForm = ({ courseId, payment, demoCard, amount }) => {
+  const [tab, setTab] = useState(demoCard ? "card" : "manual");
+  if (!demoCard) return <ManualForm courseId={courseId} payment={payment} />;
+  return (
+    <div className="flex flex-col gap-6">
+      <TabList
+        tabs={[
+          { value: "card", label: "Card", icon: CreditCard },
+          { value: "manual", label: "Bank or wallet", icon: Landmark },
+        ]}
+        value={tab}
+        onChange={setTab}
+        label="Payment method"
+      />
+      {tab === "card" ? <CardForm courseId={courseId} amount={amount} /> : <ManualForm courseId={courseId} payment={payment} />}
+    </div>
   );
 };
 

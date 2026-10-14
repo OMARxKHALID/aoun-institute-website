@@ -9,6 +9,7 @@ import { escapeHtml, sendEmail } from "@/lib/email";
 import ContactMessage from "@/features/contact/model";
 import { contactSchema } from "@/features/contact/schemas";
 import { getSiteSettings } from "@/features/site-settings/queries";
+import { audit } from "@/features/audit/service";
 
 export const sendContactMessage = async (input) => {
   const result = parse(contactSchema, input);
@@ -32,17 +33,19 @@ export const sendContactMessage = async (input) => {
 const STATUSES = ["new", "read", "archived"];
 
 export const setMessageStatus = async (id, status) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   if (!isValidObjectId(id) || !STATUSES.includes(status)) return fail("Message not found");
   await connectDB();
   await ContactMessage.updateOne({ _id: id }, { $set: { status } });
+  await audit(admin, "message.status", `Marked a contact message as ${status}`, { type: "message", id });
   return { ok: true };
 };
 
 export const deleteMessage = async (id) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   if (!isValidObjectId(id)) return fail("Message not found");
   await connectDB();
   await ContactMessage.deleteOne({ _id: id });
+  await audit(admin, "message.delete", "Deleted a contact message", { type: "message", id });
   return { ok: true };
 };

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
+import { buttonClass } from "@/lib/ui";
 
 const VerifyForm = ({ initial = "" }) => {
   const router = useRouter();
@@ -27,7 +28,7 @@ const VerifyForm = ({ initial = "" }) => {
           className="w-full rounded-2xl border border-[#302C2A] bg-[#0C0C0C] py-4 pl-12 pr-4 text-lg uppercase outline-hidden placeholder:normal-case placeholder:text-white/30 focus:border-accent"
         />
       </label>
-      <button className="rounded-2xl bg-linear-to-b from-[#E8602E] to-[#A8401A] px-8 py-4 text-lg font-semibold">Verify</button>
+      <button className={buttonClass("primary", "lg")}>Verify</button>
     </form>
   );
 };

@@ -4,14 +4,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileQuestion, Loader2 } from "lucide-react";
 import { createQuiz } from "@/features/quizzes/actions";
+import { useDialog } from "@/components/ui/dialog-provider";
 
 const AddQuizButton = ({ courseId, sectionId, lessonId, defaultTitle, label = "Add quiz" }) => {
+  const dialog = useDialog();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
   const handleClick = async () => {
-    const title = window.prompt("Quiz title", defaultTitle);
+    const title = await dialog.prompt({ title: "Add a quiz after this lesson", message: "Students unlock it after they finish the lesson.", label: "Quiz title", defaultValue: defaultTitle, multiline: false, minLength: 2, confirmLabel: "Create quiz" });
     if (!title) return;
     setBusy(true);
     const result = await createQuiz(courseId, { title, sectionId, lessonId: lessonId ?? null });

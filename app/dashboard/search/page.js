@@ -9,13 +9,17 @@ const StudentSearchPage = async ({ searchParams }) => {
   const r = await studentSearch(q);
   return (
     <>
-      <PanelHeader title="Search" subtitle={q ? `Results for “${q}”` : "Your courses, lessons and the course catalog"} query={q} />
+      <PanelHeader title="Search" subtitle={q ? `Results for “${q}”` : "Courses, lessons, quizzes, notes, certificates and pages"} query={q} />
       <div className="p-4 sm:p-5 lg:p-8">
         <SearchResults
           q={q}
           groups={r ? [
+            { title: "Pages", items: r.pages },
             { title: "My courses", items: r.courses },
             { title: "Lessons", items: r.lessons },
+            { title: "Quizzes", items: r.quizzes },
+            { title: "My notes", items: r.notes },
+            { title: "Certificates", items: r.certificates },
             { title: "More courses", items: r.catalog },
           ] : []}
         />

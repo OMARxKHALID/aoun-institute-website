@@ -13,6 +13,7 @@ import Question from "@/features/quizzes/models/question";
 import QuizAttempt from "@/features/quizzes/models/quiz-attempt";
 import { notifyCourseStudents } from "@/features/notifications/service";
 import { newQuizSchema, questionOrderSchema, questionSchema, quizSettingsSchema } from "@/features/quizzes/schemas";
+import { audit } from "@/features/audit/service";
 
 const touch = async (courseId) => {
   await Course.updateOne({ _id: courseId }, { $inc: { contentVersion: 1 } });
@@ -26,7 +27,7 @@ const loadQuiz = async (quizId) => {
 };
 
 export const createQuiz = async (courseId, input) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const result = parse(newQuizSchema, input);
   if (!result.ok) return result;
   if (!isValidObjectId(courseId)) return fail("Course not found");
@@ -40,11 +41,12 @@ export const createQuiz = async (courseId, input) => {
   const last = await Quiz.findOne({ sectionId }).sort({ order: -1 }).lean();
   const quiz = await Quiz.create({ courseId, sectionId, lessonId: lessonId ?? undefined, title, order: (last?.order ?? -1) + 1 });
   updateTag(`course:${courseId}`);
+  await audit(admin, "quiz.create", `Created quiz "${title}"`, { type: "quiz", id: quiz._id });
   return { ok: true, data: { id: String(quiz._id) } };
 };
 
 export const updateQuizSettings = async (quizId, input) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const result = parse(quizSettingsSchema, input);
   if (!result.ok) return result;
   const quiz = await loadQuiz(quizId);
@@ -58,24 +60,27 @@ export const updateQuizSettings = async (quizId, input) => {
     if (course?.status === "published")
       await notifyCourseStudents(quiz.courseId, "notifyNewQuiz", { subject: `New quiz in ${course.title}`, title: "A new quiz is available", text: `"${data.title}" was published in ${course.title}.`, path: `/dashboard/quizzes/${quizId}` });
   }
+  await audit(admin, "quiz.update", `Updated quiz "${data.title}" (${data.status})`, { type: "quiz", id: quizId });
   return { ok: true };
 };
 
 export const deleteQuiz = async (quizId) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const quiz = await loadQuiz(quizId);
   if (!quiz) return fail("Quiz not found");
   await Promise.all([Question.deleteMany({ quizId }), QuizAttempt.deleteMany({ quizId }), Quiz.deleteOne({ _id: quizId })]);
   await touch(quiz.courseId);
+  await audit(admin, "quiz.delete", `Deleted quiz "${quiz.title}"`, { type: "course", id: quiz.courseId });
   return { ok: true, data: { courseId: String(quiz.courseId) } };
 };
 
 export const saveQuestion = async (quizId, questionId, input) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const result = parse(questionSchema, input);
   if (!result.ok) return result;
   const quiz = await loadQuiz(quizId);
   if (!quiz) return fail("Quiz not found");
+  result.data = result.data.type === "short_answer" ? { ...result.data, options: [] } : { ...result.data, acceptedAnswers: [] };
   if (questionId) {
     if (!isValidObjectId(questionId)) return fail("Question not found");
     const updated = await Question.findOneAndUpdate({ _id: questionId, quizId }, { $set: result.data });
@@ -85,16 +90,18 @@ export const saveQuestion = async (quizId, questionId, input) => {
     await Question.create({ ...result.data, quizId, order: (last?.order ?? -1) + 1 });
   }
   await touch(quiz.courseId);
+  await audit(admin, "quiz.question", `${questionId ? "Edited" : "Added"} a question in "${quiz.title}"`, { type: "quiz", id: quizId });
   return { ok: true };
 };
 
 export const deleteQuestion = async (quizId, questionId) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const quiz = await loadQuiz(quizId);
   if (!quiz || !isValidObjectId(questionId)) return fail("Question not found");
   await Question.deleteOne({ _id: questionId, quizId });
   if (!(await Question.exists({ quizId }))) await Quiz.updateOne({ _id: quizId }, { $set: { status: "draft" } });
   await touch(quiz.courseId);
+  await audit(admin, "quiz.question_delete", `Deleted a question from "${quiz.title}"`, { type: "quiz", id: quizId });
   return { ok: true };
 };
 

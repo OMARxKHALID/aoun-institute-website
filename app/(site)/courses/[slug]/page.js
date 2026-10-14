@@ -6,6 +6,8 @@ import SectionHeading from "@/components/ui/section-heading";
 import CourseCard from "@/components/ui/course-card";
 import CourseCta, { CourseCtaFallback, coursePriceLabel } from "@/features/courses/components/course-cta";
 import CourseCurriculum from "@/features/courses/components/course-curriculum";
+import ReviewList from "@/features/reviews/components/review-list";
+import Stars from "@/components/ui/stars";
 import { getCatalog, getPublicCourse } from "@/features/courses/queries";
 import { formatDuration, formatPrice } from "@/lib/format";
 
@@ -41,6 +43,13 @@ const CourseDetailPage = async ({ params }) => {
     <main>
       <PageHero tag={course.category || "Course"} title={course.title} text={course.subtitle}>
         <div className="mt-4 flex flex-col items-center gap-4">
+          {course.rating && (
+            <a href="#reviews" className="flex items-center gap-2 text-white/75 hover:text-white">
+              <Stars value={course.rating.average} />
+              <span className="font-semibold">{course.rating.average.toFixed(1)}</span>
+              <span className="text-white/50">({course.rating.count} {course.rating.count === 1 ? "review" : "reviews"})</span>
+            </a>
+          )}
           <p className="text-3xl font-medium">
             {coursePriceLabel(course)}
             {discounted && <span className="ml-3 text-xl font-light text-white/40 line-through">{formatPrice(course.price, course.currency)}</span>}
@@ -99,6 +108,13 @@ const CourseDetailPage = async ({ params }) => {
                 </ul>
               </div>
             ))}
+        </section>
+      )}
+
+      {course.rating && course.reviews.length > 0 && (
+        <section id="reviews" className="mx-auto w-[90%] max-w-6xl scroll-mt-32 pb-24">
+          <SectionHeading tag="Reviews" title="What students say" />
+          <ReviewList rating={course.rating} reviews={course.reviews} />
         </section>
       )}
 

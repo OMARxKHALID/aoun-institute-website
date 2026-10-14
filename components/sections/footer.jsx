@@ -54,13 +54,16 @@ const Wordmark = ({ text }) => {
 
   const handleMove = (e) => {
     const svg = svgRef.current;
-    const point = new DOMPoint(e.clientX, e.clientY).matrixTransform(svg.getScreenCTM().inverse());
-    glowRef.current.style.transform = `translate(${point.x}px, ${point.y}px)`;
-    glowRef.current.style.opacity = "0.85";
+    const glow = glowRef.current;
+    const matrix = svg?.getScreenCTM();
+    if (!glow || !matrix) return;
+    const point = new DOMPoint(e.clientX, e.clientY).matrixTransform(matrix.inverse());
+    glow.style.transform = `translate(${point.x}px, ${point.y}px)`;
+    glow.style.opacity = "0.85";
   };
 
   const handleLeave = () => {
-    glowRef.current.style.opacity = "0";
+    if (glowRef.current) glowRef.current.style.opacity = "0";
   };
 
   return (

@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Ban, Trash2, Undo2, UserPlus } from "lucide-react";
-import { banStudent, deleteStudent, enrollStudent, revokeEnrollment, unbanStudent } from "@/features/students/actions";
+import { Ban, KeyRound, Trash2, Undo2, UserPlus } from "lucide-react";
+import { banStudent, deleteStudent, enrollStudent, revokeEnrollment, setStudentPassword, unbanStudent } from "@/features/students/actions";
 import Button from "@/components/ui/button";
 import FormAlert from "@/components/ui/form-alert";
 import Select from "@/components/ui/select";
+import { useDialog } from "@/components/ui/dialog-provider";
+import { inputClass } from "@/lib/ui";
 
 const firstError = (result) => Object.values(result.errors ?? {}).flat()[0];
 
@@ -27,23 +29,35 @@ const useRun = () => {
 };
 
 export const AccountControls = ({ student }) => {
+  const dialog = useDialog();
   const router = useRouter();
   const { run, error, busy } = useRun();
 
-  const handleBan = () => {
-    const reason = window.prompt("Why are you blocking this student? They will be signed out.");
+  const handleBan = async () => {
+    const reason = await dialog.prompt({ title: `Block ${student.name}?`, message: "They are signed out everywhere and cannot sign in until you unblock them.", label: "Reason (only admins see this)", placeholder: "e.g. Sharing their account", minLength: 3, danger: true, confirmLabel: "Block student" });
     if (reason) run(() => banStudent(student.id, { reason }));
   };
 
-  const handleDelete = () => {
-    if (window.confirm(`Permanently delete ${student.name}'s account, progress and quiz attempts? Orders and certificates are kept. This cannot be undone.`))
+  const [notice, setNotice] = useState(null);
+
+  const handlePassword = async () => {
+    const password = await dialog.prompt({ title: `New password for ${student.name}`, message: "They are signed out on every device and get an email saying their password changed. Share the new password with them yourself.", label: "New password", placeholder: "At least 8 characters", multiline: false, inputType: "password", minLength: 8, maxLength: 128, confirmLabel: "Set password" });
+    if (password) run(() => setStudentPassword(student.id, { password }), () => setNotice("Password changed. The student was signed out."));
+  };
+
+  const handleDelete = async () => {
+    if ((await dialog.confirm({ title: `Delete ${student.name}'s account?`, message: "Their progress, notes and quiz attempts are deleted. Orders and certificates are kept for your records. This cannot be undone.", confirmLabel: "Delete account", danger: true })))
       run(() => deleteStudent(student.id), () => router.push("/admin/students"));
   };
 
   return (
     <div className="flex flex-col gap-3">
       <FormAlert>{error}</FormAlert>
+      {notice && <p className="text-sm text-green-300">{notice}</p>}
       <div className="flex flex-wrap gap-2">
+        <Button type="button" variant="outline" loading={busy} onClick={handlePassword}>
+          <KeyRound className="size-4" /> Change password
+        </Button>
         {student.banned ? (
           <Button type="button" variant="outline" loading={busy} onClick={() => run(() => unbanStudent(student.id))}>
             <Undo2 className="size-4" /> Unblock
@@ -76,7 +90,7 @@ export const EnrollControl = ({ studentId, courses }) => {
           options={courses}
           aria-label="Course to enroll in"
           wrapperClassName="flex-1"
-          className="rounded-xl border border-[#302C2A] bg-[#0C0C0C] px-4 py-2.5 outline-hidden focus:border-accent"
+          className={inputClass}
         />
         <Button type="button" loading={busy} disabled={!courseId} onClick={() => run(() => enrollStudent(studentId, courseId))}>
           <UserPlus className="size-4" /> Enroll free
@@ -87,9 +101,10 @@ export const EnrollControl = ({ studentId, courses }) => {
 };
 
 export const RevokeEnrollmentButton = ({ studentId, courseId, course }) => {
+  const dialog = useDialog();
   const { run, error, busy } = useRun();
-  const handleClick = () => {
-    if (window.confirm(`Remove access to ${course}? Progress is kept if you enroll them again.`)) run(() => revokeEnrollment(studentId, courseId));
+  const handleClick = async () => {
+    if ((await dialog.confirm({ title: `Remove access to ${course}?`, message: "Their progress is kept if you enroll them again later.", confirmLabel: "Remove access", danger: true }))) run(() => revokeEnrollment(studentId, courseId));
   };
   return (
     <span className="flex flex-col items-end gap-1">

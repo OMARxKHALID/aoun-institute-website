@@ -11,6 +11,7 @@ import QuizAttempt from "@/features/quizzes/models/quiz-attempt";
 import Enrollment from "@/features/enrollments/model";
 import { buildOutline } from "@/features/progress/service";
 import { findQuizState, gradeAttempt, isExpired } from "@/features/quizzes/service";
+import { isAnswerCorrect } from "@/features/quizzes/grading";
 
 const plain = (value) => JSON.parse(JSON.stringify(value));
 
@@ -31,7 +32,7 @@ export const getQuizForEdit = async (courseId, quizId) => {
     course: { id: String(course._id), title: course.title },
     quiz: { ...quiz, id: String(quiz._id) },
     attachedTo: lesson ? `After lesson: ${lesson.title}` : section ? `End of section: ${section.title}` : "Course",
-    questions: questions.map((q) => ({ ...q, id: String(q._id), options: q.options.map(({ text, isCorrect }) => ({ text, isCorrect })) })),
+    questions: questions.map((q) => ({ ...q, id: String(q._id), options: q.options.map(({ text, isCorrect }) => ({ text, isCorrect })), acceptedAnswers: q.acceptedAnswers ?? [] })),
     attempts,
   });
 };
@@ -79,7 +80,6 @@ export const getAttemptView = async (attemptId) => {
       const order = (optionOrder.get(String(questionId)) ?? q.options.map((o) => o._id)).map(String);
       const answer = attempt.answers.find((a) => String(a.questionId) === String(questionId));
       const selected = (answer?.selected ?? []).map(String);
-      const correctIds = q.options.filter((o) => o.isCorrect).map((o) => String(o._id));
       return {
         id: String(q._id),
         type: q.type,
@@ -90,7 +90,9 @@ export const getAttemptView = async (attemptId) => {
           .map((oid) => q.options.find((o) => String(o._id) === oid))
           .filter(Boolean)
           .map((o) => ({ id: String(o._id), text: o.text, ...(reveal && { isCorrect: o.isCorrect }) })),
-        ...(done && { correct: selected.length === correctIds.length && selected.every((s) => correctIds.includes(s)) }),
+        text: answer?.text ?? "",
+        ...(done && { correct: isAnswerCorrect(q, answer) }),
+        ...(reveal && q.type === "short_answer" && { acceptedAnswers: q.acceptedAnswers ?? [] }),
         ...(reveal && { explanation: q.explanation ?? "" }),
       };
     })
@@ -147,9 +149,8 @@ export const getQuizResults = async (quizId) => {
   const users = await db.collection("user").find({ _id: { $in: ids } }, { projection: { name: 1, email: 1 } }).toArray();
   const byUser = new Map(users.map((u) => [String(u._id), u]));
   const perQuestion = questions.map((q, i) => {
-    const correctIds = q.options.filter((o) => o.isCorrect).map((o) => String(o._id));
     const answered = attempts.map((a) => a.answers.find((x) => String(x.questionId) === String(q._id)));
-    const right = answered.filter((x) => x && x.selected.length === correctIds.length && x.selected.every((s) => correctIds.includes(String(s)))).length;
+    const right = answered.filter((x) => x && isAnswerCorrect(q, x)).length;
     return { id: String(q._id), number: i + 1, prompt: q.prompt, rate: attempts.length ? Math.round((right / attempts.length) * 100) : 0 };
   });
   const students = new Set(attempts.map((a) => a.userId)).size;

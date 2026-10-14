@@ -11,6 +11,8 @@ import ActionMenu from "@/components/ui/action-menu";
 import FormAlert from "@/components/ui/form-alert";
 import StatusPill from "@/components/ui/status-pill";
 import { formatDate, formatPrice } from "@/lib/format";
+import { useDialog } from "@/components/ui/dialog-provider";
+import { imageUrl } from "@/lib/upload-rules";
 
 const helper = createColumnHelper();
 
@@ -31,7 +33,7 @@ const baseColumns = helper.columns([
     cell: ({ row }) => (
       <Link href={`/admin/courses/${row.original.id}`} className="flex items-center gap-3 hover:text-accent">
         <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-accent/15 text-accent">
-          {row.original.thumbnail?.url ? <img src={row.original.thumbnail.url} alt="" loading="lazy" decoding="async" className="size-full object-cover" /> : <BookOpen className="size-5" />}
+          {row.original.thumbnail?.url ? <img src={imageUrl(row.original.thumbnail.url, 200)} alt="" loading="lazy" decoding="async" className="size-full object-cover" /> : <BookOpen className="size-5" />}
         </span>
         <span>
           <span className="block font-medium">{row.original.title}</span>
@@ -57,11 +59,12 @@ const baseColumns = helper.columns([
 ]);
 
 const CourseTable = ({ courses, initialSearch }) => {
+  const dialog = useDialog();
   const router = useRouter();
   const [error, setError] = useState(null);
 
   const handleDelete = async (course) => {
-    if (!window.confirm(`Delete "${course.title}" with all its sections, lessons and quizzes? This cannot be undone.`)) return;
+    if (!(await dialog.confirm({ title: `Delete "${course.title}"?`, message: "Its sections, lessons and quizzes are deleted too. This cannot be undone.", confirmLabel: "Delete course", danger: true }))) return;
     setError(null);
     const result = await deleteCourse(course.id);
     if (!result.ok) return setError(Object.values(result.errors).flat()[0]);

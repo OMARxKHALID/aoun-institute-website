@@ -15,11 +15,13 @@ import Button from "@/components/ui/button";
 import Checkbox from "@/components/ui/checkbox";
 import FormAlert from "@/components/ui/form-alert";
 import PanelCard from "@/components/ui/panel-card";
-import { formatDate } from "@/lib/format";
+import { formatDate, plural } from "@/lib/format";
+import { useDialog } from "@/components/ui/dialog-provider";
 
 const helper = createColumnHelper();
 
 const AnnouncementManager = ({ announcements, courses }) => {
+  const dialog = useDialog();
   const router = useRouter();
   const [message, setMessage] = useState(null);
   const [error, setError] = useState(null);
@@ -34,12 +36,12 @@ const AnnouncementManager = ({ announcements, courses }) => {
     const result = await createAnnouncement(values);
     if (!result.ok) return Object.entries(result.errors).forEach(([field, messages]) => setFieldError(field, { message: messages[0] }));
     reset();
-    setMessage(values.email ? `Posted and emailed to ${result.data.sent} students.` : "Posted.");
+    setMessage(values.email ? `Posted and emailed to ${plural(result.data.sent, "student")}.` : "Posted.");
     router.refresh();
   };
 
   const handleDelete = async (a) => {
-    if (!window.confirm(`Delete “${a.title}”?`)) return;
+    if (!(await dialog.confirm({ title: `Delete "${a.title}"?`, message: "Students will no longer see it.", confirmLabel: "Delete", danger: true }))) return;
     const result = await deleteAnnouncement(a.id);
     if (!result.ok) return setError(Object.values(result.errors).flat()[0]);
     router.refresh();

@@ -8,6 +8,7 @@ import BarChart from "@/components/ui/bar-chart";
 import MiniCalendar from "@/components/ui/mini-calendar";
 import StatusPill from "@/components/ui/status-pill";
 import { formatDate, formatPrice } from "@/lib/format";
+import { imageUrl } from "@/lib/upload-rules";
 
 const compact = (value) => new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(value);
 
@@ -38,7 +39,7 @@ const AdminPage = async () => {
                 {data.topCourses.map((c) => (
                   <Link key={c.id} href={`/admin/courses/${c.id}`} className="flex min-w-0 items-center gap-3 rounded-2xl border border-white/5 bg-[#070707] p-4 transition hover:border-accent/50">
                     <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-accent/15 text-accent">
-                      {c.thumbnail?.url ? <img src={c.thumbnail.url} alt="" loading="lazy" decoding="async" className="size-full object-cover" /> : <BookOpen className="size-5" />}
+                      {c.thumbnail?.url ? <img src={imageUrl(c.thumbnail.url, 160)} alt="" loading="lazy" decoding="async" className="size-full object-cover" /> : <BookOpen className="size-5" />}
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate font-medium">{c.title}</span>
