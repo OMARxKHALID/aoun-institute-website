@@ -10,6 +10,7 @@ import Quiz from "@/features/quizzes/models/quiz";
 import Enrollment from "@/features/enrollments/model";
 import Review from "@/features/reviews/model";
 import { reviewStats } from "@/features/reviews/queries";
+import { getCourseCountries, getCourseCounts } from "@/features/analytics/public-stats";
 
 const plain = (value) => JSON.parse(JSON.stringify(value));
 
@@ -67,8 +68,31 @@ export const getCatalog = async () => {
     { $group: { _id: "$courseId", count: { $sum: 1 } } },
   ]);
   const lessons = new Map(counts.map((c) => [String(c._id), c.count]));
-  const ratings = await reviewStats(courses.map((c) => c._id));
-  return plain(courses.map((c) => ({ ...c, id: String(c._id), lessons: lessons.get(String(c._id)) ?? 0, rating: ratings.get(String(c._id)) ?? null })));
+  const [ratings, people] = await Promise.all([reviewStats(courses.map((c) => c._id)), getCourseCounts(courses.map((c) => c._id))]);
+  return plain(
+    courses.map((c) => ({
+      ...c,
+      id: String(c._id),
+      lessons: lessons.get(String(c._id)) ?? 0,
+      rating: ratings.get(String(c._id)) ?? null,
+      students: people.enrolled.get(String(c._id)) ?? 0,
+      graduates: people.graduated.get(String(c._id)) ?? 0,
+    })),
+  );
+};
+
+export const getFreePreviews = async () => {
+  "use cache";
+  cacheTag("catalog");
+  if (noDatabase()) return [];
+  await connectDB();
+  const courses = await Course.find({ status: "published" }, "title slug category").lean();
+  const lessons = await Lesson.find({ courseId: { $in: courses.map((c) => c._id) }, status: "published", isFreePreview: true, "video.status": "ready" }, "courseId title durationSec").sort({ order: 1 }).limit(12).lean();
+  const byId = new Map(courses.map((c) => [String(c._id), c]));
+  return lessons.map((l) => {
+    const course = byId.get(String(l.courseId));
+    return { id: String(l._id), title: l.title, durationSec: l.durationSec, course: course.title, slug: course.slug, category: course.category };
+  });
 };
 
 export const getPublicCourse = async (slug) => {
@@ -92,11 +116,23 @@ export const getPublicCourse = async (slug) => {
         .map((l) => ({ id: String(l._id), title: l.title, durationSec: l.durationSec, preview: l.isFreePreview && l.video?.status === "ready" })),
     }))
     .filter((s) => s.lessons.length);
-  const [ratings, reviews] = await Promise.all([
+  const [ratings, reviews, counts, countries] = await Promise.all([
     reviewStats([course._id]),
     Review.find({ courseId: course._id, status: "published" }, "studentName rating body reply createdAt").sort({ createdAt: -1 }).limit(12).lean(),
+    getCourseCounts([course._id]),
+    getCourseCountries(course._id),
   ]);
-  return plain({ ...course, id: String(course._id), outline, lessons: lessons.length, rating: ratings.get(String(course._id)) ?? null, reviews: reviews.map((r) => ({ ...r, id: String(r._id) })) });
+  return plain({
+    ...course,
+    id: String(course._id),
+    outline,
+    lessons: lessons.length,
+    rating: ratings.get(String(course._id)) ?? null,
+    reviews: reviews.map((r) => ({ ...r, id: String(r._id) })),
+    students: counts.enrolled.get(String(course._id)) ?? 0,
+    graduates: counts.graduated.get(String(course._id)) ?? 0,
+    countries,
+  });
 };
 
 export const getLessonForEdit = async (courseId, lessonId) => {

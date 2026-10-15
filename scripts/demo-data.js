@@ -228,7 +228,32 @@ export const STUDENTS = [
   "Laiba Aslam", "Faizan Butt", "Maryam Saeed", "Talha Anwar", "Kinza Rehman", "Hamid Nawaz", "Noor Fatima", "Rayyan Abbasi",
 ];
 
-export const CITIES = ["Lahore", "Karachi", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Hyderabad"];
+export const CITIES = [
+  ["Lahore", "Pakistan"],
+  ["London", "United Kingdom"],
+  ["Karachi", "Pakistan"],
+  ["Paris", "France"],
+  ["Dubai", "United Arab Emirates"],
+  ["Milan", "Italy"],
+  ["Islamabad", "Pakistan"],
+  ["Toronto", "Canada"],
+  ["Berlin", "Germany"],
+  ["Manchester", "United Kingdom"],
+  ["Riyadh", "Saudi Arabia"],
+  ["New York", "United States"],
+  ["Rawalpindi", "Pakistan"],
+  ["Istanbul", "Turkey"],
+  ["Sydney", "Australia"],
+  ["Madrid", "Spain"],
+  ["Doha", "Qatar"],
+  ["Amsterdam", "Netherlands"],
+  ["Faisalabad", "Pakistan"],
+  ["Rome", "Italy"],
+  ["Kuala Lumpur", "Malaysia"],
+  ["Birmingham", "United Kingdom"],
+  ["Multan", "Pakistan"],
+  ["Lyon", "France"],
+];
 
 export const ANNOUNCEMENTS = [
   ["full-stack-web-development-nextjs", "Live Q&A this Friday", "Join the live Q&A session this Friday at 8pm PKT. Bring your questions about deployment and authentication."],

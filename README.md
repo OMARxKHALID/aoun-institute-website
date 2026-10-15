@@ -23,7 +23,7 @@ bun dev
 bun run demo
 ```
 
-Resets courses, orders, progress and students, then loads a realistic demo: 8 courses (7 published, 1 draft, 1 free) with playable sample videos, quizzes, 24 students in Pakistani cities, paid/pending/failed/refunded orders over six months, progress, quiz results (including written answers), certificates, course reviews, lesson Q&A with instructor answers, timestamped notes, study plans, an admin activity log, announcements and contact messages. The admin account is kept.
+Resets courses, orders, progress and students, then loads a realistic demo: 8 courses (7 published, 1 draft, 1 free) with playable sample videos, quizzes, 24 students from Pakistan, the UK, France, Italy, the UAE and 10 more countries, paid/pending/failed/refunded orders over six months, progress, quiz results (including written answers), certificates, course reviews, lesson Q&A with instructor answers, timestamped notes, study plans, an admin activity log, announcements and contact messages. The admin account is kept.
 
 - Admin: `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`
 - Showcase student: `SEED_STUDENT_EMAIL` / `SEED_STUDENT_PASSWORD` (one finished course with certificate, one half done, one just started, a free course and a pending payment)

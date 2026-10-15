@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MoveRight, Play } from "lucide-react";
+import { Award, MoveRight, Users } from "lucide-react";
 import CornerDots from "@/components/ui/corner-dots";
 import GlowButton from "@/components/ui/glow-button";
 import AvatarStack from "@/components/ui/avatar-stack";
@@ -18,14 +18,21 @@ const StatCard = ({ icon, value, label, text }) => (
   </div>
 );
 
-const statIcons = [
-  <span key="yt" className="grid h-10 w-14 place-items-center rounded-xl bg-red-600">
-    <Play className="size-5 fill-white" />
-  </span>,
-  <span key="star" className="text-4xl">⭐️</span>,
+const statIcons = [Users, Award].map((Icon) => (
+  <span key={Icon.displayName ?? Icon.name} className="grid size-11 place-items-center rounded-xl bg-accent/15 text-accent">
+    <Icon className="size-6" />
+  </span>
+));
+
+const liveCards = (live) => [
+  { value: live.students.toLocaleString("en-US"), label: "Students Enrolled", text: "Learning with us right now, from around the world." },
+  { value: live.graduates.toLocaleString("en-US"), label: "Graduates", text: "Finished a course and earned a verifiable certificate." },
 ];
 
-const Hero = ({ hero, stats }) => (
+const Hero = ({ hero, stats: fallback, live }) => {
+  const stats = live?.students ? liveCards(live) : fallback;
+  return (
+
   <section className="mt-50 flex w-full flex-col items-center justify-center gap-3 overflow-hidden px-18 max-md:mt-30 max-md:px-8 md:gap-6">
     <HeroBackground />
     <h4 className="mb-2 text-center uppercase text-accent md:text-2xl">{hero.eyebrow}</h4>
@@ -42,7 +49,7 @@ const Hero = ({ hero, stats }) => (
     </p>
     <div className="flex flex-wrap items-center justify-center gap-2 text-center text-lg font-light text-white/70">
       <AvatarStack />
-      <span className="font-bold text-accent">{stats[1]?.value}</span>
+      <span className="font-bold text-accent">{stats[0]?.value}</span>
       learners building in our programs
     </div>
     <GlowButton href="/courses" className="mb-10 mt-5">Start Journey</GlowButton>
@@ -75,6 +82,7 @@ const Hero = ({ hero, stats }) => (
       </div>
     </div>
   </section>
-);
+  );
+};
 
 export default Hero;

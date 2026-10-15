@@ -70,7 +70,7 @@ const SettingsForm = ({ settings }) => {
           <Field label="Subtitle" rows={2} className="md:col-span-2" error={errors.hero?.subtitle?.message} {...register("hero.subtitle")} />
         </div>
         <div hidden={homeSection !== "Stats"}>
-          <ArrayField {...shared} name="home.stats" label="Stats (2)" max={2} empty={{ value: "", label: "", text: "" }} columns={[{ name: "value", label: "Value" }, { name: "label", label: "Label" }, { name: "text", label: "Description", wide: true }]} />
+          <ArrayField {...shared} name="home.stats" label="Hero stats (shown until students enroll, then live numbers replace them)" max={2} empty={{ value: "", label: "", text: "" }} columns={[{ name: "value", label: "Value" }, { name: "label", label: "Label" }, { name: "text", label: "Description", wide: true }]} />
         </div>
         <div hidden={homeSection !== "Partners"}>
           <ArrayField {...shared} name="home.partners" label="Partner logos" max={16} empty={{ name: "", logo: null }} columns={[{ name: "name", label: "Name" }, { name: "logo", label: "Logo", image: true }]} />

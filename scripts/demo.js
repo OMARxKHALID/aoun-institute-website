@@ -76,7 +76,7 @@ const testStudent = await createUser({
   joined: daysAgo(120),
   extra: { phone: "+92 300 1234567", city: "Lahore", country: "Pakistan", bio: "Aspiring full-stack developer." },
 });
-const studentInputs = STUDENTS.map((name, i) => ({ email: `${name.toLowerCase().replace(/[^a-z]+/g, ".")}@demo.pk`, password: DEMO_PASSWORD, name, joined: daysAgo(between(3, 175)), extra: { city: CITIES[i % CITIES.length], country: "Pakistan" } }));
+const studentInputs = STUDENTS.map((name, i) => ({ email: `${name.toLowerCase().replace(/[^a-z]+/g, ".")}@demo.pk`, password: DEMO_PASSWORD, name, joined: daysAgo(between(3, 175)), extra: { city: CITIES[i % CITIES.length][0], country: CITIES[i % CITIES.length][1] } }));
 const students = [];
 for (let i = 0; i < studentInputs.length; i += 6) students.push(...(await Promise.all(studentInputs.slice(i, i + 6).map(createUser))));
 console.log(`users: admin, test student, ${students.length} demo students`);

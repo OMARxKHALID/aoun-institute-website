@@ -13,8 +13,8 @@ export const defaultSiteSettings = {
   seo: { title: "Aoun Institute | Learn, Build, Get Hired", description: "Recorded courses with projects, quizzes and verifiable certificates.", ogImage: null },
   home: {
     stats: [
-      { value: "250k", label: "Channel Subscribers", text: "Learn alongside a large community of builders." },
-      { value: "80k+", label: "Career-Driven Learners", text: "Join learners who are already shipping projects." },
+      { value: "500+", label: "Students Enrolled", text: "Learning with us right now, from around the world." },
+      { value: "120+", label: "Graduates", text: "Finished a course and earned a verifiable certificate." },
     ],
     partners: [
       { name: "Northwind", logo: null },

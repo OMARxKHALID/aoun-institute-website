@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { Award, BookOpen, CalendarDays, CircleCheck, Infinity as InfinityIcon, Signal } from "lucide-react";
+import { Award, BookOpen, CalendarDays, CircleCheck, GraduationCap, Infinity as InfinityIcon, Signal, Users } from "lucide-react";
 import PageHero from "@/components/ui/page-hero";
 import SectionHeading from "@/components/ui/section-heading";
 import CourseCard from "@/components/ui/course-card";
@@ -8,6 +8,7 @@ import CourseCta, { CourseCtaFallback, coursePriceLabel } from "@/features/cours
 import CourseCurriculum from "@/features/courses/components/course-curriculum";
 import ReviewList from "@/features/reviews/components/review-list";
 import Stars from "@/components/ui/stars";
+import Flag from "@/components/ui/flag";
 import { getCatalog, getPublicCourse } from "@/features/courses/queries";
 import { formatDuration, formatPrice } from "@/lib/format";
 import JsonLd from "@/components/ui/json-ld";
@@ -42,7 +43,10 @@ const CourseDetailPage = async ({ params }) => {
     { icon: Signal, label: "Level", value: course.level || "All levels" },
     { icon: Award, label: "Certificate", value: "Yes" },
     { icon: InfinityIcon, label: "Access", value: "Lifetime" },
-  ];
+    course.students > 0 && { icon: Users, label: "Students enrolled", value: course.students.toLocaleString("en-US") },
+    course.graduates > 0 && { icon: GraduationCap, label: "Graduates", value: course.graduates.toLocaleString("en-US") },
+  ].filter(Boolean);
+  const flags = course.countries.slice(0, 8);
   const related = catalog.filter((c) => c.slug !== slug).slice(0, 3);
   const discounted = course.discountPrice != null && course.discountPrice < course.price && course.discountPrice > 0;
 
@@ -74,6 +78,19 @@ const CourseDetailPage = async ({ params }) => {
               <span className="text-white/50">({course.rating.count} {course.rating.count === 1 ? "review" : "reviews"})</span>
             </a>
           )}
+          {flags.length > 0 && (
+            <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-white/60">
+              <span className="flex -space-x-1.5">
+                {flags.map((c) => (
+                  <Flag key={c.code} code={c.code} name={c.name} className="size-6 rounded-full ring-2 ring-black" />
+                ))}
+              </span>
+              <span>
+                Students from {flags.length === 1 ? flags[0].name : `${course.countries.length} countries`}
+                {course.countries.length > flags.length && ` · +${course.countries.length - flags.length} more`}
+              </span>
+            </div>
+          )}
           <p className="text-3xl font-medium">
             {coursePriceLabel(course)}
             {discounted && <span className="ml-3 text-xl font-light text-white/40 line-through">{formatPrice(course.price, course.currency)}</span>}
@@ -84,7 +101,7 @@ const CourseDetailPage = async ({ params }) => {
         </div>
       </PageHero>
 
-      <section className="mx-auto grid w-[90%] grid-cols-2 gap-4 pb-20 md:grid-cols-3 lg:w-[80%] lg:grid-cols-5">
+      <section className="mx-auto grid w-[90%] grid-cols-2 gap-4 pb-20 md:grid-cols-3 lg:w-[80%] lg:grid-cols-4">
         {facts.map(({ icon: Icon, label, value }) => (
           <div key={label} className="flex items-center gap-3 rounded-2xl border border-[#302C2A] p-5">
             <span className="rounded-xl bg-[#FDEFEA] p-3 text-accent">
