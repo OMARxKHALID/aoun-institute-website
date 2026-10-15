@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowUpRight, House, ChevronLeft, Menu, X } from "lucide-react";
@@ -61,8 +61,11 @@ const NavList = ({ groups, activeHref, collapsed }) => {
 
 const ActiveNavList = ({ onNavigate, ...props }) => {
   const pathname = usePathname();
+  const lastPath = useRef(pathname);
 
   useEffect(() => {
+    if (lastPath.current === pathname) return;
+    lastPath.current = pathname;
     onNavigate();
   }, [pathname, onNavigate]);
 
@@ -143,7 +146,7 @@ const PanelNav = ({ panel, brand }) => {
             <span className="grid size-10 shrink-0 place-items-center rounded-full bg-white font-machina text-xl font-bold text-black">{brand.name?.[0]}</span>
             <span className={`truncate font-machina text-2xl leading-none ${railLabel(collapsed)}`}>{brand.shortName || brand.name}</span>
             {panel === "admin" && (
-              <span className={`ml-auto shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-xs uppercase tracking-wider text-accent transition-opacity duration-300 ${collapsed ? "lg:pointer-events-none lg:opacity-0" : ""}`}>Admin</span>
+              <span className={`ml-auto shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-xs uppercase tracking-wider text-accent ${collapsed ? "lg:hidden" : ""}`}>Admin</span>
             )}
           </Link>
           <button type="button" onClick={handleClose} aria-label="Close navigation" className="rounded-xl p-2 text-white/60 hover:bg-white/5 hover:text-white lg:hidden">
