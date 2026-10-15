@@ -18,14 +18,14 @@ Course-selling LMS for an institute: students register, buy recorded video cours
 | react-hook-form 7.90.0, @hookform/resolvers 5.9.1 | client forms with `zodResolver`; server errors mapped with `setError` |
 | @tanstack/react-query 5.104.2 | client cache for interactive views; reads via route handlers, mutations via Server Actions |
 | @tanstack/react-table 9.3.1 | admin tables (v9 API: `createTableHook`, `tableFeatures`, `create*RowModel`) — added in Phase 2 |
-| cloudinary 2.11.0, next-cloudinary 6.19.3 | signed direct image/PDF uploads, crop widget, delivery |
+| cloudinary 2.11.0 | signed direct image/PDF uploads (own dropzone in `components/ui/image-upload.jsx`, XHR to the Cloudinary upload API), delivery |
 | @mux/ts 15.6.1, @mux/mux-player-react 3.14.0, @mux/upchunk 3.5.0 | video: direct upload, signed + DRM playback, player — Phase 3 (`@mux/mux-node` is deprecated) |
 | resend 6.32.1 | transactional email (console fallback in dev without key) |
 | @react-pdf/renderer 4.9.0, qrcode 1.5.4 | certificate/receipt PDFs with QR — Phase 7 |
 | rate-limiter-flexible 11.2.2 | Mongo-backed limits for verify/uploads/quiz — added when needed |
 | server-only 0.0.1 | guards server modules from client bundles |
 
-Skipped: zustand (quiz and player state fit in component state). Rejected: pdf-lib (abandoned), @dnd-kit (stale/pre-1.0; native drag + keyboard buttons instead), Vidstack/Plyr (deprecated), sharp (Cloudinary transforms), bcrypt (Better Auth hashes).
+Skipped: zustand (quiz and player state fit in component state). Rejected: pdf-lib (abandoned), @dnd-kit (stale/pre-1.0; pointer-event sortable in `hooks/use-sortable.js` with touch support, plus menu move buttons for keyboard users), Vidstack/Plyr (deprecated), sharp (Cloudinary transforms), bcrypt (Better Auth hashes).
 
 ## Decisions
 - Payments: **manual first** (PKR; bank transfer + JazzCash/Easypaisa with receipt upload; admin approves). Gateway later behind `PaymentProvider` (Safepay/PayFast/JazzCash/Easypaisa to verify).

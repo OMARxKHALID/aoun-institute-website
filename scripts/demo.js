@@ -76,11 +76,9 @@ const testStudent = await createUser({
   joined: daysAgo(120),
   extra: { phone: "+92 300 1234567", city: "Lahore", country: "Pakistan", bio: "Aspiring full-stack developer." },
 });
+const studentInputs = STUDENTS.map((name, i) => ({ email: `${name.toLowerCase().replace(/[^a-z]+/g, ".")}@demo.pk`, password: DEMO_PASSWORD, name, joined: daysAgo(between(3, 175)), extra: { city: CITIES[i % CITIES.length], country: "Pakistan" } }));
 const students = [];
-for (const [i, name] of STUDENTS.entries()) {
-  const email = `${name.toLowerCase().replace(/[^a-z]+/g, ".")}@demo.pk`;
-  students.push(await createUser({ email, password: DEMO_PASSWORD, name, joined: daysAgo(between(3, 175)), extra: { city: CITIES[i % CITIES.length], country: "Pakistan" } }));
-}
+for (let i = 0; i < studentInputs.length; i += 6) students.push(...(await Promise.all(studentInputs.slice(i, i + 6).map(createUser))));
 console.log(`users: admin, test student, ${students.length} demo students`);
 
 await col("siteSettings").updateOne(
@@ -408,7 +406,7 @@ watch.forEach((seconds, key) => {
   docs.activityLogs.push({ userId, type: "lesson_viewed", meta: { day, seconds }, createdAt: new Date(`${day}T12:00:00Z`) });
 });
 
-for (const [name, list] of Object.entries(docs)) if (list.length) await col(name).insertMany(list);
+await Promise.all(Object.entries(docs).map(([name, list]) => list.length && col(name).insertMany(list)));
 
 await col("announcements").insertMany(
   ANNOUNCEMENTS.map(([slug, title, body], i) => {

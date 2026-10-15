@@ -38,6 +38,7 @@ const LessonVideoField = ({ lessonId, video, upload: pendingUpload }) => {
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState(false);
   const [upload, setUpload] = useState(null);
+  const [dragging, setDragging] = useState(false);
   const uploadRef = useRef(null);
   const status = pendingUpload?.status ?? video?.status ?? "none";
   const pending = status === "uploading" || status === "processing";
@@ -68,10 +69,8 @@ const LessonVideoField = ({ lessonId, video, upload: pendingUpload }) => {
     router.refresh();
   };
 
-  const handleFile = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
+  const startUpload = async (file) => {
+    if (!file || progress !== null) return;
     setError(null);
     if (!file.type.startsWith("video/")) return setError("Choose a video file (MP4, MOV, MKV or WEBM).");
     if (file.size > MAX_VIDEO_BYTES) return setError(`This file is ${formatBytes(file.size)}. The limit is ${formatBytes(MAX_VIDEO_BYTES)}; export it at a lower bitrate and try again.`);
@@ -103,6 +102,27 @@ const LessonVideoField = ({ lessonId, video, upload: pendingUpload }) => {
       setUpload(null);
       router.refresh();
     });
+  };
+
+  const handleFile = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    startUpload(file);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    if (!e.currentTarget.contains(e.relatedTarget)) setDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragging(false);
+    startUpload(e.dataTransfer.files?.[0]);
   };
 
   const handleCancelUpload = async () => {
@@ -169,9 +189,14 @@ const LessonVideoField = ({ lessonId, video, upload: pendingUpload }) => {
       )}
 
       {mode === "mux" ? (
-        <label className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-white/25 p-6 text-center transition hover:border-accent ${progress !== null ? "pointer-events-none opacity-60" : ""}`}>
+        <label
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed p-6 text-center transition hover:border-accent focus-within:border-accent ${dragging ? "border-accent bg-accent/5" : "border-white/25"} ${progress !== null ? "pointer-events-none opacity-60" : ""}`}
+        >
           <UploadCloud className="size-7 text-accent" />
-          <span>{status === "none" ? "Choose a video file" : "Replace video"}</span>
+          <span>{status === "none" ? "Drop a video here or click to browse" : "Drop a new video or click to replace"}</span>
           <span className="text-sm text-white/45">Uploads straight to Mux in chunks with signed playback and DRM. MP4, MOV, MKV or WEBM up to 10 GB.</span>
           <input type="file" accept="video/*" onChange={handleFile} disabled={progress !== null} className="sr-only" />
           {progress !== null && (

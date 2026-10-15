@@ -28,7 +28,6 @@
     "mongodb": "7.7.0",
     "mongoose": "9.11.2",
     "next": "16.4.0",
-    "next-cloudinary": "6.19.3",
     "qrcode": "1.5.4",
     "rate-limiter-flexible": "11.2.2",
     "react": "19.3.0",

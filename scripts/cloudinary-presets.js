@@ -15,7 +15,7 @@ const toPreset = (rule) => ({
   use_filename: false,
   unique_filename: true,
   overwrite: false,
-  ...(rule.transformation && { transformation: rule.transformation }),
+  ...(rule.transformation && { transformation: [{ raw_transformation: rule.transformation }] }),
   ...(rule.type && { type: rule.type }),
 });
 

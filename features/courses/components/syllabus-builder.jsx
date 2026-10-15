@@ -34,6 +34,7 @@ import FormAlert from "@/components/ui/form-alert";
 import { formatDuration, plural } from "@/lib/format";
 import { useDialog } from "@/components/ui/dialog-provider";
 import { buttonClass, inputClass } from "@/lib/ui";
+import { useSortable } from "@/hooks/use-sortable";
 
 const toOrder = (sections) => sections.map((s) => ({ id: s.id, lessonIds: s.lessons.map((l) => l.id) }));
 
@@ -91,6 +92,19 @@ const Stat = ({ icon: Icon, label, value, tone = "text-accent" }) => (
   </div>
 );
 
+const DropLine = ({ position, offset }) => (
+  <span aria-hidden="true" className={`pointer-events-none absolute inset-x-2 ${position === "top" ? offset.top : offset.bottom} z-20 h-0.5 rounded-full bg-accent shadow-[0_0_12px_rgba(232,96,46,0.7)]`} />
+);
+
+const lessonOffset = { top: "-top-[5px]", bottom: "-bottom-[5px]" };
+const sectionOffset = { top: "-top-[11px]", bottom: "-bottom-[11px]" };
+
+const Grip = ({ label, onPointerDown, size = "size-4" }) => (
+  <button type="button" tabIndex={-1} aria-label={label} onPointerDown={onPointerDown} className="grid size-8 shrink-0 cursor-grab touch-none place-items-center rounded-lg text-white/30 transition hover:bg-white/5 hover:text-white/70 active:cursor-grabbing">
+    <GripVertical className={size} />
+  </button>
+);
+
 const QuizRow = ({ courseId, quiz, label, nested }) => (
   <Link
     href={`/admin/courses/${courseId}/quizzes/${quiz.id}`}
@@ -113,7 +127,6 @@ const SyllabusBuilder = ({ courseId, outline }) => {
   const [collapsed, setCollapsed] = useState(() => new Set());
   const [error, setError] = useState(null);
   const [renaming, setRenaming] = useState(null);
-  const [dragging, setDragging] = useState(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => setSections(outline), [outline]);
@@ -159,45 +172,26 @@ const SyllabusBuilder = ({ courseId, outline }) => {
     commitOrder(next);
   };
 
-  const handleDragStart = (payload) => (e) => {
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", payload.id);
-    setDragging(payload);
-  };
-
-  const handleDragEnd = () => setDragging(null);
-
-  const handleDropOnLesson = (sIndex, lIndex) => (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (dragging?.type !== "lesson") return;
-    const next = cloneSections();
-    const fromS = next.findIndex((s) => s.lessons.some((l) => l.id === dragging.id));
-    const fromL = next[fromS].lessons.findIndex((l) => l.id === dragging.id);
-    const [lesson] = next[fromS].lessons.splice(fromL, 1);
-    const insertAt = fromS === sIndex && fromL < lIndex ? lIndex - 1 : lIndex;
-    next[sIndex].lessons.splice(insertAt, 0, lesson);
-    setDragging(null);
-    commitOrder(next);
-  };
-
-  const handleDropOnSection = (sIndex) => (e) => {
-    e.preventDefault();
-    if (!dragging) return;
-    if (dragging.type === "section") {
-      const from = sections.findIndex((s) => s.id === dragging.id);
-      setDragging(null);
-      if (from !== sIndex) commitOrder(moveItem(sections, from, sIndex));
+  const handleSort = (item, target) => {
+    const unchanged = (next) => JSON.stringify(toOrder(next)) === JSON.stringify(toOrder(sections));
+    if (item.type === "section") {
+      const next = sections.filter((s) => s.id !== item.id);
+      next.splice(target.index, 0, sections.find((s) => s.id === item.id));
+      if (!unchanged(next)) commitOrder(next);
       return;
     }
-    const next = sections.map((s) => ({ ...s, lessons: s.lessons.filter((l) => l.id !== dragging.id) }));
-    const lesson = sections.flatMap((s) => s.lessons).find((l) => l.id === dragging.id);
-    next[sIndex].lessons.push(lesson);
-    setDragging(null);
-    commitOrder(next);
+    const next = cloneSections();
+    const from = next.find((s) => s.lessons.some((l) => l.id === item.id));
+    const lesson = from.lessons.find((l) => l.id === item.id);
+    from.lessons = from.lessons.filter((l) => l.id !== item.id);
+    next.find((s) => s.id === target.sectionId)?.lessons.splice(target.index, 0, lesson);
+    if (!unchanged(next)) commitOrder(next);
   };
 
-  const allowDrop = (e) => e.preventDefault();
+  const { active, target, start } = useSortable(handleSort);
+  const draggingSection = active?.type === "section";
+  const draggingLesson = active?.type === "lesson";
+  const otherSections = sections.filter((s) => s.id !== active?.id);
 
   const toggleSection = (id) => () =>
     setCollapsed((current) => {
@@ -252,9 +246,8 @@ const SyllabusBuilder = ({ courseId, outline }) => {
 
       <div className="flex flex-wrap items-center gap-2">
         <p className="mr-auto flex items-center gap-2 text-sm text-white/50">
-          <GripVertical className="hidden size-4 shrink-0 text-white/30 md:block" />
-          <span className="hidden md:inline">Drag to reorder · open a lesson to add its video</span>
-          <span className="md:hidden">Use ⋯ to reorder · tap a lesson to edit</span>
+          <GripVertical className="size-4 shrink-0 text-white/30" />
+          <span>Drag the handle to reorder · open a lesson to add its video</span>
         </p>
         <button type="button" onClick={handleExpandAll} className={buttonClass("outline", "sm")}>
           Expand all
@@ -274,24 +267,22 @@ const SyllabusBuilder = ({ courseId, outline }) => {
       {sections.map((section, sIndex) => {
         const isOpen = !collapsed.has(section.id);
         const sectionDuration = section.lessons.reduce((sum, l) => sum + (l.durationSec ?? 0), 0);
+        const lifted = active?.id === section.id;
+        const slot = otherSections.findIndex((s) => s.id === section.id);
+        const isDropTarget = draggingLesson && target?.sectionId === section.id;
+        const otherLessons = section.lessons.filter((l) => l.id !== active?.id);
         return (
           <section
             key={section.id}
-            onDragOver={allowDrop}
-            onDrop={handleDropOnSection(sIndex)}
+            data-sort-section={section.id}
+            data-count={otherLessons.length}
             aria-label={`Section ${sIndex + 1}: ${section.title}`}
-            className={`rounded-3xl border bg-[#0C0C0C] transition ${dragging ? "border-dashed border-accent/40" : "border-[#302C2A]"}`}
+            className={`relative rounded-3xl border bg-[#0C0C0C] transition-[border-color,box-shadow,background-color] duration-200 ${lifted ? "z-30 border-accent/60 shadow-[0_24px_60px_rgba(0,0,0,0.6)]" : isDropTarget ? "border-accent/60 bg-accent/[0.03]" : "border-[#302C2A]"}`}
           >
-            <header className="flex items-center gap-2 p-3 sm:p-4">
-              <span
-                draggable
-                onDragStart={handleDragStart({ type: "section", id: section.id })}
-                onDragEnd={handleDragEnd}
-                className="hidden cursor-grab text-white/30 active:cursor-grabbing sm:block"
-                aria-hidden="true"
-              >
-                <GripVertical className="size-5" />
-              </span>
+            {draggingSection && !lifted && target?.index === slot && <DropLine position="top" offset={sectionOffset} />}
+            {draggingSection && !lifted && slot === otherSections.length - 1 && target?.index === slot + 1 && <DropLine position="bottom" offset={sectionOffset} />}
+            <header className="flex items-center gap-1.5 p-3 sm:gap-2 sm:p-4">
+              <Grip label={`Drag section ${section.title}`} onPointerDown={start("section", section.id)} size="size-5" />
               {renaming === section.id ? (
                 <form onSubmit={handleRename(section.id)} className="flex min-w-0 flex-1 flex-wrap gap-2">
                   <input name="title" defaultValue={section.title} autoFocus aria-label="Section title" className="min-w-0 flex-1 basis-40 rounded-lg border border-accent bg-[#070707] px-3 py-1.5 outline-hidden" />
@@ -325,7 +316,7 @@ const SyllabusBuilder = ({ courseId, outline }) => {
               />
             </header>
 
-            {isOpen && (
+            {isOpen && !lifted && (
               <div className="flex flex-col gap-2 border-t border-white/5 p-3 sm:p-4">
                 <ol className="flex flex-col gap-2">
                   {section.lessons.map((lesson, lIndex) => {
@@ -333,16 +324,18 @@ const SyllabusBuilder = ({ courseId, outline }) => {
                     const isFirst = sIndex === 0 && lIndex === 0;
                     const isLast = sIndex === sections.length - 1 && lIndex === section.lessons.length - 1;
                     const lessonHref = `/admin/courses/${courseId}/lessons/${lesson.id}`;
+                    const raised = active?.id === lesson.id;
+                    const spot = otherLessons.findIndex((l) => l.id === lesson.id);
+                    const showLine = isDropTarget && !raised;
                     return (
-                      <li key={lesson.id} onDragOver={allowDrop} onDrop={handleDropOnLesson(sIndex, lIndex)} className="flex flex-col gap-2">
+                      <li key={lesson.id} data-sort-lesson={lesson.id} className={`relative flex flex-col gap-2 ${raised ? "z-30" : ""}`}>
+                        {showLine && target.index === spot && <DropLine position="top" offset={lessonOffset} />}
+                        {showLine && spot === otherLessons.length - 1 && target.index === spot + 1 && <DropLine position="bottom" offset={lessonOffset} />}
                         <div
-                          draggable
-                          onDragStart={handleDragStart({ type: "lesson", id: lesson.id })}
-                          onDragEnd={handleDragEnd}
-                          className={`flex items-center gap-2 rounded-2xl border border-white/5 bg-[#070707] p-2 pl-3 transition hover:border-white/15 ${dragging?.id === lesson.id ? "opacity-40" : ""}`}
+                          className={`flex items-center gap-1.5 rounded-2xl border bg-[#070707] p-2 pl-1 transition-[border-color,box-shadow] duration-200 sm:gap-2 ${raised ? "border-accent/60 shadow-[0_18px_40px_rgba(0,0,0,0.6)]" : "border-white/5 hover:border-white/15"}`}
                         >
-                          <GripVertical className="hidden size-4 shrink-0 cursor-grab text-white/25 sm:block" aria-hidden="true" />
-                          <span className="w-8 shrink-0 text-xs tabular-nums text-white/35">
+                          <Grip label={`Drag lesson ${lesson.title}`} onPointerDown={start("lesson", lesson.id)} />
+                          <span className="w-7 shrink-0 text-xs tabular-nums text-white/35 sm:w-8">
                             {sIndex + 1}.{lIndex + 1}
                           </span>
                           <video.icon className={`size-4 shrink-0 ${video.tone}`} aria-label={video.label} />
@@ -392,8 +385,8 @@ const SyllabusBuilder = ({ courseId, outline }) => {
                 {section.quizzes.map((quiz) => (
                   <QuizRow key={quiz.id} courseId={courseId} quiz={quiz} label="Section quiz" />
                 ))}
-                {section.lessons.length === 0 && section.quizzes.length === 0 && (
-                  <p className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-white/10 px-4 py-6 text-center text-sm text-white/40">
+                {otherLessons.length === 0 && section.quizzes.length === 0 && (
+                  <p className={`flex flex-col items-center gap-2 rounded-2xl border border-dashed px-4 py-6 text-center text-sm transition-colors ${isDropTarget ? "border-accent/60 text-accent" : "border-white/10 text-white/40"}`}>
                     <CircleDashed className="size-5" /> Drop lessons here or add the first one below.
                   </p>
                 )}

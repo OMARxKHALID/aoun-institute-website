@@ -44,7 +44,7 @@ Every variable is documented in `.env.example`. The site runs without the option
 | MongoDB | everything | site settings fall back to defaults in dev |
 | Better Auth secret + URL | sign in | required |
 | Resend | emails | emails print to the server console |
-| Cloudinary | logos, thumbnails, PDFs, avatars, payment receipts | upload buttons show a notice; run `bun run cloudinary:presets` once after adding keys |
+| Cloudinary | logos, thumbnails, PDFs, avatars, payment receipts | upload boxes show a notice; run `bun run cloudinary:presets` once after adding keys, or uploads fail with "Upload preset not found" |
 | Mux | protected video uploads | use YouTube/Vimeo or direct video links per lesson |
 | Google OAuth | "Continue with Google" | button hidden |
 
@@ -78,7 +78,7 @@ Honest limits:
 1. Create a MongoDB Atlas cluster. Under Network Access allow `0.0.0.0/0` (Vercel has no fixed IPs) and copy the connection string with the database name in the path.
 2. Push the repo to GitHub and import it in Vercel. The framework is detected as Next.js and Bun is used automatically because of `bun.lock`. No build settings need changing.
 3. Add the environment variables from `.env.example` in Vercel → Settings → Environment Variables. Required: `MONGODB_URI`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` (your Vercel or custom domain, e.g. `https://aoun-institute.vercel.app`). The database must be reachable during the build because the catalog and settings are prerendered.
-4. Load data once from your computer: `MONGODB_URI=... bun run seed` (admin and settings only) or `MONGODB_URI=... bun run demo -- --force` (full demo).
+4. Load data once from your computer: `MONGODB_URI=... bun run seed` (admin and settings only) or `MONGODB_URI=... bun run demo -- --force` (full demo). Then redeploy in Vercel: the course catalog is prerendered at build time, and data written by these scripts does not refresh pages that are already cached.
 5. Optional services: Resend (email), Cloudinary (uploads; run `bun run cloudinary:presets` once), Mux (protected video; webhook `https://your-domain/api/webhooks/mux`), Google OAuth (redirect `https://your-domain/api/auth/callback/google`).
 6. Redeploy after changing environment variables.
 
