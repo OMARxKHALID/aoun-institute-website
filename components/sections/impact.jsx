@@ -37,29 +37,32 @@ const ImpactCard = ({ title, text, tag, image, tone, offset }) => (
 );
 
 const Impact = ({ impactCards }) => {
+  const sectionRef = useRef(null);
   const trackRef = useRef(null);
 
   useEffect(() => {
     const mm = gsap.matchMedia();
-    mm.add("(min-width: 1024px)", () => {
-      gsap.to(trackRef.current.querySelectorAll("[data-impact-card]"), {
-        x: "-150%",
+    mm.add("(min-width: 1024px) and (prefers-reduced-motion: no-preference)", () => {
+      const track = trackRef.current;
+      const distance = () => Math.max(0, track.scrollWidth - track.clientWidth);
+      gsap.to(track, {
+        x: () => -distance(),
         ease: "none",
-        scrollTrigger: { trigger: trackRef.current, start: "top 40%", end: "bottom 30%", scrub: true },
+        scrollTrigger: { trigger: sectionRef.current, start: "top top", end: () => `+=${distance()}`, pin: true, scrub: 0.6, invalidateOnRefresh: true },
       });
     });
     return () => mm.revert();
   }, []);
 
   return (
-    <section className="flex w-full flex-col items-center overflow-hidden bg-black py-10">
+    <section ref={sectionRef} className="flex w-full flex-col items-center overflow-hidden bg-black py-10 lg:min-h-screen lg:justify-center">
       <SectionHeading tag="Impact" title="How we help learners move faster and further" />
       <div ref={trackRef} className="flex w-full snap-x snap-mandatory items-start gap-8 overflow-x-auto px-6 [scrollbar-width:none] lg:overflow-visible">
         <div className="w-[40%] shrink-0 max-md:hidden sm:w-[25%]" />
         {impactCards.map((card, i) => (
           <ImpactCard key={card.title} {...card} tone={tones[i % tones.length]} offset={i % 2 === 1} />
         ))}
-        <div className="shrink-0 max-md:hidden sm:w-10" />
+        <div className="shrink-0 max-md:hidden sm:w-10 lg:w-[5vw]" />
       </div>
     </section>
   );

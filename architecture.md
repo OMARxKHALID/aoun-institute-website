@@ -24,6 +24,7 @@ Course-selling LMS for an institute: students register, buy recorded video cours
 | @react-pdf/renderer 4.9.0, qrcode 1.5.4 | certificate/receipt PDFs with QR — Phase 7 |
 | rate-limiter-flexible 11.2.2 | Mongo-backed limits for verify/uploads/quiz — added when needed |
 | server-only 0.0.1 | guards server modules from client bundles |
+| lenis 1.3.26 | smooth wheel scrolling on public pages, synced with GSAP ScrollTrigger (`components/motion/smooth-scroll.jsx`) |
 
 Skipped: zustand (quiz and player state fit in component state). Rejected: pdf-lib (abandoned), @dnd-kit (stale/pre-1.0; pointer-event sortable in `hooks/use-sortable.js` with touch support, plus menu move buttons for keyboard users), Vidstack/Plyr (deprecated), sharp (Cloudinary transforms), bcrypt (Better Auth hashes).
 
