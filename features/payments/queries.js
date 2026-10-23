@@ -14,7 +14,7 @@ export const getAdminOrders = async () => {
   const byId = new Map(users.map((u) => [String(u._id), u]));
   return orders.map((o) => ({
     id: String(o._id),
-    student: byId.get(o.userId)?.name ?? "Deleted user",
+    student: byId.get(o.userId)?.name ?? "Former student",
     email: byId.get(o.userId)?.email ?? "",
     course: o.courseId?.title ?? "Deleted course",
     amount: o.amount,
@@ -40,7 +40,7 @@ export const getMyOrders = async () => {
     currency: o.currency,
     method: o.method ?? o.provider,
     reference: o.providerRef?.replace(/^manual:/, "") ?? "",
-    note: o.status === "FAILED" ? (o.note ?? "") : "",
+    note: o.status === "REJECTED" || o.status === "CANCELLED" ? (o.note ?? "") : "",
     status: o.status,
     createdAt: o.createdAt.toISOString(),
   }));

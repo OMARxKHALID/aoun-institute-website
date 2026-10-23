@@ -24,7 +24,7 @@ export const startAttempt = async (quizId) => {
   if (open && !isExpired(open)) return { ok: true, data: { attemptId: String(open._id) } };
   if (open) await gradeAttempt(user, open, true);
   if (lockMessage[found.state.status]) return fail(lockMessage[found.state.status]);
-  const { maxAttempts } = found.quiz;
+  const { maxAttempts } = found.state;
   if (maxAttempts && (await QuizAttempt.countDocuments({ userId: user.id, quizId })) >= maxAttempts) return fail(lockMessage.failed);
   const attempt = await createAttempt(user, found.quiz).catch((error) => (error?.code === 11000 ? null : Promise.reject(error)));
   if (!attempt) return fail("Could not start the quiz. Try again.");
@@ -40,6 +40,7 @@ const loadOwnAttempt = async (user, attemptId) => {
 
 export const saveAnswers = async (attemptId, answers) => {
   const user = await requireUser();
+  if (!(await rateLimit("quizSave", user.id))) return fail("Too many requests. Wait a minute and try again.");
   const attempt = await loadOwnAttempt(user, attemptId);
   if (!attempt || attempt.status !== "in_progress") return fail("This attempt is closed");
   if (isExpired(attempt)) {

@@ -60,11 +60,11 @@ const ReviewForm = ({ courseId, review, canReview }) => {
               onMouseEnter={() => setHover(n)}
               className="p-0.5"
             >
-              <Star className={`size-7 transition ${shown >= n ? "fill-amber-400 text-amber-400" : "text-white/25"}`} />
+              <Star className={`size-7 transition ${shown >= n ? "fill-amber-300 text-amber-300" : "text-white/30"}`} />
             </button>
           ))}
         </div>
-        <span className="text-sm text-white/55">{labels[shown]}</span>
+        <span className="text-sm text-white/50">{labels[shown]}</span>
       </div>
       <textarea
         value={body}

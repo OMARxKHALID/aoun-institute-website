@@ -8,7 +8,7 @@ const orderSchema = new Schema(
     currency: { type: String, default: "PKR" },
     provider: { type: String, required: true, default: "manual" },
     method: String,
-    status: { type: String, enum: ["PENDING", "PAID", "FAILED", "REFUNDED"], default: "PENDING" },
+    status: { type: String, enum: ["PENDING", "PAID", "REJECTED", "CANCELLED", "REFUNDED"], default: "PENDING" },
     providerRef: String,
     receipt: { publicId: String, format: String },
     note: String,

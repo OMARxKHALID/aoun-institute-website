@@ -13,14 +13,18 @@ import LessonProgress from "@/features/progress/models/lesson-progress";
 import CourseProgress from "@/features/progress/models/course-progress";
 import ActivityLog from "@/features/progress/models/activity-log";
 import QuizAttempt from "@/features/quizzes/models/quiz-attempt";
+import AttemptGrant from "@/features/quizzes/models/attempt-grant";
 import PlaybackSession from "@/features/video/playback-session";
 import { grantEnrollment } from "@/features/enrollments/enroll";
 import { audit } from "@/features/audit/service";
 import Note from "@/features/notes/model";
 import StudyPlan from "@/features/calendar/model";
 import Review from "@/features/reviews/model";
+import Discussion from "@/features/discussions/model";
 import { linkEmail, sendEmail } from "@/lib/email";
 import { SITE_URL } from "@/lib/site";
+
+const FORMER_STUDENT = "Former student";
 
 const passwordSchema = z.strictObject({ password: z.string().min(8, { error: "At least 8 characters" }).max(128) });
 
@@ -56,7 +60,7 @@ export const enrollStudent = async (userId, courseId) => {
   const admin = await requireAdmin();
   if (!(await loadStudent(userId))) return fail("Student not found");
   if (!isValidObjectId(courseId) || !(await Course.exists({ _id: courseId }))) return fail("Choose a course", "courseId");
-  await grantEnrollment({ userId, courseId, source: "manual" });
+  await grantEnrollment({ userId, courseId, source: "gift" });
   await audit(admin, "student.enroll", "Enrolled a student for free", { type: "student", id: userId });
   return { ok: true };
 };
@@ -78,10 +82,12 @@ export const deleteStudent = async (userId) => {
     CourseProgress.deleteMany({ userId }),
     ActivityLog.deleteMany({ userId }),
     QuizAttempt.deleteMany({ userId }),
+    AttemptGrant.deleteMany({ userId }),
     PlaybackSession.deleteMany({ userId }),
     Note.deleteMany({ userId }),
     StudyPlan.deleteMany({ userId }),
     Review.deleteMany({ userId }),
+    Discussion.updateMany({ userId }, { $set: { authorName: FORMER_STUDENT } }),
   ]);
   await auth.api.removeUser({ headers: await headers(), body: { userId } });
   await audit(admin, "student.delete", "Deleted a student account", { type: "student", id: userId });
@@ -105,5 +111,15 @@ export const setStudentPassword = async (userId, input) => {
       html: linkEmail({ title: "Your password was changed", text: "An administrator set a new password for your account and signed you out on all devices. If you did not ask for this, contact us.", url: `${SITE_URL}/login`, cta: "Sign in" }),
     }).catch((error) => console.error("[students] email failed", error));
   await audit(admin, "student.password", "Set a new password for a student", { type: "student", id: userId });
+  return { ok: true };
+};
+
+export const setTeacherRole = async (userId, makeTeacher) => {
+  const admin = await requireAdmin();
+  const student = await loadStudent(userId);
+  if (!student) return fail("Student not found");
+  await auth.api.setRole({ headers: await headers(), body: { userId, role: makeTeacher ? "TEACHER" : "STUDENT" } });
+  if (!makeTeacher) await Course.updateMany({ teacherIds: userId }, { $pull: { teacherIds: userId } });
+  await audit(admin, makeTeacher ? "teacher.add" : "teacher.remove", `${makeTeacher ? "Made" : "Removed"} ${student.name} ${makeTeacher ? "a teacher" : "as a teacher"}`, { type: "student", id: userId });
   return { ok: true };
 };

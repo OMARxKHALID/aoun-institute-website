@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import CourseCard from "@/components/ui/course-card";
 import TabList from "@/components/ui/tab-list";
+import { searchClass, searchLgClass } from "@/lib/ui";
 
 const CourseGrid = ({ courses, embedded }) => {
   const [active, setActive] = useState("All");
@@ -24,8 +25,8 @@ const CourseGrid = ({ courses, embedded }) => {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <label className="relative w-full lg:max-w-xs">
             <span className="sr-only">Search courses</span>
-            <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-white/40" />
-            <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search courses" className="w-full rounded-full border border-[#302C2A] bg-[#0C0C0C] py-2.5 pl-11 pr-4 outline-hidden placeholder:text-white/30 focus:border-accent" />
+            <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-white/50" />
+            <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search courses" className={searchClass} />
           </label>
           {categories.length > 2 && <TabList tabs={categories} value={active} onChange={setActive} label="Category" size="sm" />}
         </div>
@@ -42,13 +43,13 @@ const CourseGrid = ({ courses, embedded }) => {
     <section className="mx-auto w-[90%] pb-24 lg:w-[85%]">
       <label className="relative mx-auto mb-6 block max-w-xl">
         <span className="sr-only">Search courses</span>
-        <Search className="pointer-events-none absolute left-5 top-1/2 size-5 -translate-y-1/2 text-white/40" />
+        <Search className="pointer-events-none absolute left-5 top-1/2 size-5 -translate-y-1/2 text-white/50" />
         <input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search courses, e.g. Python, design, Flutter"
-          className="w-full rounded-full border border-[#302C2A] bg-[#0C0C0C] py-3.5 pl-13 pr-5 text-lg outline-hidden placeholder:text-white/30 focus:border-accent"
+          className={searchLgClass}
         />
       </label>
       {categories.length > 2 && (
@@ -59,7 +60,7 @@ const CourseGrid = ({ courses, embedded }) => {
               type="button"
               onClick={handleSelect(c)}
               aria-pressed={active === c}
-              className={`rounded-full border px-5 py-2 text-lg transition-colors ${active === c ? "border-accent bg-[#4B1E0E] text-white" : "border-[#302C2A] text-white/60 hover:text-white"}`}
+              className={`rounded-full border px-5 py-2 text-lg transition-colors ${active === c ? "border-accent bg-[#4B1E0E] text-white" : "border-[#302C2A] text-white/70 hover:text-white"}`}
             >
               {c}
             </button>

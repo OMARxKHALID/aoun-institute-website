@@ -12,7 +12,7 @@ const StatCard = ({ icon, value, label, text }) => (
         {icon}
         <p className="text-6xl tracking-tighter text-accent lg:text-5xl">{value}</p>
       </div>
-      <p className="mt-1.5 text-2xl font-thin lg:text-xl">{label}</p>
+      <p className="mt-1.5 text-2xl font-light lg:text-xl">{label}</p>
     </div>
     <p className="mt-auto text-2xl leading-snug max-sm:pt-10 lg:text-xl">{text}</p>
   </div>
@@ -38,16 +38,16 @@ const Hero = ({ hero, stats: fallback, live }) => {
     <h4 className="mb-2 text-center uppercase text-accent md:text-2xl">{hero.eyebrow}</h4>
     <h1 className="w-[90%] text-center font-machina text-[2.7rem] font-normal capitalize tracking-tight max-sm:leading-[3.4rem] md:text-[5rem] md:leading-20 lg:w-[70%] lg:text-[4.7rem]">
       {hero.title}{" "}
-      <span className="relative mx-auto inline-block w-fit border border-accent bg-[#E8602E21] px-2 pt-[.06rem] text-white/90">
+      <span className="relative mx-auto inline-block w-fit border border-accent bg-[#E8602E21] px-2 pt-[.06rem] text-white">
         {hero.highlight}
         <CornerDots className="h-1 bg-white" />
       </span>{" "}
       {hero.titleEnd}
     </h1>
-    <p className="w-[90%] text-center text-[1.2rem] font-light text-[#D7D7D7] md:text-[1.9rem] lg:w-[65%]">
+    <p className="w-[90%] text-center text-xl font-normal text-white/70 md:text-[1.9rem] lg:w-[65%]">
       {hero.subtitle}
     </p>
-    <div className="flex flex-wrap items-center justify-center gap-2 text-center text-lg font-light text-white/70">
+    <div className="flex flex-wrap items-center justify-center gap-2 text-center text-lg font-normal text-white/70">
       <AvatarStack />
       <span className="font-bold text-accent">{stats[0]?.value}</span>
       learners building in our programs
@@ -76,7 +76,7 @@ const Hero = ({ hero, stats: fallback, live }) => {
           <br />
           Learning
         </h3>
-        <Link href="/contact" className="absolute bottom-5 left-5 z-10 rounded-xl border-[0.5px] border-white/40 px-7 py-4 text-2xl font-thin text-accent backdrop-blur-3xl">
+        <Link href="/contact" className="absolute bottom-5 left-5 z-10 rounded-xl border-[0.5px] border-white/40 px-7 py-4 text-2xl font-light text-accent backdrop-blur-3xl">
           Get in touch →
         </Link>
       </div>

@@ -81,19 +81,19 @@ const CertificateTable = ({ certificates, courses }) => {
       cell: ({ row }) => (
         <span>
           <span className="block font-medium">{row.original.studentName}</span>
-          <span className="block text-sm text-white/45">{row.original.email}</span>
+          <span className="block text-sm text-white/50">{row.original.email}</span>
         </span>
       ),
     }),
     helper.accessor("courseTitle", { header: "Course" }),
     helper.accessor("code", { header: "Certificate ID", cell: ({ getValue }) => <span className="select-all font-mono text-sm">{getValue()}</span> }),
-    helper.accessor("issuedAt", { header: "Issued", sortingFn: "datetime", cell: ({ getValue }) => <span className="text-white/60">{formatDate(getValue())}</span> }),
+    helper.accessor("issuedAt", { header: "Issued", sortingFn: "datetime", cell: ({ getValue }) => <span className="text-white/70">{formatDate(getValue())}</span> }),
     helper.accessor("status", {
       header: "Status",
       cell: ({ row }) => (
         <span className="flex flex-col items-start gap-1">
           <StatusPill status={row.original.status} />
-          {row.original.reason && <span className="text-xs text-white/40">{row.original.reason}</span>}
+          {row.original.reason && <span className="text-xs text-white/50">{row.original.reason}</span>}
         </span>
       ),
     }),

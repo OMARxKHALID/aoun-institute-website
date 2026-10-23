@@ -37,7 +37,7 @@ const baseColumns = helper.columns([
         </span>
         <span>
           <span className="block font-medium">{row.original.title}</span>
-          <span className="block text-sm text-white/45">{row.original.category || "Uncategorized"}</span>
+          <span className="block text-sm text-white/50">{row.original.category || "Uncategorized"}</span>
         </span>
       </Link>
     ),
@@ -49,13 +49,13 @@ const baseColumns = helper.columns([
     cell: ({ row }) => (
       <span>
         {formatPrice(row.original.discountPrice ?? row.original.price)}
-        {row.original.discountPrice != null && <span className="ml-2 text-sm text-white/40 line-through">{formatPrice(row.original.price)}</span>}
+        {row.original.discountPrice != null && <span className="ml-2 text-sm text-white/50 line-through">{formatPrice(row.original.price)}</span>}
       </span>
     ),
   }),
   helper.accessor("lessons", { header: "Lessons" }),
   helper.accessor("students", { header: "Students" }),
-  helper.accessor("updatedAt", { header: "Updated", sortingFn: "datetime", cell: ({ getValue }) => <span className="text-white/60">{formatDate(getValue())}</span> }),
+  helper.accessor("updatedAt", { header: "Updated", sortingFn: "datetime", cell: ({ getValue }) => <span className="text-white/70">{formatDate(getValue())}</span> }),
 ]);
 
 const CourseTable = ({ courses, initialSearch }) => {

@@ -70,15 +70,15 @@ const LessonNotes = ({ lessonId, notes, timed }) => {
               ) : (
                 <Bookmark className="mt-0.5 size-4 shrink-0 text-accent" />
               )}
-              <p className="min-w-0 flex-1 whitespace-pre-line break-words text-sm text-white/75">{note.body}</p>
-              <button type="button" onClick={handleDelete(note.id)} aria-label="Delete note" className="grid size-7 shrink-0 place-items-center rounded-lg text-white/40 hover:bg-red-500/10 hover:text-red-300">
+              <p className="min-w-0 flex-1 whitespace-pre-line break-words text-sm text-white/70">{note.body}</p>
+              <button type="button" onClick={handleDelete(note.id)} aria-label="Delete note" className="grid size-7 shrink-0 place-items-center rounded-lg text-white/50 hover:bg-red-500/10 hover:text-red-400">
                 <Trash2 className="size-3.5" />
               </button>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-white/45">No notes yet. Notes are private to you.</p>
+        <p className="text-sm text-white/50">No notes yet. Notes are private to you.</p>
       )}
       <Pager {...pager} />
     </div>

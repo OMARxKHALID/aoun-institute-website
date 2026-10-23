@@ -14,7 +14,7 @@ import FormAlert from "@/components/ui/form-alert";
 import StatusPill from "@/components/ui/status-pill";
 import TabList from "@/components/ui/tab-list";
 import { useDialog } from "@/components/ui/dialog-provider";
-import { inputClass } from "@/lib/ui";
+import { inputClass, labelClass } from "@/lib/ui";
 import { plural } from "@/lib/format";
 
 const firstError = (result) => Object.values(result.errors ?? {}).flat()[0] ?? "Something went wrong";
@@ -126,7 +126,7 @@ const QuestionForm = ({ quizId, question, onDone }) => {
 
       {type === "short_answer" ? (
         <div className="flex flex-col gap-2">
-          <label htmlFor="accepted-answers" className="text-base text-white/70">
+          <label htmlFor="accepted-answers" className={labelClass}>
             Accepted answers (one per line)
           </label>
           <textarea
@@ -137,7 +137,7 @@ const QuestionForm = ({ quizId, question, onDone }) => {
             placeholder={"const\nthe const keyword"}
             className={inputClass}
           />
-          <p className="text-xs text-white/45">Answers are matched ignoring capital letters, extra spaces and punctuation.</p>
+          <p className="text-xs text-white/50">Answers are matched ignoring capital letters, extra spaces and punctuation.</p>
           {errors.acceptedAnswers && <p className="text-sm text-red-400">{errors.acceptedAnswers.message ?? errors.acceptedAnswers.root?.message}</p>}
         </div>
       ) : (
@@ -153,7 +153,7 @@ const QuestionForm = ({ quizId, question, onDone }) => {
                 onClick={handleCorrect(index)}
                 aria-label={correct ? "Correct answer" : "Mark as correct"}
                 aria-pressed={correct}
-                className={`grid size-10 shrink-0 place-items-center rounded-xl border transition ${correct ? "border-green-500/50 bg-green-500/10 text-green-400" : "border-[#302C2A] text-white/40 hover:text-white"}`}
+                className={`grid size-10 shrink-0 place-items-center rounded-xl border transition ${correct ? "border-green-500/50 bg-green-500/10 text-green-400" : "border-[#302C2A] text-white/50 hover:text-white"}`}
               >
                 <Icon className="size-5" />
               </button>
@@ -166,7 +166,7 @@ const QuestionForm = ({ quizId, question, onDone }) => {
                 className={`min-w-0 flex-1 ${inputClass}`}
               />
               {type !== "true_false" && fields.length > 2 && (
-                <button type="button" onClick={() => remove(index)} aria-label={`Remove option ${index + 1}`} className="grid size-10 shrink-0 place-items-center rounded-xl text-white/40 hover:bg-red-500/10 hover:text-red-300">
+                <button type="button" onClick={() => remove(index)} aria-label={`Remove option ${index + 1}`} className="grid size-10 shrink-0 place-items-center rounded-xl text-white/50 hover:bg-red-500/10 hover:text-red-400">
                   <X className="size-4" />
                 </button>
               )}
@@ -250,13 +250,13 @@ const QuestionList = ({ quizId, questions }) => {
                       </li>
                     ))
                   : q.options.map((o, i) => (
-                      <li key={i} className={`flex items-start gap-2 ${o.isCorrect ? "text-green-400" : "text-white/55"}`}>
+                      <li key={i} className={`flex items-start gap-2 ${o.isCorrect ? "text-green-400" : "text-white/50"}`}>
                         {o.isCorrect ? <CheckCircle2 className="mt-0.5 size-4 shrink-0" /> : <Circle className="mt-0.5 size-4 shrink-0" />}
                         <span className="break-words">{o.text}</span>
                       </li>
                     ))}
               </ul>
-              <p className="mt-2 text-xs text-white/40">
+              <p className="mt-2 text-xs text-white/50">
                 {QUESTION_TYPES.find((t) => t.value === q.type)?.label} · {q.points} {q.points === 1 ? "point" : "points"}
               </p>
             </div>
@@ -270,14 +270,14 @@ const QuestionList = ({ quizId, questions }) => {
               <button type="button" onClick={() => setEditing(q.id)} aria-label="Edit question" className="grid size-8 place-items-center rounded-lg text-white/50 hover:bg-white/5 hover:text-white">
                 <Pencil className="size-4" />
               </button>
-              <button type="button" onClick={handleDelete(q)} aria-label="Delete question" className="grid size-8 place-items-center rounded-lg text-white/50 hover:bg-red-500/10 hover:text-red-300">
+              <button type="button" onClick={handleDelete(q)} aria-label="Delete question" className="grid size-8 place-items-center rounded-lg text-white/50 hover:bg-red-500/10 hover:text-red-400">
                 <Trash2 className="size-4" />
               </button>
             </div>
           </article>
         ),
       )}
-      {list.length === 0 && editing !== "new" && <p className="rounded-2xl border border-dashed border-white/10 px-4 py-8 text-center text-white/45">No questions yet. Add the first one.</p>}
+      {list.length === 0 && editing !== "new" && <p className="rounded-2xl border border-dashed border-white/10 px-4 py-8 text-center text-white/50">No questions yet. Add the first one.</p>}
       {editing === "new" ? (
         <QuestionForm quizId={quizId} onDone={() => setEditing(null)} />
       ) : (
@@ -321,7 +321,7 @@ const QuizBuilder = ({ courseId, quiz, questions, attempts }) => {
       <div hidden={tab !== "Settings"} className="flex flex-col gap-8">
         <SettingsForm quiz={quiz} />
         <div className="flex flex-col gap-3 rounded-2xl border border-red-500/30 p-5">
-          <p className="font-medium text-red-300">Delete quiz</p>
+          <p className="font-medium text-red-400">Delete quiz</p>
           <p className="text-sm text-white/50">Removes the quiz, its questions and all student attempts.</p>
           <FormAlert>{error}</FormAlert>
           <Button type="button" variant="danger" onClick={handleDelete} className="self-start">

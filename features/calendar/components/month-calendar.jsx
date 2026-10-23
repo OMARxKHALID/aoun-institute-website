@@ -28,7 +28,7 @@ const MonthCalendar = ({ month, prev, next, today, plans, studied, basePath }) =
       </div>
       <div className="grid grid-cols-7 gap-1 sm:gap-2">
         {WEEKDAYS.map((d) => (
-          <span key={d} className="pb-1 text-center text-xs text-white/40">
+          <span key={d} className="pb-1 text-center text-xs text-white/50">
             <span className="sm:hidden">{d[0]}</span>
             <span className="hidden sm:inline">{d}</span>
           </span>
@@ -43,14 +43,14 @@ const MonthCalendar = ({ month, prev, next, today, plans, studied, basePath }) =
               key={i}
               className={`flex min-h-12 flex-col gap-1 rounded-xl border p-1.5 sm:min-h-24 sm:p-2 ${k === today ? "border-accent bg-accent/[0.08]" : "border-white/5 bg-[#070707]"}`}
             >
-              <span className={`text-xs ${k === today ? "font-semibold text-accent" : "text-white/60"}`}>{day}</span>
+              <span className={`text-xs ${k === today ? "font-semibold text-accent" : "text-white/70"}`}>{day}</span>
               {studiedMin > 0 && (
-                <span title={`${studiedMin} minutes studied`} className="hidden truncate rounded-md bg-green-500/10 px-1.5 py-0.5 text-[10px] text-green-300 sm:block">
+                <span title={`${studiedMin} minutes studied`} className="hidden truncate rounded-md bg-green-500/10 px-1.5 py-0.5 text-xs text-green-400 sm:block">
                   {studiedMin} min studied
                 </span>
               )}
               {items.slice(0, 2).map((p) => (
-                <span key={p.id} title={`${p.time} ${p.title}`} className={`hidden truncate rounded-md px-1.5 py-0.5 text-[10px] sm:block ${p.done ? "bg-white/5 text-white/40 line-through" : "bg-accent/15 text-accent"}`}>
+                <span key={p.id} title={`${p.time} ${p.title}`} className={`hidden truncate rounded-md px-1.5 py-0.5 text-xs sm:block ${p.done ? "bg-white/5 text-white/50 line-through" : "bg-accent/15 text-accent"}`}>
                   {p.time} {p.title}
                 </span>
               ))}
@@ -58,7 +58,7 @@ const MonthCalendar = ({ month, prev, next, today, plans, studied, basePath }) =
                 {studiedMin > 0 && <span className="size-1.5 rounded-full bg-green-400" />}
                 {items.length > 0 && <span className="size-1.5 rounded-full bg-accent" />}
               </span>
-              {items.length > 2 && <span className="hidden text-[10px] text-white/40 sm:block">+{items.length - 2} more</span>}
+              {items.length > 2 && <span className="hidden text-xs text-white/50 sm:block">+{items.length - 2} more</span>}
             </div>
           );
         })}

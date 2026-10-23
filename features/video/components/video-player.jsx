@@ -38,7 +38,7 @@ const getDeviceId = () => {
 const fetchPlayback = (lessonId) => fetch(`/api/lessons/${lessonId}/playback`).then((res) => res.json());
 
 const Notice = ({ icon: Icon, children }) => (
-  <div className="grid aspect-video w-full place-items-center rounded-2xl border border-[#302C2A] bg-[#0C0C0C] p-6 text-center text-white/60">
+  <div className="grid aspect-video w-full place-items-center rounded-2xl border border-[#302C2A] bg-[#0C0C0C] p-6 text-center text-white/70">
     <div className="flex flex-col items-center gap-3">
       <Icon className="size-8 text-accent" />
       {children}
@@ -275,7 +275,7 @@ const VideoPlayer = ({ lessonId, title, onComplete, controllerRef, startAt }) =>
         <div className="absolute inset-0 z-30 grid place-items-center bg-black p-6 text-center">
           <div className="flex flex-col items-center gap-3">
             <ShieldCheck className="size-8 text-accent" />
-            <p className="max-w-sm text-white/80">Paused. This video is protected and only plays while this window is in focus.</p>
+            <p className="max-w-sm text-white">Paused. This video is protected and only plays while this window is in focus.</p>
             <button type="button" onClick={handleShieldResume} className={btn.primary}>
               Resume
             </button>
@@ -286,7 +286,7 @@ const VideoPlayer = ({ lessonId, title, onComplete, controllerRef, startAt }) =>
         <div className="absolute inset-0 z-20 grid place-items-center bg-black/85 p-6 text-center">
           <div className="flex flex-col items-center gap-3">
             <MonitorX className="size-8 text-accent" />
-            <p className="max-w-sm text-white/80">Your account is playing a video on another device or tab. Only one stream is allowed at a time.</p>
+            <p className="max-w-sm text-white">Your account is playing a video on another device or tab. Only one stream is allowed at a time.</p>
             <button type="button" onClick={handleResume} className={btn.primary}>
               Watch here instead
             </button>

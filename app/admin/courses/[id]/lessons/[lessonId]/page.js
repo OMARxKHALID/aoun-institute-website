@@ -33,7 +33,7 @@ const EditLessonPage = async ({ params }) => {
 
         <aside className="flex min-w-0 flex-col gap-5">
           <PanelCard title="Status">
-            <div className="flex flex-wrap items-center gap-2 text-sm text-white/60">
+            <div className="flex flex-wrap items-center gap-2 text-sm text-white/70">
               <StatusPill status={lesson.status} />
               {lesson.isFreePreview && <StatusPill status="preview" tone="accent" label="free preview" />}
               <StatusPill status={lesson.upload?.status ?? lesson.video?.status ?? "none"} label={`video ${lesson.upload?.status ?? lesson.video?.status ?? "missing"}`} />
@@ -52,7 +52,7 @@ const EditLessonPage = async ({ params }) => {
                 <FileQuestion className="size-5 shrink-0 text-accent" />
                 <span className="min-w-0 flex-1 truncate">{quiz.title}</span>
                 <StatusPill status={quiz.status} />
-                <Pencil className="size-4 text-white/40" />
+                <Pencil className="size-4 text-white/50" />
               </Link>
             ) : (
               <>
@@ -65,7 +65,7 @@ const EditLessonPage = async ({ params }) => {
           <nav aria-label="Lesson navigation" className="grid grid-cols-2 gap-3">
             {prev ? (
               <Link href={`${base}/lessons/${prev.id}`} className="flex min-w-0 flex-col gap-1 rounded-2xl border border-[#302C2A] p-3 text-sm transition hover:border-accent">
-                <span className="flex items-center gap-1 text-white/45">
+                <span className="flex items-center gap-1 text-white/50">
                   <ArrowLeft className="size-3.5" /> Previous
                 </span>
                 <span className="truncate">{prev.title}</span>
@@ -75,7 +75,7 @@ const EditLessonPage = async ({ params }) => {
             )}
             {next && (
               <Link href={`${base}/lessons/${next.id}`} className="flex min-w-0 flex-col items-end gap-1 rounded-2xl border border-[#302C2A] p-3 text-right text-sm transition hover:border-accent">
-                <span className="flex items-center gap-1 text-white/45">
+                <span className="flex items-center gap-1 text-white/50">
                   Next <ArrowRight className="size-3.5" />
                 </span>
                 <span className="w-full truncate">{next.title}</span>

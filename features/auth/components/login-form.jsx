@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -13,18 +13,27 @@ import FormAlert from "@/components/ui/form-alert";
 
 const safeNext = (next) => (next?.startsWith("/") && !next.startsWith("//") ? next : null);
 
+const homes = { ADMIN: "/admin", TEACHER: "/admin/courses" };
+
+const homeFor = (user) => homes[user?.role] ?? "/dashboard";
+
 const LoginForm = () => {
   const router = useRouter();
   const requested = safeNext(useSearchParams().get("next"));
-  const next = requested ?? "/dashboard";
+  const next = requested ?? "/login";
+  const { data: session } = authClient.useSession();
   const [unverified, setUnverified] = useState(null);
   const [resent, setResent] = useState(false);
   const { register, handleSubmit, setError, formState } = useForm({ resolver: zodResolver(loginSchema) });
 
+  useEffect(() => {
+    if (session?.user) router.replace(requested ?? homeFor(session.user));
+  }, [session, requested, router]);
+
   const handleLogin = async (values) => {
     setUnverified(null);
     const { data, error } = await authClient.signIn.email(values);
-    if (!error) return router.push(requested ?? (data?.user?.role === "ADMIN" ? "/admin" : "/dashboard"));
+    if (!error) return window.location.assign(requested ?? homeFor(data?.user));
     if (error.code === "EMAIL_NOT_VERIFIED") return setUnverified(values.email);
     setError("root", { message: error.message ?? "Invalid email or password" });
   };
@@ -53,7 +62,7 @@ const LoginForm = () => {
       )}
       <Field label="Email" type="email" autoComplete="email" error={formState.errors.email?.message} {...register("email")} />
       <Field label="Password" type="password" autoComplete="current-password" error={formState.errors.password?.message} {...register("password")} />
-      <Link href="/forgot-password" className="-mt-2 justify-self-end text-sm text-white/60 hover:text-accent">
+      <Link href="/forgot-password" className="-mt-2 justify-self-end text-sm text-white/70 hover:text-accent">
         Forgot password?
       </Link>
       <Button size="lg" type="submit" loading={formState.isSubmitting}>

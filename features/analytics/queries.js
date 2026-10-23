@@ -41,7 +41,7 @@ export const getAdminDashboard = async () => {
   });
   const thisMonth = months.at(-1).value;
   const lastMonth = months.at(-2).value;
-  const orderRow = (o) => ({ id: String(o._id), student: names.get(o.userId) ?? "Deleted user", course: o.courseId?.title ?? "Deleted course", amount: o.amount, currency: o.currency, status: o.status, createdAt: o.createdAt });
+  const orderRow = (o) => ({ id: String(o._id), student: names.get(o.userId) ?? "Former student", course: o.courseId?.title ?? "Deleted course", amount: o.amount, currency: o.currency, status: o.status, createdAt: o.createdAt });
   return plain({
     admin: { name: admin.name },
     stats: { revenue: paid[0]?.total ?? 0, paidOrders: paid[0]?.count ?? 0, thisMonth, change: lastMonth ? Math.round(((thisMonth - lastMonth) / lastMonth) * 100) : null, students, activeEnrollments, pending: pendingCount, certificates },

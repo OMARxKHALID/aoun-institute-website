@@ -9,7 +9,7 @@ const EmptyState = ({ icon: Icon, title, text, action, boxed }) => (
       </span>
     )}
     {title && <p className="text-xl font-medium">{title}</p>}
-    {text && <p className="max-w-xl text-sm text-white/55">{text}</p>}
+    {text && <p className="max-w-xl text-sm text-white/50">{text}</p>}
     {action && (
       <Link href={action.href} className={btn.secondary}>
         {action.label}

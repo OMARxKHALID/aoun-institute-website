@@ -31,7 +31,7 @@ const Tile = ({ title, text, image, area, tone, video }) => (
         <div className="absolute bottom-0 left-0 z-20 hidden min-h-[30%] w-full translate-y-full bg-linear-to-b from-transparent to-accent pt-10 transition-all duration-500 group-hover:translate-y-0 lg:flex">
           <div className="mt-auto h-max p-8 pt-10">
             <h3 className="font-machina text-3xl font-bold capitalize">{title}</h3>
-            <p className="text-lg text-white/90">{text}</p>
+            <p className="text-lg text-white">{text}</p>
           </div>
         </div>
         <span className="absolute right-5 top-5 grid place-items-center rounded-full bg-[#010101] p-[1em] backdrop-blur-md transition-all duration-700 group-hover:rotate-45">

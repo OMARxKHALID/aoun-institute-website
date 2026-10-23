@@ -7,7 +7,7 @@ const AuthShell = ({ tag, title, text, children }) => (
     <div className="flex w-full max-w-2xl flex-col items-center gap-6 text-center">
       <SectionTag>{tag}</SectionTag>
       <h1 className="font-machina text-[2.5rem] leading-tight md:text-[3.5rem]">{title}</h1>
-      <p className="text-xl font-light text-white/60">{text}</p>
+      <p className="text-xl font-normal text-white/70">{text}</p>
       <div className="w-full">{children}</div>
     </div>
   </main>

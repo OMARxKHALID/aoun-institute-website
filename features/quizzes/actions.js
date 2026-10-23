@@ -3,7 +3,7 @@
 import { updateTag } from "next/cache";
 import { isValidObjectId } from "mongoose";
 import { connectDB } from "@/lib/db";
-import { requireAdmin } from "@/lib/dal";
+import { requireStaff } from "@/lib/dal";
 import { fail, parse } from "@/lib/validate";
 import Course from "@/features/courses/models/course";
 import Lesson from "@/features/courses/models/lesson";
@@ -11,26 +11,30 @@ import Section from "@/features/courses/models/section";
 import Quiz from "@/features/quizzes/models/quiz";
 import Question from "@/features/quizzes/models/question";
 import QuizAttempt from "@/features/quizzes/models/quiz-attempt";
+import AttemptGrant from "@/features/quizzes/models/attempt-grant";
 import { notifyCourseStudents } from "@/features/notifications/service";
 import { newQuizSchema, questionOrderSchema, questionSchema, quizSettingsSchema } from "@/features/quizzes/schemas";
 import { audit } from "@/features/audit/service";
+import { canTeach } from "@/features/courses/access";
 
 const touch = async (courseId) => {
   await Course.updateOne({ _id: courseId }, { $inc: { contentVersion: 1 } });
   updateTag(`course:${courseId}`);
 };
 
-const loadQuiz = async (quizId) => {
+const loadQuiz = async (user, quizId) => {
   if (!isValidObjectId(quizId)) return null;
   await connectDB();
-  return Quiz.findById(quizId);
+  const quiz = await Quiz.findById(quizId);
+  return quiz && (await canTeach(user, quiz.courseId)) ? quiz : null;
 };
 
 export const createQuiz = async (courseId, input) => {
-  const admin = await requireAdmin();
+  const admin = await requireStaff();
   const result = parse(newQuizSchema, input);
   if (!result.ok) return result;
   if (!isValidObjectId(courseId)) return fail("Course not found");
+  if (!(await canTeach(admin, courseId))) return fail("You can only manage courses you teach");
   await connectDB();
   const { sectionId, lessonId, title } = result.data;
   if (!(await Section.exists({ _id: sectionId, courseId }))) return fail("Section not found");
@@ -46,10 +50,10 @@ export const createQuiz = async (courseId, input) => {
 };
 
 export const updateQuizSettings = async (quizId, input) => {
-  const admin = await requireAdmin();
+  const admin = await requireStaff();
   const result = parse(quizSettingsSchema, input);
   if (!result.ok) return result;
-  const quiz = await loadQuiz(quizId);
+  const quiz = await loadQuiz(admin, quizId);
   if (!quiz) return fail("Quiz not found");
   const { timeLimitMin, ...data } = result.data;
   if (data.status === "published" && !(await Question.exists({ quizId }))) return fail("Add at least one question before publishing", "status");
@@ -65,8 +69,8 @@ export const updateQuizSettings = async (quizId, input) => {
 };
 
 export const deleteQuiz = async (quizId) => {
-  const admin = await requireAdmin();
-  const quiz = await loadQuiz(quizId);
+  const admin = await requireStaff();
+  const quiz = await loadQuiz(admin, quizId);
   if (!quiz) return fail("Quiz not found");
   await Promise.all([Question.deleteMany({ quizId }), QuizAttempt.deleteMany({ quizId }), Quiz.deleteOne({ _id: quizId })]);
   await touch(quiz.courseId);
@@ -75,10 +79,10 @@ export const deleteQuiz = async (quizId) => {
 };
 
 export const saveQuestion = async (quizId, questionId, input) => {
-  const admin = await requireAdmin();
+  const admin = await requireStaff();
   const result = parse(questionSchema, input);
   if (!result.ok) return result;
-  const quiz = await loadQuiz(quizId);
+  const quiz = await loadQuiz(admin, quizId);
   if (!quiz) return fail("Quiz not found");
   result.data = result.data.type === "short_answer" ? { ...result.data, options: [] } : { ...result.data, acceptedAnswers: [] };
   if (questionId) {
@@ -95,8 +99,8 @@ export const saveQuestion = async (quizId, questionId, input) => {
 };
 
 export const deleteQuestion = async (quizId, questionId) => {
-  const admin = await requireAdmin();
-  const quiz = await loadQuiz(quizId);
+  const admin = await requireStaff();
+  const quiz = await loadQuiz(admin, quizId);
   if (!quiz || !isValidObjectId(questionId)) return fail("Question not found");
   await Question.deleteOne({ _id: questionId, quizId });
   if (!(await Question.exists({ quizId }))) await Quiz.updateOne({ _id: quizId }, { $set: { status: "draft" } });
@@ -106,14 +110,25 @@ export const deleteQuestion = async (quizId, questionId) => {
 };
 
 export const reorderQuestions = async (quizId, input) => {
-  await requireAdmin();
+  const admin = await requireStaff();
   const result = parse(questionOrderSchema, input);
   if (!result.ok) return result;
-  const quiz = await loadQuiz(quizId);
+  const quiz = await loadQuiz(admin, quizId);
   if (!quiz) return fail("Quiz not found");
   const existing = await Question.find({ quizId }, "_id").lean();
   const ids = new Set(existing.map((q) => String(q._id)));
   if (result.data.length !== ids.size || !result.data.every((id) => ids.has(id))) return fail("The questions changed. Reload and try again.");
   await Question.bulkWrite(result.data.map((id, order) => ({ updateOne: { filter: { _id: id }, update: { order } } })));
+  return { ok: true };
+};
+
+export const grantExtraAttempt = async (quizId, userId) => {
+  const admin = await requireStaff();
+  const quiz = await loadQuiz(admin, quizId);
+  if (!quiz) return fail("Quiz not found");
+  if (!quiz.maxAttempts) return fail("This quiz already has unlimited attempts");
+  if (typeof userId !== "string" || !(await QuizAttempt.exists({ quizId: quiz._id, userId }))) return fail("This student has not taken the quiz");
+  await AttemptGrant.updateOne({ userId, quizId: quiz._id }, { $inc: { extra: 1 }, $setOnInsert: { courseId: quiz.courseId } }, { upsert: true });
+  await audit(admin, "quiz.extra_attempt", `Gave a student one more attempt at "${quiz.title}"`, { type: "student", id: userId });
   return { ok: true };
 };

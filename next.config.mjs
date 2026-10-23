@@ -1,6 +1,7 @@
 const nextConfig = {
   cacheComponents: true,
   poweredByHeader: false,
+  devIndicators: { position: "bottom-right" },
   headers: async () => [
     {
       source: "/:path*",
@@ -14,6 +15,9 @@ const nextConfig = {
     },
   ],
   partialPrefetching: true,
+  experimental: {
+    agentUpgrade: "security",
+  },
   turbopack: {
     rules: {
       "*.css": {

@@ -36,7 +36,7 @@ const StudentCoursePage = async ({ params }) => {
             >
               <PlayCircle className="size-10 shrink-0" />
               <span className="min-w-0">
-                <span className="block text-sm text-white/75">{stats.completedLessons ? "Continue where you left off" : "Start the course"}</span>
+                <span className="block text-sm text-white/70">{stats.completedLessons ? "Continue where you left off" : "Start the course"}</span>
                 <span className="block truncate font-machina text-xl sm:text-2xl">{resume.title}</span>
               </span>
             </Link>
@@ -51,7 +51,7 @@ const StudentCoursePage = async ({ params }) => {
               <ProgressBar percent={stats.percent} />
               <span className="font-semibold">{stats.percent}%</span>
             </div>
-            <ul className="flex flex-col gap-2 text-sm text-white/65">
+            <ul className="flex flex-col gap-2 text-sm text-white/70">
               <li className="flex items-center gap-2">
                 <CheckCircle2 className="size-4 text-accent" /> {stats.completedLessons} of {stats.totalLessons} lessons completed
               </li>
@@ -69,7 +69,7 @@ const StudentCoursePage = async ({ params }) => {
           <PanelCard title="Certificate">
             {certificate ? (
               <>
-                <p className="flex items-center gap-2 text-green-300">
+                <p className="flex items-center gap-2 text-green-400">
                   <Award className="size-5" /> You earned your certificate
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -83,12 +83,12 @@ const StudentCoursePage = async ({ params }) => {
               </>
             ) : (
               <>
-                <p className="text-sm text-white/55">
+                <p className="text-sm text-white/50">
                   {course.certificateRule?.type === "percent" ? `Complete ${course.certificateRule.percent}% of the lessons` : "Complete every lesson"}
                   {course.certificateRule?.requireQuizzes && stats.totalRequiredQuizzes > 0 ? " and pass the required quizzes" : ""} to earn your certificate.
                 </p>
                 {(stats.missing.lessons > 0 || stats.missing.quizzes.length > 0) && (
-                  <ul className="flex flex-col gap-1 text-sm text-white/45">
+                  <ul className="flex flex-col gap-1 text-sm text-white/50">
                     {stats.missing.lessons > 0 && <li>• {stats.missing.lessons} more lessons to finish</li>}
                     {stats.missing.quizzes.map((q) => (
                       <li key={q.quizId}>• Pass “{q.title}”</li>

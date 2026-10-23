@@ -4,7 +4,7 @@ import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import Button from "@/components/ui/button";
 
-const GoogleButton = ({ callbackURL = "/dashboard" }) => {
+const GoogleButton = ({ callbackURL = "/login" }) => {
   const [loading, setLoading] = useState(false);
 
   const handleGoogle = async () => {

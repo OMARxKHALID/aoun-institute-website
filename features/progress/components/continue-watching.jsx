@@ -30,7 +30,7 @@ const ContinueWatching = ({ courses }) => {
         {lastLesson.durationSec > 0 && (
           <div className="flex items-center gap-3">
             <ProgressBar percent={Math.round((position / lastLesson.durationSec) * 100)} />
-            <span className="shrink-0 font-mono text-xs text-white/55">
+            <span className="shrink-0 font-mono text-xs text-white/50">
               {formatClock(position)} / {formatClock(lastLesson.durationSec)}
             </span>
           </div>

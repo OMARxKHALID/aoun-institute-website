@@ -35,7 +35,7 @@ const QuizPage = async ({ params }) => {
         <PanelCard>
           {quiz.description && <p className="whitespace-pre-line text-white/70">{quiz.description}</p>}
           {state.status === "locked" ? (
-            <p className="flex items-center gap-2 text-white/60">
+            <p className="flex items-center gap-2 text-white/70">
               <Lock className="size-5 text-accent" /> {lesson ? "Finish the lesson video to unlock this quiz." : "Finish the section lessons to unlock this quiz."}
               {lesson && (
                 <Link href={`/dashboard/courses/${course.slug}/lessons/${lesson.id}`} className="text-accent hover:underline">
@@ -44,9 +44,9 @@ const QuizPage = async ({ params }) => {
               )}
             </p>
           ) : state.status === "passed" ? (
-            <p className="text-green-300">You passed this quiz with {state.best}%.</p>
+            <p className="text-green-400">You passed this quiz with {state.best}%.</p>
           ) : state.status === "failed" ? (
-            <p className="text-red-300">You have used all your attempts. Contact the institute if you need another try.</p>
+            <p className="text-red-400">You have used all your attempts. Contact the institute if you need another try.</p>
           ) : null}
           {quiz.timeLimitSec > 0 && canStart && !open && <p className="text-sm text-white/50">The timer starts when you press start and keeps running if you leave the page.</p>}
           {open ? (
@@ -65,7 +65,7 @@ const QuizPage = async ({ params }) => {
                 <li key={a.id}>
                   <Link href={`/dashboard/quizzes/attempts/${a.id}`} className="flex flex-wrap items-center gap-3 py-3 hover:text-accent">
                     <span className="font-medium">Attempt {a.attemptNo}</span>
-                    <span className="text-sm text-white/45">{formatDate(a.submittedAt ?? a.startedAt)}</span>
+                    <span className="text-sm text-white/50">{formatDate(a.submittedAt ?? a.startedAt)}</span>
                     <span className="ml-auto flex items-center gap-3">
                       {a.percent != null && <span className="font-semibold">{a.percent}%</span>}
                       <StatusPill status={a.status} label={a.status === "in_progress" ? "in progress" : a.passed ? "passed" : "not passed"} tone={a.status === "in_progress" ? "accent" : a.passed ? "green" : "red"} />

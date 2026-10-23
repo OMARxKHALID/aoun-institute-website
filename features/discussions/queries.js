@@ -1,7 +1,8 @@
 import "server-only";
 import { isValidObjectId } from "mongoose";
 import { connectDB } from "@/lib/db";
-import { requireAdmin, requireUser } from "@/lib/dal";
+import { requireStaff, requireUser } from "@/lib/dal";
+import { canTeach, courseScope, taughtCourseIds } from "@/features/courses/access";
 import Discussion from "@/features/discussions/model";
 import Course from "@/features/courses/models/course";
 import Lesson from "@/features/courses/models/lesson";
@@ -31,9 +32,9 @@ export const getLessonDiscussion = async (lessonId) => {
 };
 
 export const getAdminQuestions = async () => {
-  const admin = await requireAdmin();
+  const admin = await requireStaff();
   await connectDB();
-  const questions = await Discussion.find({ parentId: null }).sort({ answered: 1, createdAt: -1 }).limit(300).lean();
+  const questions = await Discussion.find({ parentId: null, ...(await courseScope(admin)) }).sort({ answered: 1, createdAt: -1 }).limit(300).lean();
   const [courses, lessons] = await Promise.all([
     Course.find({ _id: { $in: [...new Set(questions.map((q) => String(q.courseId)))] } }, "title slug").lean(),
     Lesson.find({ _id: { $in: [...new Set(questions.map((q) => String(q.lessonId)))] } }, "title").lean(),

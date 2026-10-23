@@ -43,7 +43,7 @@ export const getSalesReport = async (rangeValue) => {
   const courses = await Course.find({ _id: { $in: byCourse.map((c) => c._id) } }, "title").lean();
   const titles = new Map(courses.map((c) => [String(c._id), c.title]));
   const counts = Object.fromEntries(statusCounts.map((s) => [s._id, s.count]));
-  const reviewed = (counts.PAID ?? 0) + (counts.FAILED ?? 0) + (counts.REFUNDED ?? 0);
+  const reviewed = (counts.PAID ?? 0) + (counts.REJECTED ?? 0) + (counts.REFUNDED ?? 0);
   const t = totals[0] ?? { revenue: 0, orders: 0, students: [] };
   return {
     range,

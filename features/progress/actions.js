@@ -48,11 +48,20 @@ export const saveProgress = async (lessonId, input) => {
   const elapsed = previous ? (Date.now() - new Date(previous.updatedAt).getTime()) / 1000 + 2 : MAX_TICK;
   const watched = Math.min(MAX_TICK, elapsed, Math.max(0, Number(input?.watched) || 0));
   const duration = lesson.durationSec || Math.max(0, Number(input?.duration) || 0);
-  const doc = await LessonProgress.findOneAndUpdate(
-    { userId: user.id, lessonId: lesson._id },
-    { $set: { lastPosition: position }, $inc: { watchedSeconds: watched }, $setOnInsert: { courseId: lesson.courseId } },
-    { upsert: true, returnDocument: "after" },
-  );
+  const doc = previous
+    ? await LessonProgress.findOneAndUpdate(
+        { _id: previous._id, updatedAt: previous.updatedAt },
+        { $set: { lastPosition: position }, $inc: { watchedSeconds: watched } },
+        { returnDocument: "after" },
+      )
+    : await LessonProgress.findOneAndUpdate(
+        { userId: user.id, lessonId: lesson._id },
+        { $set: { lastPosition: position }, $setOnInsert: { courseId: lesson.courseId, watchedSeconds: watched } },
+        { upsert: true, returnDocument: "after", includeResultMetadata: true },
+      )
+        .then(({ value, lastErrorObject }) => (lastErrorObject?.updatedExisting ? null : value))
+        .catch((error) => (error?.code === 11000 ? null : Promise.reject(error)));
+  if (!doc) return { ok: true, data: { completed: false, percent: 0 } };
   const percent = duration ? Math.min(1, doc.watchedSeconds / duration) : 0;
   await Promise.all([
     LessonProgress.updateOne({ _id: doc._id, completedAt: null }, { $set: { percent } }),

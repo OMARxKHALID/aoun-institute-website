@@ -43,7 +43,7 @@ const AdminPage = async () => {
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate font-medium">{c.title}</span>
-                      <span className="block truncate text-xs text-white/45">
+                      <span className="block truncate text-xs text-white/50">
                         {c.students} {c.students === 1 ? "student" : "students"}
                         {c.category && ` · ${c.category}`}
                       </span>
@@ -52,7 +52,7 @@ const AdminPage = async () => {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-white/45">No enrollments yet.</p>
+              <p className="text-sm text-white/50">No enrollments yet.</p>
             )}
           </PanelCard>
 
@@ -79,17 +79,17 @@ const AdminPage = async () => {
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block truncate">{o.student}</span>
-                          <span className="block truncate text-xs text-white/45">
+                          <span className="block truncate text-xs text-white/50">
                             {o.course} · {formatPrice(o.amount, o.currency)}
                           </span>
                         </span>
-                        <ChevronRight className="size-4 text-white/40" />
+                        <ChevronRight className="size-4 text-white/50" />
                       </Link>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-white/45">Nothing waiting. Nice.</p>
+                <p className="text-sm text-white/50">Nothing waiting. Nice.</p>
               )}
             </PanelCard>
           </div>
@@ -101,16 +101,16 @@ const AdminPage = async () => {
                   <li key={o.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-3 text-sm">
                     <span className="min-w-0 flex-1 basis-40">
                       <span className="block truncate font-medium">{o.student}</span>
-                      <span className="block truncate text-xs text-white/45">{o.course}</span>
+                      <span className="block truncate text-xs text-white/50">{o.course}</span>
                     </span>
                     <span>{formatPrice(o.amount, o.currency)}</span>
-                    <span className="text-white/45">{formatDate(o.createdAt)}</span>
+                    <span className="text-white/50">{formatDate(o.createdAt)}</span>
                     <StatusPill status={o.status} />
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-white/45">No orders yet.</p>
+              <p className="text-sm text-white/50">No orders yet.</p>
             )}
           </PanelCard>
         </div>
@@ -118,7 +118,7 @@ const AdminPage = async () => {
         <aside className="grid min-w-0 content-start gap-5 md:grid-cols-2 xl:grid-cols-1">
           <PanelCard>
             <MiniCalendar marked={data.salesDays} />
-            <p className="text-xs text-white/40">Highlighted days had approved payments.</p>
+            <p className="text-xs text-white/50">Highlighted days had approved payments.</p>
           </PanelCard>
           <PanelCard title="Shortcuts">
             <ul className="flex flex-col gap-2 text-sm">
@@ -130,7 +130,7 @@ const AdminPage = async () => {
               ].map(([href, label]) => (
                 <li key={href}>
                   <Link href={href} className="flex items-center justify-between rounded-xl border border-white/5 bg-[#070707] px-3 py-2.5 hover:border-accent/50">
-                    {label} <ChevronRight className="size-4 text-white/40" />
+                    {label} <ChevronRight className="size-4 text-white/50" />
                   </Link>
                 </li>
               ))}

@@ -4,6 +4,7 @@ import Section from "@/features/courses/models/section";
 import Lesson from "@/features/courses/models/lesson";
 import Quiz from "@/features/quizzes/models/quiz";
 import QuizAttempt from "@/features/quizzes/models/quiz-attempt";
+import AttemptGrant from "@/features/quizzes/models/attempt-grant";
 import LessonProgress from "@/features/progress/models/lesson-progress";
 import CourseProgress from "@/features/progress/models/course-progress";
 
@@ -12,15 +13,20 @@ export const COMPLETE_RATIO = 0.9;
 const id = (value) => String(value);
 
 const bestAttempts = async (userId, quizIds) => {
-  const attempts = await QuizAttempt.find({ userId, quizId: { $in: quizIds }, status: { $ne: "in_progress" } }, "quizId percent passed").lean();
+  const [attempts, grants] = await Promise.all([
+    QuizAttempt.find({ userId, quizId: { $in: quizIds }, status: { $ne: "in_progress" } }, "quizId percent passed").lean(),
+    AttemptGrant.find({ userId, quizId: { $in: quizIds } }, "quizId extra").lean(),
+  ]);
   const byQuiz = new Map();
+  const entry = (quizId) => byQuiz.get(id(quizId)) ?? { count: 0, best: null, passed: false, extra: 0 };
   attempts.forEach((a) => {
-    const current = byQuiz.get(id(a.quizId)) ?? { count: 0, best: null, passed: false };
+    const current = entry(a.quizId);
     current.count += 1;
     current.passed ||= Boolean(a.passed);
     current.best = Math.max(current.best ?? 0, a.percent ?? 0);
     byQuiz.set(id(a.quizId), current);
   });
+  grants.forEach((g) => byQuiz.set(id(g.quizId), { ...entry(g.quizId), extra: g.extra }));
   return byQuiz;
 };
 
@@ -59,9 +65,10 @@ export const buildOutline = async (userId, courseId) => {
         });
       const quizState = (q, unlocked) => {
         const a = attempts.get(id(q._id));
-        const exhausted = q.maxAttempts && (a?.count ?? 0) >= q.maxAttempts;
-        const status = a?.passed ? "passed" : !unlocked ? "locked" : exhausted ? "failed" : a ? "retry" : "available";
-        return { id: id(q._id), title: q.title, required: q.requiredForCertificate, attempts: a?.count ?? 0, best: a?.best ?? null, maxAttempts: q.maxAttempts, status };
+        const maxAttempts = q.maxAttempts ? q.maxAttempts + (a?.extra ?? 0) : null;
+        const exhausted = maxAttempts && (a?.count ?? 0) >= maxAttempts;
+        const status = a?.passed ? "passed" : !unlocked ? "locked" : exhausted ? "failed" : a?.count ? "retry" : "available";
+        return { id: id(q._id), title: q.title, required: q.requiredForCertificate, attempts: a?.count ?? 0, best: a?.best ?? null, maxAttempts, status };
       };
       sectionLessons.forEach((lesson) => {
         const quiz = quizzes.find((q) => id(q.lessonId) === lesson.id);

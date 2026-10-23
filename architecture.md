@@ -2,6 +2,8 @@
 
 Course-selling LMS for an institute: students register, buy recorded video courses, watch DRM-protected lessons, take server-graded quizzes, track progress, and earn publicly verifiable certificates. The owner manages everything from an admin panel.
 
+Domain language lives in `CONTEXT.md`; architectural decisions in `docs/adr/`.
+
 ## Stack (fixed)
 - Next.js 16.4 App Router, `cacheComponents: true`, React 19.3, plain JS/JSX (no TypeScript), `jsconfig.json` alias `@/*`
 - Tailwind CSS 4.3 (CSS-first config in `app/globals.css`), GSAP for marketing animations
@@ -33,10 +35,10 @@ Skipped: zustand (quiz and player state fit in component state). Rejected: pdf-l
 - Demo checkout: with `DEMO_PAYMENTS=true` the checkout adds a "Card" tab (`features/payments/providers/demo-card.js`): test card 4242 4242 4242 4242 pays instantly (order `PAID`, provider `demo_card`) and enrolls; 4000 0000 0000 0002 is declined. Never enable it for real customers. A real gateway replaces this provider later.
 - Search: panel header search (`next/form`) → `/admin/search` or `/dashboard/search` (`features/analytics/search.js`) covering pages (from `lib/nav.js`), courses, lessons, quizzes, notes, certificates, students, orders and announcements.
 - Video: **Mux with DRM from day one** (paid add-on ~$100/mo + $0.003/play), Mux Player for all adapters. Fallback adapters: `embed` (YouTube/Vimeo, flagged insecure), `url` (HLS/MP4 testing).
-- Access: lifetime enrollment. One video stream at a time per account.
+- Access: an enrollment has no expiry; it ends only on refund or owner revoke (`CONTEXT.md`). One video stream at a time per account.
 - Auth: email+password (verification required) + Google (enabled only when env keys exist).
 - Email: Resend. Brand: current orange/black look; logo/colors editable in Site Settings.
-- Roles: `STUDENT`, `ADMIN` via Better Auth admin plugin access control; extensible (`INSTRUCTOR` later).
+- Roles: Owner, Teacher, Student (`docs/adr/0001-owner-teacher-student-roles.md`). Stored as Better Auth roles `ADMIN` (the Owner), `TEACHER` and `STUDENT`; course access via `features/courses/access.js` (`canTeach`, `taughtCourseIds`).
 - Removed marketing extras (jobs, hire, resume checker, submit projects, webinars, request callback).
 
 ## Folder structure (feature-based)
@@ -74,16 +76,17 @@ Better Auth owns `user`, `session`, `account`, `verification`, `rateLimit`; `use
 | Collection | Key fields | Indexes |
 |---|---|---|
 | siteSettings | singleton `_id:"site"`: brand{name,logo}, contact{email,phone,address,hours}, socials[], hero, footer, seo, payment{bank, wallets[]} | — |
-| courses | slug, title, description, thumbnail, price, discountPrice, currency, status, outcomes[], prerequisites[], estimatedDuration, syllabusFile, attachments[], sequentialUnlock, certificateRule{type,percent,requireQuizzes}, contentVersion | slug unique; status+createdAt |
+| courses | slug, title, description, thumbnail, price, discountPrice, currency, status, outcomes[], prerequisites[], estimatedDuration, syllabusFile, attachments[], sequentialUnlock, certificateRule{type,percent,requireQuizzes}, contentVersion, teacherIds[] | slug unique; status+createdAt; teacherIds |
 | sections | courseId, title, order | courseId+order |
 | lessons | courseId, sectionId, title, order, description, isFreePreview, durationSec, status, video{provider,assetId,playbackId,status,src,drm}, attachments[] | courseId; sectionId+order |
 | quizzes | courseId, sectionId?, lessonId?, title, order, passingPercent, maxAttempts, timeLimitSec, shuffleQuestions, shuffleOptions, showAnswers, displayMode, requiredForCertificate, dueAt, status | courseId; sectionId+order |
 | questions | quizId, type (single/multiple/true_false; short_answer later via acceptedAnswers), prompt, options[{text,isCorrect}], points, explanation, order | quizId+order |
-| enrollments | userId, courseId, status, source, orderId, enrolledAt | userId+courseId unique |
-| orders | userId, courseId, amount, currency, provider, status PENDING/PAID/FAILED/REFUNDED, providerRef, receipt, reviewedBy, paidAt, refundedAt | userId+createdAt; status+createdAt; providerRef unique sparse |
+| enrollments | userId, courseId, status active/revoked, source order/free/gift, orderId, enrolledAt | userId+courseId unique |
+| orders | userId, courseId, amount, currency, provider, status PENDING/PAID/REJECTED/CANCELLED/REFUNDED, providerRef, receipt, reviewedBy, paidAt, refundedAt | userId+createdAt; status+createdAt; providerRef unique sparse |
 | paymentEvents | provider, eventId, orderId, processedAt | provider+eventId unique |
 | lessonProgress | userId, courseId, lessonId, watchedSeconds, lastPosition, percent, completedAt | userId+lessonId unique; userId+courseId |
 | quizAttempts | userId, quizId, courseId, attemptNo, questionOrder[], optionOrder, answers[], startedAt, expiresAt, submittedAt, score, maxScore, percent, passed, status | userId+quizId+attemptNo unique; quizId |
+| attemptGrants | userId, quizId, courseId, extra | userId+quizId unique |
 | courseProgress | userId, courseId, counts, percent, timeSpentSec, lastLessonId, lastPosition, lastActiveAt, eligible, missing, contentVersion | userId+courseId unique |
 | certificates | code INST-YYYY-XXXXXXXX, userId, courseId, studentName, courseTitle, issuedAt, status VALID/REVOKED, revokedAt, reason, reissuedFrom | code unique; userId+courseId partial unique (VALID) |
 | announcements | courseId, authorId, title, body | courseId+createdAt |
@@ -99,7 +102,7 @@ Progress staleness: structural course edits bump `contentVersion`; an older `cou
 - Video: enrollment (or free preview) checked before minting Mux tokens; tokens per view with `exp` = duration + buffer; domain/UA playback restriction; DRM; moving watermark (name + email + short id); one stream per account.
 - Video flow: admin uploads straight to Mux (UpChunk to a direct-upload URL, `passthrough` = lessonId). Lesson status syncs from the Mux API (`features/video/sync.js`), triggered by the webhook and by the admin page polling, so dev works without a public webhook. Env: `MUX_TOKEN_ID/SECRET`, `MUX_SIGNING_KEY`, `MUX_PRIVATE_KEY`, `MUX_WEBHOOK_SECRET`, `MUX_DRM_CONFIGURATION_ID` (signed-only without it), `MUX_PLAYBACK_RESTRICTION_ID`.
 - One stream: player claims `playbackSessions` on play and heartbeats every 30s; another device claiming the slot pauses the first player. Client-enforced on top of server state (a modified client can ignore it; tokens still expire).
-- Payments: student submits method + transaction ID (+ optional private receipt); one PENDING order per course; admin approve → `PAID` + enrollment; reject → `FAILED` with reason, student can resubmit (same reference reopens their rejected order). Free courses enroll directly.
+- Payments: student submits method + transaction ID (+ optional private receipt); one PENDING order per course; admin approve → `PAID` + enrollment; reject → `REJECTED` with reason, student can resubmit (same reference reopens their rejected order). Free courses enroll directly.
 - Uploads: server-signed Cloudinary params; after upload the server re-checks format/size via Admin API and deletes invalid assets; old asset destroyed on replace; receipts use `authenticated` delivery.
 - Deterrents in `video-player.jsx`: player pauses behind a cover when the window loses focus, the tab is hidden, a screenshot shortcut (PrintScreen, Win+Shift+S, Cmd+Shift+3/4/5) is pressed or the page is printed; right-click, drag, long-press save, picture-in-picture and casting are disabled; moving watermark plus a faint tiled watermark (email + id) so leaks are traceable.
 - Honest limits (README): no website can block screenshots; DRM blacks out recordings only where hardware DRM exists (not desktop Chrome/Firefox).

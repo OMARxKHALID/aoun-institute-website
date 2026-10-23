@@ -23,7 +23,7 @@ const CourseCard = ({ slug, title, subtitle, thumbnail, price, discountPrice, cu
     <div className={`relative flex flex-col-reverse justify-between md:gap-7 lg:gap-32 ${index % 2 === 0 ? "lg:flex-row-reverse" : "lg:flex-row"}`}>
       <div className="relative z-10 flex flex-1 flex-col justify-center pt-6 lg:w-1/2">
         <h3 className="font-machina text-3xl font-medium leading-tight md:mb-4 md:text-4xl lg:mb-2 lg:text-[3.5rem]">{title}</h3>
-        <p className={`line-clamp-2 text-xl font-light tracking-wide md:text-2xl lg:max-w-2xl ${light ? "text-black/60" : "text-white/60"}`}>{subtitle}</p>
+        <p className={`line-clamp-2 text-xl font-normal tracking-wide md:text-2xl lg:max-w-2xl ${light ? "text-black/60" : "text-white/70"}`}>{subtitle}</p>
         <div className="mt-4 flex w-full flex-wrap gap-5 md:mt-10 md:gap-8 lg:mt-8">
           {meta.map(({ icon: Icon, label, value }) => (
             <div key={label} className="flex items-center gap-2">

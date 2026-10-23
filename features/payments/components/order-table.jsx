@@ -15,7 +15,7 @@ import TabList from "@/components/ui/tab-list";
 
 const helper = createColumnHelper();
 
-const filters = ["PENDING", "PAID", "FAILED", "REFUNDED", "ALL"];
+const filters = ["PENDING", "PAID", "REJECTED", "CANCELLED", "REFUNDED", "ALL"];
 
 const OrderActions = ({ order, onResult }) => {
   const dialog = useDialog();
@@ -74,14 +74,14 @@ const OrderActions = ({ order, onResult }) => {
   };
 
   if (order.status === "PAID") return <ActionMenu label={`Actions for order by ${order.student}`} items={[{ label: "Mark refunded & remove access", icon: Undo2, danger: true, onClick: handleRefund }]} />;
-  if (order.status !== "PENDING") return <span className="text-sm text-white/40">{order.note}</span>;
+  if (order.status !== "PENDING") return <span className="text-sm text-white/50">{order.note}</span>;
 
   return (
     <div className="flex gap-2">
-      <button type="button" disabled={busy} onClick={handleApprove} className="flex items-center gap-1 rounded-full bg-green-500/15 px-3 py-1.5 text-sm text-green-300 hover:bg-green-500/25 disabled:opacity-50">
+      <button type="button" disabled={busy} onClick={handleApprove} className="flex items-center gap-1 rounded-full bg-green-500/15 px-3 py-1.5 text-sm text-green-400 hover:bg-green-500/25 disabled:opacity-50">
         <Check className="size-4" /> Approve
       </button>
-      <button type="button" disabled={busy} onClick={handleReject} className="flex items-center gap-1 rounded-full bg-red-500/10 px-3 py-1.5 text-sm text-red-300 hover:bg-red-500/20 disabled:opacity-50">
+      <button type="button" disabled={busy} onClick={handleReject} className="flex items-center gap-1 rounded-full bg-red-500/10 px-3 py-1.5 text-sm text-red-400 hover:bg-red-500/20 disabled:opacity-50">
         <X className="size-4" /> Reject
       </button>
     </div>
@@ -105,7 +105,7 @@ const OrderTable = ({ orders, initialSearch = "" }) => {
       cell: ({ row }) => (
         <span>
           <span className="block font-medium">{row.original.student}</span>
-          <span className="block text-sm text-white/45">{row.original.email}</span>
+          <span className="block text-sm text-white/50">{row.original.email}</span>
         </span>
       ),
     }),
@@ -116,7 +116,7 @@ const OrderTable = ({ orders, initialSearch = "" }) => {
       cell: ({ row }) => (
         <span>
           <span className="block">{row.original.method}</span>
-          <span className="block select-all text-sm text-white/45">{row.original.reference}</span>
+          <span className="block select-all text-sm text-white/50">{row.original.reference}</span>
         </span>
       ),
     }),
@@ -130,10 +130,10 @@ const OrderTable = ({ orders, initialSearch = "" }) => {
             <FileText className="size-4" /> View
           </a>
         ) : (
-          <span className="text-white/30">None</span>
+          <span className="text-white/50">None</span>
         ),
     }),
-    helper.accessor("createdAt", { header: "Date", sortingFn: "datetime", meta: { className: "hidden xl:table-cell" }, cell: ({ getValue }) => <span className="text-white/60">{formatDate(getValue())}</span> }),
+    helper.accessor("createdAt", { header: "Date", sortingFn: "datetime", meta: { className: "hidden xl:table-cell" }, cell: ({ getValue }) => <span className="text-white/70">{formatDate(getValue())}</span> }),
     helper.accessor("status", { header: "Status", cell: ({ getValue }) => <StatusPill status={getValue()} /> }),
     helper.display({ id: "actions", header: "", cell: ({ row }) => <OrderActions order={row.original} onResult={handleResult} /> }),
   ]);

@@ -3,7 +3,7 @@
 import { Types, isValidObjectId } from "mongoose";
 import { z } from "zod";
 import { connectDB, db } from "@/lib/db";
-import { isAdmin, requireUser } from "@/lib/dal";
+import { requireUser } from "@/lib/dal";
 import { fail, parse } from "@/lib/validate";
 import { rateLimit } from "@/lib/rate-limit";
 import { linkEmail, sendEmail } from "@/lib/email";
@@ -12,11 +12,12 @@ import Lesson from "@/features/courses/models/lesson";
 import Enrollment from "@/features/enrollments/model";
 import Discussion from "@/features/discussions/model";
 import { audit } from "@/features/audit/service";
+import { canTeach } from "@/features/courses/access";
 import { SITE_URL } from "@/lib/site";
 
 const bodySchema = z.strictObject({ body: z.string().trim().min(3, { error: "Write a little more" }).max(3000) });
 
-const canPost = async (user, courseId) => isAdmin(user) || Boolean(await Enrollment.exists({ userId: user.id, courseId, status: "active" }));
+const canPost = async (user, courseId) => (await canTeach(user, courseId)) || Boolean(await Enrollment.exists({ userId: user.id, courseId, status: "active" }));
 
 export const askQuestion = async (lessonId, input) => {
   const user = await requireUser();
@@ -27,7 +28,7 @@ export const askQuestion = async (lessonId, input) => {
   await connectDB();
   const lesson = await Lesson.findById(lessonId, "courseId").lean();
   if (!lesson || !(await canPost(user, lesson.courseId))) return fail("Only enrolled students can ask questions here");
-  await Discussion.create({ courseId: lesson.courseId, lessonId, userId: user.id, authorName: user.name, instructor: isAdmin(user), body: result.data.body });
+  await Discussion.create({ courseId: lesson.courseId, lessonId, userId: user.id, authorName: user.name, instructor: await canTeach(user, lesson.courseId), body: result.data.body });
   return { ok: true };
 };
 
@@ -40,7 +41,7 @@ export const replyToQuestion = async (questionId, input) => {
   await connectDB();
   const question = await Discussion.findOne({ _id: questionId, parentId: null });
   if (!question || !(await canPost(user, question.courseId))) return fail("You cannot reply here");
-  const instructor = isAdmin(user);
+  const instructor = await canTeach(user, question.courseId);
   await Discussion.create({ courseId: question.courseId, lessonId: question.lessonId, parentId: question._id, userId: user.id, authorName: user.name, instructor, body: result.data.body });
   if (instructor) {
     await Discussion.updateOne({ _id: question._id }, { $set: { answered: true } });
@@ -66,7 +67,7 @@ export const deleteDiscussion = async (id) => {
   await connectDB();
   const post = await Discussion.findById(id);
   if (!post) return fail("Post not found");
-  const admin = isAdmin(user);
+  const admin = await canTeach(user, post.courseId);
   if (!admin && post.userId !== user.id) return fail("You can only delete your own posts");
   await Discussion.deleteMany({ $or: [{ _id: post._id }, { parentId: post._id }] });
   if (admin && post.userId !== user.id) await audit(user, "discussion.delete", `Deleted a post by ${post.authorName}`, { type: "course", id: post.courseId });

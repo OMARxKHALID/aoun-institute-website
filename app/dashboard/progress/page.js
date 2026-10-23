@@ -44,7 +44,7 @@ const ProgressPage = async () => {
                       <div className="flex items-start justify-between gap-3">
                         <span className="min-w-0 truncate font-medium">{c.title}</span>
                         {c.eligible ? (
-                          <span className="flex shrink-0 items-center gap-1 text-xs text-green-300">
+                          <span className="flex shrink-0 items-center gap-1 text-xs text-green-400">
                             <Award className="size-4" /> Certified
                           </span>
                         ) : (
@@ -52,7 +52,7 @@ const ProgressPage = async () => {
                         )}
                       </div>
                       <ProgressBar percent={c.percent} />
-                      <p className="text-xs text-white/45">
+                      <p className="text-xs text-white/50">
                         {c.completedLessons}/{c.totalLessons} lessons · {formatDuration(c.timeSpentSec)} watched
                         {c.lastActiveAt && ` · last active ${formatDate(c.lastActiveAt)}`}
                       </p>
@@ -73,7 +73,7 @@ const ProgressPage = async () => {
                     <Link href={`/dashboard/quizzes/attempts/${a.id}`} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-3 hover:text-accent">
                       <span className="min-w-0 flex-1 basis-48">
                         <span className="block truncate">{a.quiz}</span>
-                        <span className="block truncate text-xs text-white/45">
+                        <span className="block truncate text-xs text-white/50">
                           {a.course} · attempt {a.attemptNo} · {formatDate(a.submittedAt)}
                         </span>
                       </span>

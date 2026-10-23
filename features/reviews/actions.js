@@ -3,7 +3,7 @@
 import { updateTag } from "next/cache";
 import { isValidObjectId } from "mongoose";
 import { connectDB } from "@/lib/db";
-import { requireAdmin, requireUser } from "@/lib/dal";
+import { requireAdmin, requireStaff, requireUser } from "@/lib/dal";
 import { fail, parse } from "@/lib/validate";
 import { rateLimit } from "@/lib/rate-limit";
 import Enrollment from "@/features/enrollments/model";
@@ -11,6 +11,7 @@ import LessonProgress from "@/features/progress/models/lesson-progress";
 import Review from "@/features/reviews/model";
 import { replySchema, reviewSchema } from "@/features/reviews/schemas";
 import { audit } from "@/features/audit/service";
+import { canTeach } from "@/features/courses/access";
 
 const invalidate = (courseId) => {
   updateTag("catalog");
@@ -58,11 +59,12 @@ export const setReviewStatus = async (id, status) => {
 };
 
 export const replyToReview = async (id, input) => {
-  const admin = await requireAdmin();
+  const admin = await requireStaff();
   const result = parse(replySchema, input);
   if (!result.ok) return result;
   const review = await loadReview(id);
   if (!review) return fail("Review not found");
+  if (!(await canTeach(admin, review.courseId))) return fail("You can only manage courses you teach");
   await Review.updateOne({ _id: id }, { $set: { reply: { body: result.data.body, at: new Date() } } });
   invalidate(review.courseId);
   await audit(admin, "review.reply", `Replied to a review by ${review.studentName}`, { type: "course", id: review.courseId });

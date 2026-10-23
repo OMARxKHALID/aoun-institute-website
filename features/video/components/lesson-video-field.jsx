@@ -159,7 +159,7 @@ const LessonVideoField = ({ lessonId, video, upload: pendingUpload }) => {
           </button>
         )}
         {video?.provider && (
-          <button type="button" onClick={handleRemove} disabled={busy} className={`flex items-center gap-1.5 rounded-lg px-2 py-1 text-red-300/80 hover:bg-red-500/10 ${status === "ready" ? "" : "ml-auto"}`}>
+          <button type="button" onClick={handleRemove} disabled={busy} className={`flex items-center gap-1.5 rounded-lg px-2 py-1 text-red-400/80 hover:bg-red-500/10 ${status === "ready" ? "" : "ml-auto"}`}>
             <Trash2 className="size-4" /> Remove
           </button>
         )}
@@ -175,14 +175,14 @@ const LessonVideoField = ({ lessonId, video, upload: pendingUpload }) => {
         <div className="flex flex-col gap-2 rounded-xl border border-white/5 bg-[#070707] p-4 text-sm">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="min-w-0 flex-1 truncate font-medium">{upload.name}</span>
-            <span className="text-white/55">
+            <span className="text-white/50">
               {formatBytes(upload.sent)} of {formatBytes(upload.size)}
               {upload.eta != null && ` · about ${formatEta(upload.eta)} left`}
             </span>
           </div>
           {upload.offline && <p className="text-amber-300">Connection lost. The upload resumes automatically when you are back online.</p>}
-          <p className="text-xs text-white/45">Keep this tab open until the upload finishes. Mux then processes the video, which can take a few minutes for long files.</p>
-          <button type="button" onClick={handleCancelUpload} className="self-start text-red-300/80 hover:text-red-300">
+          <p className="text-xs text-white/50">Keep this tab open until the upload finishes. Mux then processes the video, which can take a few minutes for long files.</p>
+          <button type="button" onClick={handleCancelUpload} className="self-start text-red-400/80 hover:text-red-400">
             Cancel upload
           </button>
         </div>
@@ -197,7 +197,7 @@ const LessonVideoField = ({ lessonId, video, upload: pendingUpload }) => {
         >
           <UploadCloud className="size-7 text-accent" />
           <span>{status === "none" ? "Drop a video here or click to browse" : "Drop a new video or click to replace"}</span>
-          <span className="text-sm text-white/45">Uploads straight to Mux in chunks with signed playback and DRM. MP4, MOV, MKV or WEBM up to 10 GB.</span>
+          <span className="text-sm text-white/50">Uploads straight to Mux in chunks with signed playback and DRM. MP4, MOV, MKV or WEBM up to 10 GB.</span>
           <input type="file" accept="video/*" onChange={handleFile} disabled={progress !== null} className="sr-only" />
           {progress !== null && (
             <span className="mt-2 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-white/10">

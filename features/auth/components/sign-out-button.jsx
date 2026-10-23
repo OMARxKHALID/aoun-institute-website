@@ -1,26 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
-import { authClient } from "@/lib/auth-client";
+import { useSignOut } from "@/features/auth/hooks/use-sign-out";
 import { railLabel } from "@/lib/ui";
 
 const SignOutButton = ({ compact, className = "" }) => {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-
-  const handleSignOut = async () => {
-    setLoading(true);
-    await authClient.signOut();
-    router.push("/");
-    router.refresh();
-  };
+  const { signOut, loading } = useSignOut();
 
   return (
     <button
       type="button"
-      onClick={handleSignOut}
+      onClick={signOut}
       disabled={loading}
       aria-label="Sign out"
       title={compact ? "Sign out" : undefined}

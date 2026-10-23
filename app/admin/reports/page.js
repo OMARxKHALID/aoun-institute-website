@@ -34,7 +34,7 @@ const ReportsPage = async ({ searchParams }) => {
                 key={range.value}
                 href={`/admin/reports?range=${range.value}`}
                 aria-current={range.value === r.range.value ? "page" : undefined}
-                className={`rounded-full border px-3.5 py-1.5 text-sm transition ${range.value === r.range.value ? "border-accent bg-[#4B1E0E] text-white" : "border-[#302C2A] text-white/60 hover:border-white/30 hover:text-white"}`}
+                className={`rounded-full border px-3.5 py-1.5 text-sm transition ${range.value === r.range.value ? "border-accent bg-[#4B1E0E] text-white" : "border-[#302C2A] text-white/70 hover:border-white/30 hover:text-white"}`}
               >
                 {range.label}
               </Link>
@@ -70,7 +70,7 @@ const ReportsPage = async ({ searchParams }) => {
                   <li key={m.method} className="flex flex-col gap-1.5">
                     <div className="flex items-center justify-between gap-3 text-sm">
                       <span>{m.method}</span>
-                      <span className="text-white/60">
+                      <span className="text-white/70">
                         {formatPrice(m.revenue)} · {m.orders}
                       </span>
                     </div>

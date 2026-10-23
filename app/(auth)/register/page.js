@@ -9,7 +9,7 @@ const RegisterPage = () => (
   <AuthShell tag="Register" title="Start your journey" text="Create an account to buy courses, track progress, and earn certificates.">
     <RegisterForm />
     <AuthDivider />
-    <p className="mt-6 text-white/60">
+    <p className="mt-6 text-white/70">
       Already have an account?{" "}
       <Link href="/login" className="text-accent hover:underline">
         Sign in

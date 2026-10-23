@@ -26,7 +26,7 @@ const targetHref = ({ targetType, targetId }) =>
 const formatWhen = (value) => new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Karachi" }).format(new Date(value));
 
 const columns = helper.columns([
-  helper.accessor("createdAt", { header: "When", sortingFn: "datetime", cell: ({ getValue }) => <span className="whitespace-nowrap text-white/60">{formatWhen(getValue())}</span> }),
+  helper.accessor("createdAt", { header: "When", sortingFn: "datetime", cell: ({ getValue }) => <span className="whitespace-nowrap text-white/70">{formatWhen(getValue())}</span> }),
   helper.accessor("actorName", { header: "Who" }),
   helper.accessor("action", {
     header: "Action",
@@ -48,7 +48,7 @@ const columns = helper.columns([
       );
     },
   }),
-  helper.accessor("ip", { header: "IP", cell: ({ getValue }) => <span className="font-mono text-xs text-white/45">{getValue() ?? "—"}</span> }),
+  helper.accessor("ip", { header: "IP", cell: ({ getValue }) => <span className="font-mono text-xs text-white/50">{getValue() ?? "—"}</span> }),
 ]);
 
 const ActivityTable = ({ logs }) => {

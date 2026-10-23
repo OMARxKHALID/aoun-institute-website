@@ -7,7 +7,7 @@ export const metadata = { title: "Forgot Password" };
 const ForgotPasswordPage = () => (
   <AuthShell tag="Password" title="Forgot your password?" text="Enter your email and we will send you a reset link.">
     <ForgotPasswordForm />
-    <p className="mt-6 text-white/60">
+    <p className="mt-6 text-white/70">
       Remembered it?{" "}
       <Link href="/login" className="text-accent hover:underline">
         Back to sign in

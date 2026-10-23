@@ -26,17 +26,17 @@ const columns = helper.columns([
     cell: ({ row }) => (
       <span>
         <span className="block">{row.original.method}</span>
-        <span className="block text-sm text-white/45">{row.original.reference}</span>
+        <span className="block text-sm text-white/50">{row.original.reference}</span>
       </span>
     ),
   }),
-  helper.accessor("createdAt", { header: "Date", sortingFn: "datetime", cell: ({ getValue }) => <span className="text-white/60">{formatDate(getValue())}</span> }),
+  helper.accessor("createdAt", { header: "Date", sortingFn: "datetime", cell: ({ getValue }) => <span className="text-white/70">{formatDate(getValue())}</span> }),
   helper.accessor("status", {
     header: "Status",
     cell: ({ row }) => (
       <span className="flex flex-col items-start gap-1">
         <StatusPill status={row.original.status} label={row.original.status === "PENDING" ? "under review" : undefined} />
-        {row.original.note && <span className="text-xs text-red-300/80">{row.original.note}</span>}
+        {row.original.note && <span className="text-xs text-red-400/80">{row.original.note}</span>}
       </span>
     ),
   }),

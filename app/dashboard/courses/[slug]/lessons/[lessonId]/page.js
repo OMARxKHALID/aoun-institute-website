@@ -49,7 +49,7 @@ const LessonPage = async ({ params, searchParams }) => {
         <PlayerProvider>
         <div className="flex min-w-0 flex-col gap-5">
           {locked ? (
-            <div className="grid aspect-video place-items-center rounded-2xl border border-[#302C2A] bg-[#0C0C0C] p-6 text-center text-white/60">
+            <div className="grid aspect-video place-items-center rounded-2xl border border-[#302C2A] bg-[#0C0C0C] p-6 text-center text-white/70">
               <div className="flex flex-col items-center gap-3">
                 <Lock className="size-8 text-accent" />
                 <p>Finish the previous lesson to unlock this one.</p>
@@ -66,7 +66,7 @@ const LessonPage = async ({ params, searchParams }) => {
 
           <div className="flex flex-wrap items-center gap-3">
             {!locked && <CompleteButton lessonId={lesson.id} completed={lesson.status === "completed"} />}
-            {lesson.status === "in_progress" && <span className="text-sm text-white/45">{lesson.percent}% watched</span>}
+            {lesson.status === "in_progress" && <span className="text-sm text-white/50">{lesson.percent}% watched</span>}
             <div className="ml-auto flex gap-2">
               {prev && (
                 <Link href={`${base}/lessons/${prev.id}`} aria-label={`Previous: ${prev.title}`} className={btn.outline}>
@@ -94,7 +94,7 @@ const LessonPage = async ({ params, searchParams }) => {
                 content: (
                   <div className="flex flex-col gap-4">
                     {quizCard}
-                    {lesson.description ? <p className="whitespace-pre-line text-white/70">{lesson.description}</p> : !lesson.quiz && <p className="text-white/45">No description for this lesson.</p>}
+                    {lesson.description ? <p className="whitespace-pre-line text-white/70">{lesson.description}</p> : !lesson.quiz && <p className="text-white/50">No description for this lesson.</p>}
                     {lesson.attachments.length > 0 && (
                       <ul className="grid gap-2 sm:grid-cols-2">
                         {lesson.attachments.map((file) => (
@@ -124,7 +124,7 @@ const LessonPage = async ({ params, searchParams }) => {
               <ProgressBar percent={stats.percent} />
               <span className="text-sm font-semibold">{stats.percent}%</span>
             </div>
-            <p className="text-xs text-white/45">
+            <p className="text-xs text-white/50">
               {stats.completedLessons} of {stats.totalLessons} lessons completed
             </p>
           </PanelCard>

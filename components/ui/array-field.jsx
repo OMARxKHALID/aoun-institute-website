@@ -24,7 +24,7 @@ const ArrayField = ({ control, register, errors, name, label, columns, empty, ma
   return (
     <fieldset className="flex min-w-0 flex-col gap-3 rounded-2xl border border-[#302C2A] p-4 md:p-5">
       <legend className="px-2 font-machina text-xl">
-        {label} <span className="text-base text-white/40">({fields.length})</span>
+        {label} <span className="text-base text-white/50">({fields.length})</span>
       </legend>
       {fields.map((item, i) => {
         const isOpen = openId === item.id || (openId === "new" && i === fields.length - 1);
@@ -34,7 +34,7 @@ const ArrayField = ({ control, register, errors, name, label, columns, empty, ma
           <div key={item.id} className={`rounded-xl border ${hasError ? "border-red-500/50" : "border-white/5"} bg-white/[0.03]`}>
             <div className="flex items-center gap-1 px-3 py-2">
               <button type="button" onClick={handleToggle(item.id)} aria-expanded={isOpen} className="flex min-w-0 flex-1 items-center gap-2 py-1 text-left">
-                <ChevronDown className={`size-4 shrink-0 text-white/40 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                <ChevronDown className={`size-4 shrink-0 text-white/50 transition-transform ${isOpen ? "rotate-180" : ""}`} />
                 <span className="truncate">{summary}</span>
               </button>
               <button type="button" onClick={() => move(i, i - 1)} disabled={i === 0} aria-label="Move up" className="rounded-lg p-2 text-white/50 hover:bg-white/5 disabled:opacity-25">
@@ -43,7 +43,7 @@ const ArrayField = ({ control, register, errors, name, label, columns, empty, ma
               <button type="button" onClick={() => move(i, i + 1)} disabled={i === fields.length - 1} aria-label="Move down" className="rounded-lg p-2 text-white/50 hover:bg-white/5 disabled:opacity-25">
                 <ArrowDown className="size-4" />
               </button>
-              <button type="button" onClick={() => remove(i)} aria-label={`Remove ${summary}`} className="rounded-lg p-2 text-red-300/80 hover:bg-red-500/10">
+              <button type="button" onClick={() => remove(i)} aria-label={`Remove ${summary}`} className="rounded-lg p-2 text-red-400/80 hover:bg-red-500/10">
                 <Trash2 className="size-4" />
               </button>
             </div>

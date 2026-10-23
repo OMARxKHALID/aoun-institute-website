@@ -15,7 +15,7 @@ const TabList = ({ tabs, value, onChange, label, size = "md" }) => (
           aria-selected={active}
           onClick={() => onChange(id)}
           className={`flex shrink-0 items-center gap-2 rounded-full border transition ${tab.className ?? ""} ${size === "sm" ? "px-3.5 py-1.5 text-sm" : "px-4 py-2"} ${
-            active ? "border-accent bg-[#4B1E0E] text-white" : "border-[#302C2A] text-white/60 hover:border-white/30 hover:text-white"
+            active ? "border-accent bg-[#4B1E0E] text-white" : "border-[#302C2A] text-white/70 hover:border-white/30 hover:text-white"
           }`}
         >
           {Icon && <Icon className="size-4" />}

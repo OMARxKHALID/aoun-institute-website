@@ -22,7 +22,7 @@ const Worldwide = ({ stats }) => {
         {items.map(([value, label]) => (
           <div key={label} className="flex flex-col items-center gap-1 bg-[#FFF3EF] px-2 py-8">
             <p className="font-machina text-5xl tracking-tighter text-accent sm:text-6xl md:text-7xl">{number(value)}</p>
-            <p className="text-center text-lg font-light capitalize text-black/70 md:text-xl">{label}</p>
+            <p className="text-center text-lg font-normal capitalize text-black/70 md:text-xl">{label}</p>
           </div>
         ))}
       </Reveal>
@@ -30,7 +30,7 @@ const Worldwide = ({ stats }) => {
         <Reveal className="mt-12 w-full max-w-6xl">
           <ul className="flex flex-wrap justify-center gap-2.5 md:gap-3">
             {countries.map((c) => (
-              <li key={c.code} className="flex items-center gap-2.5 rounded-full border-[0.5px] border-black/20 bg-white py-1.5 pl-1.5 pr-4 text-base font-light md:gap-3 md:py-2 md:pl-2 md:pr-5 md:text-lg">
+              <li key={c.code} className="flex items-center gap-2.5 rounded-full border-[0.5px] border-black/20 bg-white py-1.5 pl-1.5 pr-4 text-base font-normal md:gap-3 md:py-2 md:pl-2 md:pr-5 md:text-lg">
                 <Flag code={c.code} name={c.name} className="aspect-square h-8 w-auto rounded-full object-cover ring-0 md:h-9" />
                 {c.name}
                 <span className="font-medium text-accent">{number(c.count)}</span>

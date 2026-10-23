@@ -18,11 +18,11 @@ const AnnouncementsPage = async () => {
               <li key={a.id} className="relative">
                 <span className="absolute -left-[27px] top-6 size-3 rounded-full bg-accent ring-4 ring-black sm:-left-[39px]" />
                 <article className="flex min-w-0 flex-col gap-2 rounded-3xl border border-[#302C2A] bg-[#0C0C0C] p-4 sm:p-6">
-                  <p className="text-xs text-white/40">
+                  <p className="text-xs text-white/50">
                     {a.course} · {formatDate(a.createdAt)}
                   </p>
                   <h2 className="font-machina text-xl">{a.title}</h2>
-                  <p className="whitespace-pre-line break-words text-white/65">{a.body}</p>
+                  <p className="whitespace-pre-line break-words text-white/70">{a.body}</p>
                 </article>
               </li>
             ))}

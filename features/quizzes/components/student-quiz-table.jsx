@@ -16,7 +16,7 @@ const columns = helper.columns([
     cell: ({ row }) => (
       <span>
         <span className="block font-medium">{row.original.title}</span>
-        <span className="block text-sm text-white/45">After: {row.original.after}</span>
+        <span className="block text-sm text-white/50">After: {row.original.after}</span>
       </span>
     ),
   }),
@@ -28,7 +28,7 @@ const columns = helper.columns([
       return <StatusPill status={getValue()} label={label} tone={tone} />;
     },
   }),
-  helper.accessor((row) => row.best ?? -1, { id: "best", header: "Best score", cell: ({ row }) => (row.original.best == null ? <span className="text-white/35">—</span> : `${row.original.best}%`) }),
+  helper.accessor((row) => row.best ?? -1, { id: "best", header: "Best score", cell: ({ row }) => (row.original.best == null ? <span className="text-white/50">—</span> : `${row.original.best}%`) }),
   helper.accessor("attempts", { header: "Attempts", cell: ({ row }) => `${row.original.attempts}${row.original.maxAttempts ? ` / ${row.original.maxAttempts}` : ""}` }),
   helper.display({
     id: "actions",

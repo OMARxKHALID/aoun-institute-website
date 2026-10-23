@@ -20,6 +20,7 @@ import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, Search } from "lucide-rea
 import Select from "@/components/ui/select";
 import Pager from "@/components/ui/pager";
 import { PAGE_SIZE } from "@/hooks/use-pager";
+import { searchClass } from "@/lib/ui";
 
 const tableFeatureSet = tableFeatures({
   rowSortingFeature,
@@ -35,6 +36,7 @@ const tableFeatureSet = tableFeatures({
 
 const sortIcons = { asc: ArrowUp, desc: ArrowDown };
 
+const cellAlign = (column) => (column.id === "actions" ? "w-px text-right [&>*]:ml-auto" : "");
 
 const headerText = (column) => (typeof column.columnDef.header === "string" ? column.columnDef.header : column.id);
 
@@ -90,7 +92,7 @@ const RowCard = ({ row, table }) => {
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
           aria-label={open ? "Hide details" : "Show details"}
-          className="grid size-9 shrink-0 place-items-center rounded-full text-white/60 transition hover:bg-white/5 hover:text-white"
+          className="grid size-9 shrink-0 place-items-center rounded-full text-white/70 transition hover:bg-white/5 hover:text-white"
         >
           <ChevronDown className={`size-5 transition-transform ${open ? "rotate-180" : ""}`} />
         </button>
@@ -102,7 +104,7 @@ const RowCard = ({ row, table }) => {
         <dl className="grid grid-cols-1 gap-3 border-t border-white/5 p-4 text-sm min-[420px]:grid-cols-2">
           {details.map((cell) => (
             <div key={cell.id} className="flex min-w-0 flex-col gap-1">
-              <dt className="text-xs uppercase tracking-wider text-white/40">{headerText(cell.column)}</dt>
+              <dt className="text-xs uppercase tracking-wider text-white/50">{headerText(cell.column)}</dt>
               <dd className="min-w-0 break-words">
                 <table.FlexRender cell={cell} />
               </dd>
@@ -137,28 +139,28 @@ const DataTable = ({ columns, data, searchPlaceholder = "Search", initialSearch 
       <div className="flex flex-col gap-3 sm:flex-row">
         <label className="relative w-full sm:max-w-sm">
           <span className="sr-only">{searchPlaceholder}</span>
-          <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-white/40" />
+          <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-white/50" />
           <input
             type="search"
             value={search}
             onChange={handleSearch}
             placeholder={searchPlaceholder}
-            className="w-full rounded-full border border-[#302C2A] bg-[#0C0C0C] py-2.5 pl-11 pr-4 outline-hidden placeholder:text-white/30 focus:border-accent"
+            className={searchClass}
           />
         </label>
         <MobileSort table={table} />
       </div>
 
       <div className="hidden overflow-x-auto rounded-2xl border border-[#302C2A] md:block">
-        <table className="w-full text-left">
-          <thead className="bg-white/[0.03] text-sm text-white/50">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-white/[0.03] text-xs uppercase tracking-wider text-white/50">
             {table.getHeaderGroups().map((group) => (
               <tr key={group.id}>
                 {group.headers.map((header) => {
                   const sorted = header.column.getIsSorted();
                   const SortIcon = sortIcons[sorted] ?? ArrowUpDown;
                   return (
-                    <th key={header.id} scope="col" aria-sort={sorted ? (sorted === "asc" ? "ascending" : "descending") : undefined} className={`whitespace-nowrap px-4 py-3 font-medium ${header.column.columnDef.meta?.className ?? ""}`}>
+                    <th key={header.id} scope="col" aria-sort={sorted ? (sorted === "asc" ? "ascending" : "descending") : undefined} className={`whitespace-nowrap px-4 py-3 font-medium ${cellAlign(header.column)} ${header.column.columnDef.meta?.className ?? ""}`}>
                       {header.isPlaceholder ? null : header.column.getCanSort() ? (
                         <button type="button" onClick={header.column.getToggleSortingHandler()} className="flex items-center gap-1.5 hover:text-white">
                           <table.FlexRender header={header} />
@@ -177,7 +179,7 @@ const DataTable = ({ columns, data, searchPlaceholder = "Search", initialSearch 
             {rows.map((row) => (
               <tr key={row.id} className="border-t border-[#302C2A] transition hover:bg-white/[0.02]">
                 {row.getAllCells().map((cell) => (
-                  <td key={cell.id} className={`px-4 py-3 align-middle ${cell.column.columnDef.meta?.className ?? ""}`}>
+                  <td key={cell.id} className={`px-4 py-3 align-middle ${cellAlign(cell.column)} ${cell.column.columnDef.meta?.className ?? ""}`}>
                     <table.FlexRender cell={cell} />
                   </td>
                 ))}

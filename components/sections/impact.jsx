@@ -27,7 +27,7 @@ const ImpactCard = ({ title, text, tag, image, tone, offset }) => (
     <div className="absolute bottom-0 left-0 z-20 flex min-h-[50%] w-full bg-linear-to-b from-transparent to-accent pt-10 transition-all duration-500 group-hover:translate-y-0 md:translate-y-full">
       <div className="mt-auto h-max p-8 pt-10">
         <h3 className="text-2xl font-medium max-md:mb-2 md:text-3xl">{title}</h3>
-        <p className="text-white/90">{text}</p>
+        <p className="text-white">{text}</p>
       </div>
     </div>
     <span className="absolute right-5 top-5 z-20 rounded-full border border-white/40 bg-[#010101] p-[1em] backdrop-blur-md transition-all duration-300 ease-out group-hover:rotate-45 md:p-4">

@@ -7,7 +7,7 @@ const SearchResults = ({ q, groups }) => {
   if (!q) return <p className="text-white/50">Type something in the search bar to search.</p>;
   if (!filled.length)
     return (
-      <div className="flex flex-col items-center gap-3 rounded-3xl border border-[#302C2A] bg-[#0C0C0C] p-10 text-center text-white/55">
+      <div className="flex flex-col items-center gap-3 rounded-3xl border border-[#302C2A] bg-[#0C0C0C] p-10 text-center text-white/50">
         <SearchX className="size-8 text-accent" />
         No results for “{q}”.
       </div>
@@ -22,9 +22,9 @@ const SearchResults = ({ q, groups }) => {
                 <Link href={item.href} className="flex items-center gap-3 rounded-2xl border border-white/5 bg-[#070707] p-3 transition hover:border-accent/50">
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-medium">{item.title}</span>
-                    {item.meta && <span className="block truncate text-xs text-white/45">{item.meta}</span>}
+                    {item.meta && <span className="block truncate text-xs text-white/50">{item.meta}</span>}
                   </span>
-                  <ChevronRight className="size-4 shrink-0 text-white/40" />
+                  <ChevronRight className="size-4 shrink-0 text-white/50" />
                 </Link>
               </li>
             ))}

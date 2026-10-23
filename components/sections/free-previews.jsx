@@ -14,9 +14,9 @@ const PreviewCard = ({ title, durationSec, course, slug, category }) => (
       </span>
       {durationSec > 0 && <span className="absolute bottom-3 right-3 rounded-md bg-black/75 px-2 py-0.5 text-xs tabular-nums">{formatDuration(durationSec)}</span>}
     </div>
-    <div className="pt-4 font-light">
+    <div className="pt-4 font-normal">
       <h3 className="mb-1.5 line-clamp-2 text-lg font-medium tracking-wide text-white md:text-xl">{title}</h3>
-      <p className="truncate text-sm text-white/60 md:text-base">
+      <p className="truncate text-sm text-white/70 md:text-base">
         Free preview <span className="text-accent">·</span> {course}
       </p>
     </div>

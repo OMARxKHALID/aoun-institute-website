@@ -3,6 +3,7 @@
 import { FileText, X } from "lucide-react";
 import ImageUpload from "@/components/ui/image-upload";
 import { fileHref } from "@/lib/upload-rules";
+import { labelClass } from "@/lib/ui";
 
 const AttachmentsField = ({ value = [], onChange, label = "Attachments (PDF)", max = 10, error }) => {
   const handleAdd = (assets) => assets?.length && onChange([...value, ...assets].slice(0, max));
@@ -10,7 +11,7 @@ const AttachmentsField = ({ value = [], onChange, label = "Attachments (PDF)", m
 
   return (
     <div className="flex flex-col gap-3">
-      <span className="text-base text-white/70">{label}</span>
+      <span className={labelClass}>{label}</span>
       {value.length > 0 && (
         <ul className="flex flex-col gap-2">
           {value.map((file) => (
@@ -19,7 +20,7 @@ const AttachmentsField = ({ value = [], onChange, label = "Attachments (PDF)", m
               <a href={fileHref(file)} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 truncate text-sm hover:text-accent">
                 {file.name ?? file.publicId}
               </a>
-              <button type="button" onClick={handleRemove(file.publicId)} aria-label={`Remove ${file.name ?? "file"}`} className="grid size-8 shrink-0 place-items-center rounded-lg text-white/50 transition hover:bg-white/5 hover:text-red-300">
+              <button type="button" onClick={handleRemove(file.publicId)} aria-label={`Remove ${file.name ?? "file"}`} className="grid size-8 shrink-0 place-items-center rounded-lg text-white/50 transition hover:bg-white/5 hover:text-red-400">
                 <X className="size-4" />
               </button>
             </li>

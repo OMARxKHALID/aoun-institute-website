@@ -19,7 +19,7 @@ const StateCard = ({ icon: Icon, tone, title, children }) => (
   <div className="flex flex-col gap-4 rounded-3xl border border-[#302C2A] bg-[#0C0C0C] p-6 md:p-8">
     <Icon className={`size-9 ${tone}`} />
     <h2 className="font-machina text-3xl">{title}</h2>
-    <div className="flex flex-col gap-4 text-lg text-white/65">{children}</div>
+    <div className="flex flex-col gap-4 text-lg text-white/70">{children}</div>
   </div>
 );
 
@@ -51,7 +51,7 @@ const CheckoutPage = async ({ params }) => {
       );
     return (
       <div className="flex flex-col gap-6">
-        {order?.status === "FAILED" && (
+        {order?.status === "REJECTED" && (
           <StateCard icon={XCircle} tone="text-red-400" title="We could not confirm your last payment">
             {order.note && <p>Reason: {order.note}</p>}
             <p>Check the details and submit again below.</p>
@@ -76,18 +76,18 @@ const CheckoutPage = async ({ params }) => {
           <Link href={`/courses/${course.slug}`} className="font-machina text-2xl leading-tight hover:text-accent">
             {course.title}
           </Link>
-          <p className="flex items-center gap-2 text-white/60">
+          <p className="flex items-center gap-2 text-white/70">
             <BookOpen className="size-4 text-accent" /> {plural(course.lessons, "lesson")}
             {course.estimatedDuration > 0 && <span>· {formatDuration(course.estimatedDuration)}</span>}
           </p>
           <div className="flex items-baseline justify-between border-t border-white/10 pt-4">
-            <span className="text-white/60">Total</span>
+            <span className="text-white/70">Total</span>
             <span className="text-3xl font-medium">
               {coursePriceLabel(course)}
-              {!free && course.discountPrice != null && <span className="ml-2 text-base font-light text-white/40 line-through">{formatPrice(course.price, course.currency)}</span>}
+              {!free && course.discountPrice != null && <span className="ml-2 text-base font-normal text-white/50 line-through">{formatPrice(course.price, course.currency)}</span>}
             </span>
           </div>
-          <p className="text-sm text-white/45">One-time payment. Lifetime access.</p>
+          <p className="text-sm text-white/50">One-time payment. Lifetime access.</p>
         </aside>
       </div>
     </main>

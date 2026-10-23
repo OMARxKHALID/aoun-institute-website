@@ -39,10 +39,10 @@ const QuizResultsPage = async ({ params }) => {
               {perQuestion.map((q) => (
                 <li key={q.id} className="flex flex-col gap-1.5">
                   <div className="flex items-start justify-between gap-3 text-sm">
-                    <span className="min-w-0 truncate text-white/75">
+                    <span className="min-w-0 truncate text-white/70">
                       {q.number}. {q.prompt}
                     </span>
-                    <span className={`shrink-0 font-semibold ${q.rate < 50 ? "text-red-300" : "text-white"}`}>{q.rate}%</span>
+                    <span className={`shrink-0 font-semibold ${q.rate < 50 ? "text-red-400" : "text-white"}`}>{q.rate}%</span>
                   </div>
                   <ProgressBar percent={q.rate} />
                 </li>
@@ -50,7 +50,7 @@ const QuizResultsPage = async ({ params }) => {
             </ul>
           </PanelCard>
         )}
-        <QuizResultsTable rows={rows} />
+        <QuizResultsTable rows={rows} quizId={quiz.id} limited={Boolean(quiz.maxAttempts)} />
       </div>
     </>
   );

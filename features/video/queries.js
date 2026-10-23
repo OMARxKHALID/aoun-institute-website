@@ -1,7 +1,7 @@
 import "server-only";
 import { isValidObjectId } from "mongoose";
 import { connectDB } from "@/lib/db";
-import { isAdmin } from "@/lib/dal";
+import { canTeach } from "@/features/courses/access";
 import Course from "@/features/courses/models/course";
 import Lesson from "@/features/courses/models/lesson";
 import Enrollment from "@/features/enrollments/model";
@@ -12,7 +12,7 @@ import { muxEnabled, signPlayback } from "@/features/video/mux";
 const denied = (reason) => ({ ok: false, reason });
 
 const access = async (lesson, user) => {
-  if (isAdmin(user)) return { enrolled: false };
+  if (user && (await canTeach(user, lesson.courseId))) return { enrolled: false };
   const course = await Course.findById(lesson.courseId, "status sequentialUnlock").lean();
   if (!course || lesson.status !== "published") return { reason: "not-found" };
   const enrolled = user && (await Enrollment.exists({ userId: user.id, courseId: lesson.courseId, status: "active" }));

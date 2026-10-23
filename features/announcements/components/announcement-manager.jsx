@@ -53,12 +53,12 @@ const AnnouncementManager = ({ announcements, courses }) => {
       cell: ({ row }) => (
         <span className="block max-w-xl">
           <span className="block font-medium">{row.original.title}</span>
-          <span className="line-clamp-2 block text-sm text-white/45">{row.original.body}</span>
+          <span className="line-clamp-2 block text-sm text-white/50">{row.original.body}</span>
         </span>
       ),
     }),
     helper.accessor("course", { header: "Course" }),
-    helper.accessor("createdAt", { header: "Posted", sortingFn: "datetime", cell: ({ getValue }) => <span className="text-white/60">{formatDate(getValue())}</span> }),
+    helper.accessor("createdAt", { header: "Posted", sortingFn: "datetime", cell: ({ getValue }) => <span className="text-white/70">{formatDate(getValue())}</span> }),
     helper.display({ id: "actions", header: "", cell: ({ row }) => <ActionMenu label={`Actions for ${row.original.title}`} items={[{ label: "Delete", icon: Trash2, danger: true, onClick: () => handleDelete(row.original) }]} /> }),
   ]);
 

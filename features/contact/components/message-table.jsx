@@ -37,14 +37,14 @@ const MessageTable = ({ messages }) => {
       cell: ({ row }) => (
         <span>
           <span className="block font-medium">{row.original.name}</span>
-          <span className="block text-sm text-white/45">{row.original.email}</span>
-          {row.original.phone && <span className="block text-xs text-white/35">{row.original.phone}</span>}
+          <span className="block text-sm text-white/50">{row.original.email}</span>
+          {row.original.phone && <span className="block text-xs text-white/50">{row.original.phone}</span>}
         </span>
       ),
     }),
     helper.accessor("topic", { header: "Topic", cell: ({ getValue }) => getValue() || "—" }),
     helper.accessor("message", { header: "Message", cell: ({ getValue }) => <span className="line-clamp-3 block max-w-md whitespace-pre-line text-sm text-white/70">{getValue()}</span> }),
-    helper.accessor("createdAt", { header: "Received", sortingFn: "datetime", cell: ({ getValue }) => <span className="text-white/60">{formatDate(getValue())}</span> }),
+    helper.accessor("createdAt", { header: "Received", sortingFn: "datetime", cell: ({ getValue }) => <span className="text-white/70">{formatDate(getValue())}</span> }),
     helper.accessor("status", { header: "Status", cell: ({ getValue }) => <StatusPill status={getValue()} /> }),
     helper.display({
       id: "actions",

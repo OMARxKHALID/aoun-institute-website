@@ -56,7 +56,7 @@ const Author = ({ name, instructor, date }) => (
         <GraduationCap className="size-3.5" /> Instructor
       </span>
     )}
-    <span className="text-xs text-white/40">{formatDate(date)}</span>
+    <span className="text-xs text-white/50">{formatDate(date)}</span>
   </p>
 );
 
@@ -82,7 +82,7 @@ const Thread = ({ thread, admin, onChange }) => {
   return (
     <li className="flex flex-col gap-3 rounded-2xl border border-white/5 bg-[#070707] p-4">
       {admin && (
-        <p className="text-xs text-white/45">
+        <p className="text-xs text-white/50">
           <Link href={`/admin/courses/${thread.courseId}/lessons/${thread.lessonId}`} className="hover:text-accent">
             {thread.course} · {thread.lesson}
           </Link>
@@ -92,15 +92,15 @@ const Thread = ({ thread, admin, onChange }) => {
         <MessageCircleQuestion className={`mt-0.5 size-5 shrink-0 ${thread.answered ? "text-green-400" : "text-accent"}`} />
         <div className="min-w-0 flex-1">
           <Author name={thread.authorName} instructor={thread.instructor} date={thread.createdAt} />
-          <p className="mt-1 whitespace-pre-line break-words text-white/80">{thread.body}</p>
+          <p className="mt-1 whitespace-pre-line break-words text-white">{thread.body}</p>
         </div>
         {thread.answered && (
-          <span className="hidden shrink-0 items-center gap-1 text-xs text-green-300 sm:flex">
+          <span className="hidden shrink-0 items-center gap-1 text-xs text-green-400 sm:flex">
             <CheckCircle2 className="size-4" /> Answered
           </span>
         )}
         {(thread.mine || admin) && (
-          <button type="button" onClick={handleDelete(thread.id)} aria-label="Delete question" className="grid size-8 shrink-0 place-items-center rounded-lg text-white/40 hover:bg-red-500/10 hover:text-red-300">
+          <button type="button" onClick={handleDelete(thread.id)} aria-label="Delete question" className="grid size-8 shrink-0 place-items-center rounded-lg text-white/50 hover:bg-red-500/10 hover:text-red-400">
             <Trash2 className="size-4" />
           </button>
         )}
@@ -112,10 +112,10 @@ const Thread = ({ thread, admin, onChange }) => {
               <CornerDownRight className="mt-0.5 size-4 shrink-0 text-white/30" />
               <div className="min-w-0 flex-1">
                 <Author name={r.authorName} instructor={r.instructor} date={r.createdAt} />
-                <p className="mt-1 whitespace-pre-line break-words text-sm text-white/75">{r.body}</p>
+                <p className="mt-1 whitespace-pre-line break-words text-sm text-white/70">{r.body}</p>
               </div>
               {(r.mine || admin) && (
-                <button type="button" onClick={handleDelete(r.id)} aria-label="Delete reply" className="grid size-7 shrink-0 place-items-center rounded-lg text-white/40 hover:bg-red-500/10 hover:text-red-300">
+                <button type="button" onClick={handleDelete(r.id)} aria-label="Delete reply" className="grid size-7 shrink-0 place-items-center rounded-lg text-white/50 hover:bg-red-500/10 hover:text-red-400">
                   <Trash2 className="size-3.5" />
                 </button>
               )}
@@ -157,7 +157,7 @@ const DiscussionBoard = ({ lessonId, threads, admin = false }) => {
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-white/45">{admin ? "No questions here." : "No questions yet. Be the first to ask."}</p>
+        <p className="text-sm text-white/50">{admin ? "No questions here." : "No questions yet. Be the first to ask."}</p>
       )}
       <Pager {...pager} />
     </div>

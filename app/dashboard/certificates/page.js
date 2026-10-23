@@ -25,7 +25,7 @@ const CertificatesPage = async () => {
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="font-machina text-lg leading-tight">{c.courseTitle}</p>
-                    <p className="text-sm text-white/45">Issued {formatDate(c.issuedAt)}</p>
+                    <p className="text-sm text-white/50">Issued {formatDate(c.issuedAt)}</p>
                   </div>
                   <StatusPill status={c.status} />
                 </div>
@@ -40,7 +40,7 @@ const CertificatesPage = async () => {
                     </Link>
                   </div>
                 ) : (
-                  <p className="text-sm text-red-300/80">Revoked{c.reason ? `: ${c.reason}` : ""}</p>
+                  <p className="text-sm text-red-400/80">Revoked{c.reason ? `: ${c.reason}` : ""}</p>
                 )}
               </article>
             ))}

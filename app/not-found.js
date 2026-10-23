@@ -6,7 +6,7 @@ const NotFound = () => (
     <HeroBackground className="h-full" />
     <p className="font-machina text-[8rem] leading-none text-accent md:text-[12rem]">404</p>
     <h1 className="font-machina text-4xl md:text-5xl">This page took a wrong turn</h1>
-    <p className="text-xl font-light text-white/60">The page you are looking for does not exist or has moved.</p>
+    <p className="text-xl font-normal text-white/70">The page you are looking for does not exist or has moved.</p>
     <GlowButton href="/" className="mt-4">Back Home</GlowButton>
   </main>
 );

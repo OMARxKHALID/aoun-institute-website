@@ -10,7 +10,8 @@
     "cloudinary:presets": "bun scripts/cloudinary-presets.js",
     "test": "bun test",
     "db": "bun scripts/dev-db.js",
-    "demo": "bun scripts/demo.js"
+    "demo": "bun scripts/demo.js",
+    "migrate:glossary": "bun scripts/migrate-glossary.js"
   },
   "dependencies": {
     "@better-auth/mongo-adapter": "1.7.7",
@@ -28,7 +29,7 @@
     "lucide-react": "^1.56.0",
     "mongodb": "7.7.0",
     "mongoose": "9.11.2",
-    "next": "16.4.0",
+    "next": "16.4.2",
     "qrcode": "1.5.4",
     "rate-limiter-flexible": "11.2.2",
     "react": "19.3.0",

@@ -1,6 +1,7 @@
 import "server-only";
 import { connectDB } from "@/lib/db";
-import { requireAdmin, requireUser } from "@/lib/dal";
+import { requireStaff, requireUser } from "@/lib/dal";
+import { canTeach, courseScope, taughtCourseIds } from "@/features/courses/access";
 import Announcement from "@/features/announcements/model";
 import Course from "@/features/courses/models/course";
 import Enrollment from "@/features/enrollments/model";
@@ -8,9 +9,13 @@ import Enrollment from "@/features/enrollments/model";
 const plain = (value) => JSON.parse(JSON.stringify(value));
 
 export const getAdminAnnouncements = async () => {
-  await requireAdmin();
+  const user = await requireStaff();
   await connectDB();
-  const [list, courses] = await Promise.all([Announcement.find().sort({ createdAt: -1 }).limit(500).lean(), Course.find({}, "title").sort({ title: 1 }).lean()]);
+  const ids = await taughtCourseIds(user);
+  const [list, courses] = await Promise.all([
+    Announcement.find(await courseScope(user)).sort({ createdAt: -1 }).limit(500).lean(),
+    Course.find(ids ? { _id: { $in: ids } } : {}, "title").sort({ title: 1 }).lean(),
+  ]);
   const titles = new Map(courses.map((c) => [String(c._id), c.title]));
   return plain({
     announcements: list.map((a) => ({ id: String(a._id), title: a.title, body: a.body, course: titles.get(String(a.courseId)) ?? "Deleted course", createdAt: a.createdAt })),

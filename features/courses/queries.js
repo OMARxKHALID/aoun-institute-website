@@ -1,8 +1,9 @@
 import "server-only";
 import { cacheTag } from "next/cache";
 import { isValidObjectId } from "mongoose";
-import { connectDB, hasDatabase } from "@/lib/db";
-import { requireAdmin } from "@/lib/dal";
+import { connectDB, db, hasDatabase } from "@/lib/db";
+import { isAdmin, requireStaff } from "@/lib/dal";
+import { canTeach } from "@/features/courses/access";
 import Course from "@/features/courses/models/course";
 import Section from "@/features/courses/models/section";
 import Lesson from "@/features/courses/models/lesson";
@@ -15,10 +16,10 @@ import { getCourseCountries, getCourseCounts } from "@/features/analytics/public
 const plain = (value) => JSON.parse(JSON.stringify(value));
 
 export const getAdminCourses = async () => {
-  await requireAdmin();
+  const user = await requireStaff();
   await connectDB();
   const [courses, lessonCounts, studentCounts] = await Promise.all([
-    Course.find({}, "title slug status price discountPrice category level updatedAt thumbnail").sort({ updatedAt: -1 }).lean(),
+    Course.find(isAdmin(user) ? {} : { teacherIds: user.id }, "title slug status price discountPrice category level updatedAt thumbnail").sort({ updatedAt: -1 }).lean(),
     Lesson.aggregate([{ $group: { _id: "$courseId", count: { $sum: 1 } } }]),
     Enrollment.aggregate([{ $match: { status: "active" } }, { $group: { _id: "$courseId", count: { $sum: 1 } } }]),
   ]);
@@ -28,8 +29,8 @@ export const getAdminCourses = async () => {
 };
 
 export const getCourseForEdit = async (id) => {
-  await requireAdmin();
-  if (!isValidObjectId(id)) return null;
+  const user = await requireStaff();
+  if (!isValidObjectId(id) || !(await canTeach(user, id))) return null;
   await connectDB();
   const course = await Course.findById(id).lean();
   if (!course) return null;
@@ -50,7 +51,9 @@ export const getCourseForEdit = async (id) => {
       }),
     quizzes: quizzes.filter((q) => !q.lessonId && String(q.sectionId) === String(s._id)).map((q) => ({ ...q, id: String(q._id) })),
   }));
-  return plain({ course: { ...course, id: String(course._id) }, outline, students });
+  const owner = isAdmin(user);
+  const teachers = owner ? await db.collection("user").find({ role: "TEACHER" }, { projection: { name: 1, email: 1 } }).sort({ name: 1 }).toArray() : [];
+  return plain({ course: { ...course, id: String(course._id) }, outline, students, owner, teachers: teachers.map((t) => ({ value: String(t._id), label: t.name, hint: t.email })) });
 };
 
 const CARD_FIELDS = "title slug subtitle category level thumbnail price discountPrice currency estimatedDuration createdAt";
@@ -136,8 +139,8 @@ export const getPublicCourse = async (slug) => {
 };
 
 export const getLessonForEdit = async (courseId, lessonId) => {
-  await requireAdmin();
-  if (!isValidObjectId(courseId) || !isValidObjectId(lessonId)) return null;
+  const user = await requireStaff();
+  if (!isValidObjectId(courseId) || !isValidObjectId(lessonId) || !(await canTeach(user, courseId))) return null;
   await connectDB();
   const [course, lesson] = await Promise.all([Course.findById(courseId, "title slug status").lean(), Lesson.findOne({ _id: lessonId, courseId }).lean()]);
   if (!course || !lesson) return null;

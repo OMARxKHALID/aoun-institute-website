@@ -20,8 +20,8 @@ const RecommendedCourses = ({ courses }) =>
               <span className="mt-auto flex items-center justify-between gap-2 pt-1 text-sm">
                 <span className="font-semibold">{(c.discountPrice ?? c.price) === 0 ? "Free" : formatPrice(c.discountPrice ?? c.price, c.currency)}</span>
                 {c.rating && (
-                  <span className="flex items-center gap-1 text-xs text-white/60">
-                    <Star className="size-3.5 fill-amber-400 text-amber-400" /> {c.rating.average.toFixed(1)}
+                  <span className="flex items-center gap-1 text-xs text-white/70">
+                    <Star className="size-3.5 fill-amber-300 text-amber-300" /> {c.rating.average.toFixed(1)}
                   </span>
                 )}
               </span>

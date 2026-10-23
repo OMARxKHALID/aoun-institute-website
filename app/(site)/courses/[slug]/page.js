@@ -72,14 +72,14 @@ const CourseDetailPage = async ({ params }) => {
       <PageHero tag={course.category || "Course"} title={course.title} text={course.subtitle}>
         <div className="mt-4 flex flex-col items-center gap-4">
           {course.rating && (
-            <a href="#reviews" className="flex items-center gap-2 text-white/75 hover:text-white">
+            <a href="#reviews" className="flex items-center gap-2 text-white/70 hover:text-white">
               <Stars value={course.rating.average} />
               <span className="font-semibold">{course.rating.average.toFixed(1)}</span>
               <span className="text-white/50">({course.rating.count} {course.rating.count === 1 ? "review" : "reviews"})</span>
             </a>
           )}
           {flags.length > 0 && (
-            <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-white/60">
+            <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-white/70">
               <span className="flex -space-x-1.5">
                 {flags.map((c) => (
                   <Flag key={c.code} code={c.code} name={c.name} className="size-6 rounded-full ring-2 ring-black" />
@@ -93,7 +93,7 @@ const CourseDetailPage = async ({ params }) => {
           )}
           <p className="text-3xl font-medium">
             {coursePriceLabel(course)}
-            {discounted && <span className="ml-3 text-xl font-light text-white/40 line-through">{formatPrice(course.price, course.currency)}</span>}
+            {discounted && <span className="ml-3 text-xl font-normal text-white/50 line-through">{formatPrice(course.price, course.currency)}</span>}
           </p>
           <Suspense fallback={<CourseCtaFallback course={course} />}>
             <CourseCta course={course} />
@@ -118,7 +118,7 @@ const CourseDetailPage = async ({ params }) => {
       {course.description && (
         <section className="mx-auto w-[90%] max-w-4xl pb-20">
           <SectionHeading tag="About" title="About this course" />
-          <p className="whitespace-pre-line text-xl font-light leading-relaxed text-white/70">{course.description}</p>
+          <p className="whitespace-pre-line text-xl font-normal leading-relaxed text-white/70">{course.description}</p>
         </section>
       )}
 
@@ -142,7 +142,7 @@ const CourseDetailPage = async ({ params }) => {
                 <ul className="flex flex-col gap-4">
                   {items.map((item) => (
                     <li key={item} className="flex items-start gap-3 rounded-2xl border border-[#302C2A] p-5">
-                      <CircleCheck className="mt-1 size-5 shrink-0 text-green-500" />
+                      <CircleCheck className="mt-1 size-5 shrink-0 text-green-400" />
                       <span className="text-lg">{item}</span>
                     </li>
                   ))}

@@ -7,7 +7,7 @@ const LogoMarquee = ({ partners }) => (
         logo?.url ? (
           <img key={name} src={logo.url} alt={name} className="mr-24 h-10 w-auto opacity-80" />
         ) : (
-          <span key={name} className="whitespace-nowrap pr-24 font-machina text-4xl font-bold text-white/80">
+          <span key={name} className="whitespace-nowrap pr-24 font-machina text-4xl font-bold text-white">
             {name}
           </span>
         ),

@@ -11,8 +11,8 @@ const AnnouncementList = ({ announcements, showCourse }) =>
             <Megaphone className="mt-0.5 size-5 shrink-0 text-accent" />
             <div className="min-w-0">
               <p className="font-medium">{a.title}</p>
-              <p className="mt-1 whitespace-pre-line break-words text-sm text-white/60">{a.body}</p>
-              <p className="mt-1 text-xs text-white/35">
+              <p className="mt-1 whitespace-pre-line break-words text-sm text-white/70">{a.body}</p>
+              <p className="mt-1 text-xs text-white/50">
                 {showCourse && a.course ? `${a.course} · ` : ""}
                 {formatDate(a.createdAt)}
               </p>

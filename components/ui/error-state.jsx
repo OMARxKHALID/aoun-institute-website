@@ -10,7 +10,7 @@ const ErrorState = ({ retry, home = "/", homeLabel = "Go home", className = "" }
       <TriangleAlert className="size-7" />
     </span>
     <h1 className="font-machina text-2xl sm:text-3xl">Something went wrong</h1>
-    <p className="max-w-md text-white/60">This page could not load. Please try again. If it keeps happening, contact us and we will sort it out.</p>
+    <p className="max-w-md text-white/70">This page could not load. Please try again. If it keeps happening, contact us and we will sort it out.</p>
     <div className="flex flex-wrap justify-center gap-3">
       <button type="button" onClick={() => retry()} className={btn.primary}>
         <RotateCcw className="size-4" /> Try again

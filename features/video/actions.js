@@ -3,7 +3,7 @@
 import { updateTag } from "next/cache";
 import { isValidObjectId } from "mongoose";
 import { connectDB } from "@/lib/db";
-import { requireAdmin, requireUser } from "@/lib/dal";
+import { requireStaff, requireUser } from "@/lib/dal";
 import { fail, parse } from "@/lib/validate";
 import { rateLimit } from "@/lib/rate-limit";
 import Lesson from "@/features/courses/models/lesson";
@@ -12,11 +12,17 @@ import { createDirectUpload, deleteVideo, muxEnabled } from "@/features/video/mu
 import { syncLessonVideo } from "@/features/video/sync";
 import { deviceIdSchema, videoLinkSchema } from "@/features/video/schemas";
 import { audit } from "@/features/audit/service";
+import { canTeach } from "@/features/courses/access";
 
 const loadLesson = async (lessonId) => {
   if (!isValidObjectId(lessonId)) return null;
   await connectDB();
   return Lesson.findById(lessonId);
+};
+
+const loadTaughtLesson = async (user, lessonId) => {
+  const lesson = await loadLesson(lessonId);
+  return lesson && (await canTeach(user, lesson.courseId)) ? lesson : null;
 };
 
 const cancelUpload = (lesson) => deleteVideo({ provider: "mux", uploadId: lesson.upload?.uploadId });
@@ -27,9 +33,9 @@ const invalidate = (lesson) => {
 };
 
 export const startVideoUpload = async (lessonId) => {
-  const admin = await requireAdmin();
+  const admin = await requireStaff();
   if (!muxEnabled) return fail("Mux is not configured. Add MUX_TOKEN_ID and MUX_TOKEN_SECRET to the environment.");
-  const lesson = await loadLesson(lessonId);
+  const lesson = await loadTaughtLesson(admin, lessonId);
   if (!lesson) return fail("Lesson not found");
   const upload = await createDirectUpload(String(lesson._id));
   await cancelUpload(lesson);
@@ -39,8 +45,8 @@ export const startVideoUpload = async (lessonId) => {
 };
 
 export const refreshVideoStatus = async (lessonId) => {
-  await requireAdmin();
-  const lesson = await loadLesson(lessonId);
+  const admin = await requireStaff();
+  const lesson = await loadTaughtLesson(admin, lessonId);
   if (!lesson) return fail("Lesson not found");
   const { status } = await syncLessonVideo(lesson.toObject());
   if (status === "ready") invalidate(lesson);
@@ -48,8 +54,8 @@ export const refreshVideoStatus = async (lessonId) => {
 };
 
 export const cancelVideoUpload = async (lessonId) => {
-  await requireAdmin();
-  const lesson = await loadLesson(lessonId);
+  const admin = await requireStaff();
+  const lesson = await loadTaughtLesson(admin, lessonId);
   if (!lesson) return fail("Lesson not found");
   await cancelUpload(lesson);
   await Lesson.updateOne({ _id: lesson._id }, { $unset: { upload: 1 } });
@@ -57,10 +63,10 @@ export const cancelVideoUpload = async (lessonId) => {
 };
 
 export const setVideoLink = async (lessonId, input) => {
-  const admin = await requireAdmin();
+  const admin = await requireStaff();
   const result = parse(videoLinkSchema, input);
   if (!result.ok) return result;
-  const lesson = await loadLesson(lessonId);
+  const lesson = await loadTaughtLesson(admin, lessonId);
   if (!lesson) return fail("Lesson not found");
   await Promise.all([deleteVideo(lesson.video), cancelUpload(lesson)]);
   await Lesson.updateOne({ _id: lesson._id }, { $set: { video: { ...result.data, status: "ready", drm: false } }, $unset: { upload: 1 } });
@@ -70,8 +76,8 @@ export const setVideoLink = async (lessonId, input) => {
 };
 
 export const removeVideo = async (lessonId) => {
-  const admin = await requireAdmin();
-  const lesson = await loadLesson(lessonId);
+  const admin = await requireStaff();
+  const lesson = await loadTaughtLesson(admin, lessonId);
   if (!lesson) return fail("Lesson not found");
   await Promise.all([deleteVideo(lesson.video), cancelUpload(lesson)]);
   await Lesson.updateOne({ _id: lesson._id }, { $set: { video: { status: "none" } }, $unset: { upload: 1 } });

@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Ban, KeyRound, Trash2, Undo2, UserPlus } from "lucide-react";
-import { banStudent, deleteStudent, enrollStudent, revokeEnrollment, setStudentPassword, unbanStudent } from "@/features/students/actions";
+import { Ban, GraduationCap, KeyRound, Trash2, Undo2, UserPlus } from "lucide-react";
+import { banStudent, deleteStudent, enrollStudent, revokeEnrollment, setStudentPassword, setTeacherRole, unbanStudent } from "@/features/students/actions";
 import Button from "@/components/ui/button";
 import FormAlert from "@/components/ui/form-alert";
 import Select from "@/components/ui/select";
@@ -53,7 +53,7 @@ export const AccountControls = ({ student }) => {
   return (
     <div className="flex flex-col gap-3">
       <FormAlert>{error}</FormAlert>
-      {notice && <p className="text-sm text-green-300">{notice}</p>}
+      {notice && <p className="text-sm text-green-400">{notice}</p>}
       <div className="flex flex-wrap gap-2">
         <Button type="button" variant="outline" loading={busy} onClick={handlePassword}>
           <KeyRound className="size-4" /> Change password
@@ -67,6 +67,9 @@ export const AccountControls = ({ student }) => {
             <Ban className="size-4" /> Block
           </Button>
         )}
+        <Button type="button" variant="outline" loading={busy} onClick={() => run(() => setTeacherRole(student.id, student.role !== "TEACHER"))}>
+          <GraduationCap className="size-4" /> {student.role === "TEACHER" ? "Remove teacher" : "Make teacher"}
+        </Button>
         <Button type="button" variant="danger" loading={busy} onClick={handleDelete}>
           <Trash2 className="size-4" /> Delete
         </Button>
@@ -108,7 +111,7 @@ export const RevokeEnrollmentButton = ({ studentId, courseId, course }) => {
   };
   return (
     <span className="flex flex-col items-end gap-1">
-      <button type="button" onClick={handleClick} disabled={busy} className="rounded-full px-3 py-1 text-sm text-red-300/80 hover:bg-red-500/10 disabled:opacity-50">
+      <button type="button" onClick={handleClick} disabled={busy} className="rounded-full px-3 py-1 text-sm text-red-400/80 hover:bg-red-500/10 disabled:opacity-50">
         Remove access
       </button>
       {error && <span className="text-xs text-red-400">{error}</span>}

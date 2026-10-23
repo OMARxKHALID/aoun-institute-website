@@ -1,0 +1,7 @@
+# One owner, many teachers, many students
+
+The institute has three roles: one Owner, any number of Teachers, and any number of Students. A Teacher is a student account the Owner promotes, so one person keeps one login and can still study other courses. A course has one or more Teachers with equal rights over it, and the Owner can act on every course. Teachers control teaching in their own courses: lessons, publishing lessons, sequential unlock, choosing free previews (logged, owner can undo), answering and removing questions, announcements, replying to reviews, granting a student extra quiz attempts (logged), and seeing their students' progress and quiz results. Money (payments, refunds, prices, payment details, revenue), publishing a course for sale, issuing, revoking or reissuing certificates by hand, hiding or deleting reviews, site settings, contact messages, the activity log, and accounts (making or removing teachers, gifts, revoking, banning, deleting, passwords) stay with the Owner alone, so one person reconciles every payment against the bank, no teacher can redirect payments or give a paid course away, no teacher can sign in as a student, and no teacher can hide bad reviews of their own course.
+
+## Consequences
+
+Stored roles are `ADMIN` (the Owner), `TEACHER` and `STUDENT`; courses keep their teachers in `teacherIds`. Owner-only work checks `requireAdmin`, teaching work checks `canTeach(user, courseId)` from `features/courses/access.js`, and list queries filter by `taughtCourseIds`.

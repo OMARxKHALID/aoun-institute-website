@@ -5,7 +5,7 @@ import Link from "next/link";
 import { MoreHorizontal } from "lucide-react";
 import { menuItem, menuPanel } from "@/lib/ui";
 
-const ActionMenu = ({ label, items }) => {
+const ActionMenu = ({ label, items, trigger, triggerClassName = "grid size-9 shrink-0 place-items-center rounded-full text-white/70 transition hover:bg-white/5 hover:text-white" }) => {
   const id = useId();
   const [pos, setPos] = useState({ top: 0, left: 0 });
 
@@ -31,13 +31,13 @@ const ActionMenu = ({ label, items }) => {
         onClick={handleToggle}
         aria-label={label}
         title={label}
-        className="grid size-9 shrink-0 place-items-center rounded-full text-white/60 transition hover:bg-white/5 hover:text-white"
+        className={triggerClassName}
       >
-        <MoreHorizontal className="size-5" />
+        {trigger ?? <MoreHorizontal className="size-5" />}
       </button>
       <div id={id} popover="auto" role="menu" style={{ top: pos.top, left: pos.left }} className={`${menuPanel} w-56`}>
         {items.filter(Boolean).map(({ label: text, icon: Icon, href, external, onClick, danger, disabled }) => {
-          const className = `${menuItem} ${danger ? "text-red-300 hover:bg-red-500/10" : ""}`;
+          const className = `${menuItem} ${danger ? "text-red-400 hover:bg-red-500/10" : ""}`;
           const content = (
             <>
               {Icon && <Icon className={`size-4 shrink-0 ${danger ? "" : "text-white/50"}`} />} {text}

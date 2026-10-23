@@ -6,7 +6,7 @@ const AuthDivider = () => {
   if (!googleEnabled) return null;
   return (
     <div className="mt-6 flex flex-col gap-4">
-      <div className="flex items-center gap-4 text-sm text-white/40">
+      <div className="flex items-center gap-4 text-sm text-white/50">
         <span className="h-px flex-1 bg-white/10" />
         or
         <span className="h-px flex-1 bg-white/10" />

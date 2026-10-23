@@ -31,20 +31,20 @@ const VerifyCodePage = async ({ params }) => {
         <div className="flex flex-col items-center gap-3 text-center">
           <ShieldAlert className="size-14 text-amber-300" />
           <h1 className="font-machina text-3xl">Too many checks</h1>
-          <p className="text-white/60">Please wait a minute and try again.</p>
+          <p className="text-white/70">Please wait a minute and try again.</p>
         </div>
       ) : !certificate ? (
         <div className="flex flex-col items-center gap-3 text-center">
           <CircleX className="size-14 text-red-400" />
           <h1 className="font-machina text-3xl md:text-4xl">Certificate not found</h1>
-          <p className="text-white/60">No certificate matches “{decodeURIComponent(code).toUpperCase()}”. Check the ID and try again.</p>
+          <p className="text-white/70">No certificate matches “{decodeURIComponent(code).toUpperCase()}”. Check the ID and try again.</p>
         </div>
       ) : (
         <div className="flex w-full flex-col items-center gap-6">
           <div className="flex flex-col items-center gap-3 text-center">
             {valid ? <BadgeCheck className="size-16 text-green-400" /> : <CircleX className="size-16 text-red-400" />}
             <h1 className="font-machina text-3xl md:text-5xl">{valid ? "Valid certificate" : "Certificate revoked"}</h1>
-            {!valid && certificate.reason && <p className="text-white/60">Reason: {certificate.reason}</p>}
+            {!valid && certificate.reason && <p className="text-white/70">Reason: {certificate.reason}</p>}
           </div>
           <dl className="w-full rounded-3xl border border-[#302C2A] bg-[#0C0C0C] px-6 py-2">
             <Row label="Awarded to" value={certificate.studentName} />

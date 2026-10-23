@@ -104,7 +104,7 @@ const Select = ({ options = [], placeholder, className = "", wrapperClassName = 
         aria-label={props["aria-label"]}
         className={`relative flex w-full items-center pr-10 text-left disabled:opacity-50 ${className}`}
       >
-        <span className={`block truncate ${selected ? "" : "text-white/35"}`}>{selected?.label ?? placeholder ?? "Select…"}</span>
+        <span className={`block truncate ${selected ? "" : "text-white/50"}`}>{selected?.label ?? placeholder ?? "Select…"}</span>
         <ChevronDown aria-hidden="true" className="pointer-events-none absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-white/50" />
       </button>
       <ul
@@ -128,7 +128,7 @@ const Select = ({ options = [], placeholder, className = "", wrapperClassName = 
               aria-selected={isSelected}
               onClick={() => choose(value)}
               onMouseEnter={() => setActive(index)}
-              className={`${menuItem} ${index === active ? "bg-white/[0.06]" : ""} ${isSelected ? "text-accent" : "text-white/80"}`}
+              className={`${menuItem} ${index === active ? "bg-white/[0.06]" : ""} ${isSelected ? "text-accent" : "text-white"}`}
             >
               <span className="min-w-0 flex-1 truncate">{label}</span>
               {isSelected && <Check className="size-4 shrink-0" />}

@@ -30,20 +30,23 @@ const columns = helper.columns([
           {row.original.image ? <img src={imageUrl(row.original.image, 96)} alt="" className="size-full object-cover" /> : initials(row.original.name)}
         </span>
         <span className="min-w-0">
-          <span className="block truncate font-medium">{row.original.name}</span>
-          <span className="block truncate text-sm text-white/45">{row.original.email}</span>
+          <span className="flex items-center gap-2 truncate font-medium">
+            {row.original.name}
+            {row.original.role === "TEACHER" && <StatusPill status="new" label="teacher" />}
+          </span>
+          <span className="block truncate text-sm text-white/50">{row.original.email}</span>
         </span>
       </Link>
     ),
   }),
   helper.accessor("courses", { header: "Courses" }),
   helper.accessor("spent", { header: "Paid", cell: ({ getValue }) => formatPrice(getValue()) }),
-  helper.accessor("joinedAt", { header: "Joined", sortingFn: "datetime", cell: ({ getValue }) => <span className="text-white/60">{formatDate(getValue())}</span> }),
-  helper.accessor((row) => row.lastActiveAt ?? "", { id: "lastActiveAt", header: "Last active", cell: ({ row }) => <span className="text-white/60">{row.original.lastActiveAt ? formatDate(row.original.lastActiveAt) : "—"}</span> }),
+  helper.accessor("joinedAt", { header: "Joined", sortingFn: "datetime", cell: ({ getValue }) => <span className="text-white/70">{formatDate(getValue())}</span> }),
+  helper.accessor((row) => row.lastActiveAt ?? "", { id: "lastActiveAt", header: "Last active", cell: ({ row }) => <span className="text-white/70">{row.original.lastActiveAt ? formatDate(row.original.lastActiveAt) : "—"}</span> }),
   helper.accessor("status", { header: "Status", cell: ({ getValue }) => <StatusPill status={getValue()} label={statusLabel[getValue()]} /> }),
   helper.display({ id: "actions", header: "", cell: ({ row }) => <ActionMenu label={`Actions for ${row.original.name}`} items={[{ label: "View student", icon: Eye, href: `/admin/students/${row.original.id}` }]} /> }),
 ]);
 
-const StudentTable = ({ students, initialSearch }) => <DataTable columns={columns} data={students} initialSearch={initialSearch} searchPlaceholder="Search name or email" empty="No students yet." />;
+const StudentTable = ({ students, initialSearch, owner }) => <DataTable columns={owner ? columns : columns.filter((c) => c.accessorKey !== "spent")} data={students} initialSearch={initialSearch} searchPlaceholder="Search name or email" empty="No students yet." />;
 
 export default StudentTable;

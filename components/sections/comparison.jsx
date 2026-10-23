@@ -3,7 +3,7 @@ import { comparison } from "@/lib/data";
 import SectionHeading from "@/components/ui/section-heading";
 
 const Comparison = ({ brand }) => (
-  <section className="bg-black px-4 font-light capitalize max-md:py-10 lg:py-16">
+  <section className="bg-black px-4 font-normal capitalize max-md:py-10 lg:py-16">
     <div className="mx-auto w-fit">
       <SectionHeading tag="Comparison" title={`What sets ${brand.name} apart`} />
       <div className="mx-auto flex flex-col justify-center gap-8 rounded-3xl border border-[#302C2A] p-5 md:gap-12 lg:flex-row">
@@ -16,7 +16,7 @@ const Comparison = ({ brand }) => (
               </div>
               {comparison.ours.map((item) => (
                 <div key={item} className="flex items-center gap-3 py-5 md:items-start">
-                  <CircleCheck className="size-7 shrink-0 text-green-600 md:mt-1" />
+                  <CircleCheck className="size-7 shrink-0 text-green-400 md:mt-1" />
                   <p className="text-xl md:text-[1.6rem]">{item}</p>
                 </div>
               ))}
@@ -32,7 +32,7 @@ const Comparison = ({ brand }) => (
               </div>
               {comparison.others.map((item) => (
                 <div key={item} className="flex items-center gap-3 py-5 md:items-start">
-                  <CircleX className="size-7 shrink-0 rounded-full bg-[#210b06] text-[#E8602F] md:mt-1" />
+                  <CircleX className="size-7 shrink-0 rounded-full bg-[#210b06] text-accent md:mt-1" />
                   <p className="text-xl md:text-[1.6rem]">{item}</p>
                 </div>
               ))}

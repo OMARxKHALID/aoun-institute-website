@@ -2,7 +2,7 @@
 
 import { createContext, use, useCallback, useEffect, useRef, useState } from "react";
 import { CircleHelp, TriangleAlert } from "lucide-react";
-import { buttonClass, inputClass } from "@/lib/ui";
+import { buttonClass, inputClass, labelClass } from "@/lib/ui";
 
 const DialogContext = createContext(null);
 
@@ -69,14 +69,14 @@ const DialogProvider = ({ children }) => {
         {state && (
           <form onSubmit={handleSubmit} className="flex flex-col gap-5 p-6">
             <div className="flex items-start gap-4">
-              <span className={`grid size-11 shrink-0 place-items-center rounded-2xl ${state.danger ? "bg-red-500/15 text-red-300" : "bg-accent/15 text-accent"}`}>
+              <span className={`grid size-11 shrink-0 place-items-center rounded-2xl ${state.danger ? "bg-red-500/15 text-red-400" : "bg-accent/15 text-accent"}`}>
                 <Icon className="size-5" />
               </span>
               <div className="min-w-0 flex-1">
                 <h2 id="app-dialog-title" className="font-machina text-xl leading-tight">
                   {state.title}
                 </h2>
-                {state.message && <p className="mt-1.5 text-sm text-white/60">{state.message}</p>}
+                {state.message && <p className="mt-1.5 text-sm text-white/70">{state.message}</p>}
               </div>
             </div>
 
@@ -92,8 +92,8 @@ const DialogProvider = ({ children }) => {
             )}
 
             {state.kind === "prompt" && (
-              <label className="flex flex-col gap-2 text-sm">
-                {state.label && <span className="text-white/70">{state.label}</span>}
+              <label className="flex flex-col gap-2">
+                {state.label && <span className={labelClass}>{state.label}</span>}
                 {state.multiline === false ? (
                   <input
                     autoFocus

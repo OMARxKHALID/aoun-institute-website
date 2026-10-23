@@ -1,9 +1,9 @@
-import { getUser, isAdmin } from "@/lib/dal";
+import { getUser, isStaff } from "@/lib/dal";
 import { getQuizResults } from "@/features/quizzes/queries";
 import { toCsv } from "@/lib/csv";
 
 export const GET = async (_request, { params }) => {
-  if (!isAdmin(await getUser())) return Response.json({ error: "Forbidden" }, { status: 403 });
+  if (!isStaff(await getUser())) return Response.json({ error: "Forbidden" }, { status: 403 });
   const { quizId } = await params;
   const data = await getQuizResults(quizId);
   if (!data) return Response.json({ error: "Not found" }, { status: 404 });

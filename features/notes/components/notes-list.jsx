@@ -22,8 +22,8 @@ const NotesList = ({ notes }) => {
                     <Play className="size-3" /> {formatClock(n.sec)}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block whitespace-pre-line break-words text-sm text-white/80">{n.body}</span>
-                    <span className="mt-1 block truncate text-xs text-white/45">
+                    <span className="block whitespace-pre-line break-words text-sm text-white">{n.body}</span>
+                    <span className="mt-1 block truncate text-xs text-white/50">
                       {n.lesson} · {formatDate(n.createdAt)}
                     </span>
                   </span>

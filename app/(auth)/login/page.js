@@ -12,7 +12,7 @@ const LoginPage = () => (
       <LoginForm />
     </Suspense>
     <AuthDivider />
-    <p className="mt-6 text-white/60">
+    <p className="mt-6 text-white/70">
       New here?{" "}
       <Link href="/register" className="text-accent hover:underline">
         Create an account

@@ -58,6 +58,7 @@ export const getMyCourses = async () => {
           lastActiveAt: p?.lastActiveAt ?? null,
           lastLesson: p?.lastLessonId ? { id: String(p.lastLessonId), title: titles.get(String(p.lastLessonId)), position: p.lastPosition ?? 0, durationSec: durations.get(String(p.lastLessonId)) ?? 0 } : null,
           eligible: p?.eligible ?? false,
+          quizzesLeft: p?.missing?.quizzes?.length ?? 0,
         };
       })
       .filter(Boolean),

@@ -36,7 +36,7 @@ const DashboardPage = async () => {
         {header}
         <div className="grid gap-5 p-4 sm:p-5 lg:p-8">
           {stats.pendingOrders > 0 && (
-            <Link href="/dashboard/orders" className="flex items-center gap-3 rounded-2xl border border-amber-400/30 bg-amber-500/5 p-4 text-amber-200">
+            <Link href="/dashboard/orders" className="flex items-center gap-3 rounded-2xl border border-amber-400/30 bg-amber-500/5 p-4 text-amber-300">
               <Receipt className="size-5 shrink-0" /> Your payment is under review. You will get access as soon as it is approved.
             </Link>
           )}
@@ -71,7 +71,7 @@ const DashboardPage = async () => {
                     </span>
                     <div className="min-w-0">
                       <p className="truncate font-medium">{c.title}</p>
-                      <p className="truncate text-xs text-white/45">{c.category || "Course"}</p>
+                      <p className="truncate text-xs text-white/50">{c.category || "Course"}</p>
                     </div>
                   </div>
                   <ProgressBar percent={c.percent} />
@@ -103,15 +103,15 @@ const DashboardPage = async () => {
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block truncate">{q.title}</span>
-                          <span className="block truncate text-xs text-white/45">{q.course}</span>
+                          <span className="block truncate text-xs text-white/50">{q.course}</span>
                         </span>
-                        <ChevronRight className="size-4 text-white/40" />
+                        <ChevronRight className="size-4 text-white/50" />
                       </Link>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-white/45">No quizzes waiting. Finish lessons to unlock their quizzes.</p>
+                <p className="text-sm text-white/50">No quizzes waiting. Finish lessons to unlock their quizzes.</p>
               )}
             </PanelCard>
           </div>

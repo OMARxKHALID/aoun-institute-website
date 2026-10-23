@@ -21,7 +21,7 @@ const Cta = ({ brand }) => (
     </div>
     <h2 className={titleClass}>Turn your learning journey into a career breakthrough with</h2>
     <div className={`mt-2 ${titleClass}`}>
-      <span className="relative mx-auto inline-block w-fit border-[.5px] border-[#E8602E]/20 bg-[#e8602e21] px-[.5rem] pb-[0.25rem] pt-[.5rem] font-light leading-none text-[#fadfd5]">
+      <span className="relative mx-auto inline-block w-fit border-[.5px] border-[#E8602E]/20 bg-[#e8602e21] px-[.5rem] pb-[0.25rem] pt-[.5rem] font-normal leading-none text-[#fadfd5]">
         {brand.shortName || brand.name}
         <CornerDots className="w-1.5 bg-white" />
       </span>

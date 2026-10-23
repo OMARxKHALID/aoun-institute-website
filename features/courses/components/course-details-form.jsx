@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createCourse, updateCourseDetails } from "@/features/courses/actions";
-import { LEVELS, courseDetailsSchema, slugify } from "@/features/courses/schemas";
+import { LEVELS, STATUS_OPTIONS, courseDetailsSchema, slugify } from "@/features/courses/schemas";
 import Field from "@/components/ui/field";
 import Button from "@/components/ui/button";
 import FormAlert from "@/components/ui/form-alert";
@@ -17,7 +17,7 @@ const pick = (course) => Object.fromEntries(Object.keys(blank).map((key) => [key
 
 const numberOrNull = (value) => (value === "" || Number.isNaN(Number(value)) ? null : Number(value));
 
-const CourseDetailsForm = ({ course }) => {
+const CourseDetailsForm = ({ course, owner = true }) => {
   const router = useRouter();
   const editing = Boolean(course);
   const [saved, setSaved] = useState(false);
@@ -59,9 +59,15 @@ const CourseDetailsForm = ({ course }) => {
       <Field label="Description" rows={6} className="md:col-span-2" error={errors.description?.message} {...register("description")} />
       <Field label="Category" placeholder="e.g. Development" error={errors.category?.message} {...register("category")} />
       <Field label="Level" options={LEVELS} error={errors.level?.message} {...register("level")} />
-      <Field label="Price (PKR)" type="number" min="0" step="1" error={errors.price?.message} {...register("price", { valueAsNumber: true })} />
-      <Field label="Discount price (optional)" type="number" min="0" step="1" error={errors.discountPrice?.message} {...register("discountPrice", { setValueAs: numberOrNull })} />
-      <Field label="Status" options={["draft", "published"]} error={errors.status?.message} {...register("status")} />
+      {owner ? (
+        <>
+          <Field label="Price (PKR)" type="number" min="0" step="1" error={errors.price?.message} {...register("price", { valueAsNumber: true })} />
+          <Field label="Sale price (optional)" type="number" min="0" step="1" error={errors.discountPrice?.message} {...register("discountPrice", { setValueAs: numberOrNull })} />
+          <Field label="Status" options={STATUS_OPTIONS} error={errors.status?.message} {...register("status")} />
+        </>
+      ) : (
+        <p className="rounded-xl border border-[#302C2A] bg-[#070707] p-4 text-sm text-white/70 md:col-span-2">The owner sets the price and publishes the course when it is ready.</p>
+      )}
       <Controller control={control} name="thumbnail" render={({ field }) => <ImageUpload kind="thumbnail" label="Thumbnail (16:9)" value={field.value} onChange={field.onChange} aspect={16 / 9} />} />
       {errors.thumbnail?.message && <p className="text-sm text-red-400 md:col-span-2">{errors.thumbnail.message}</p>}
       <Button type="submit" loading={isSubmitting} className="justify-self-start md:col-span-2">

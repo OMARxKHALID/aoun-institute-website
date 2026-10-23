@@ -108,12 +108,12 @@ const QuizTaker = ({ attempt, quiz, questions }) => {
   return (
     <div className="flex flex-col gap-5">
       <div className="sticky top-2 z-10 flex flex-wrap items-center gap-3 rounded-2xl border border-[#302C2A] bg-[#0C0C0C]/95 p-3 backdrop-blur-sm sm:p-4">
-        <span className="text-sm text-white/60">
+        <span className="text-sm text-white/70">
           {answered}/{questions.length} answered
         </span>
-        <span className="text-xs text-white/40">{saving === "saving" ? "Saving…" : saving === "saved" ? "Saved" : ""}</span>
+        <span className="text-xs text-white/50">{saving === "saving" ? "Saving…" : saving === "saved" ? "Saved" : ""}</span>
         {remaining != null && (
-          <span className={`ml-auto flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-sm ${low ? "bg-red-500/15 text-red-300" : "bg-white/5 text-white/80"}`} aria-live="polite">
+          <span className={`ml-auto flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-sm ${low ? "bg-red-500/15 text-red-400" : "bg-white/5 text-white"}`} aria-live="polite">
             <Clock className="size-4" /> {formatClock(remaining)}
           </span>
         )}
@@ -137,7 +137,7 @@ const QuizTaker = ({ attempt, quiz, questions }) => {
               type="button"
               onClick={() => setIndex(i)}
               aria-current={i === index ? "step" : undefined}
-              className={`grid size-9 place-items-center rounded-lg text-sm transition ${i === index ? "bg-accent text-white" : answers[q.id]?.length ? "bg-accent/20 text-accent" : "bg-white/5 text-white/60"}`}
+              className={`grid size-9 place-items-center rounded-lg text-sm transition ${i === index ? "bg-accent text-white" : answers[q.id]?.length ? "bg-accent/20 text-accent" : "bg-white/5 text-white/70"}`}
             >
               {i + 1}
             </button>
@@ -155,7 +155,7 @@ const QuizTaker = ({ attempt, quiz, questions }) => {
               <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent/15 text-sm font-semibold text-accent">{number}</span>
               <div className="min-w-0">
                 <p className="whitespace-pre-line break-words text-lg">{question.prompt}</p>
-                <p className="mt-1 text-xs text-white/40">
+                <p className="mt-1 text-xs text-white/50">
                   {question.type === "multiple" ? "Select all that apply" : question.type === "short_answer" ? "Type your answer" : "Select one"} · {question.points} {question.points === 1 ? "point" : "points"}
                 </p>
               </div>
@@ -184,7 +184,7 @@ const QuizTaker = ({ attempt, quiz, questions }) => {
                     onClick={handlePick(question, option.id)}
                     className={`flex items-start gap-3 rounded-2xl border p-3 text-left transition sm:p-4 ${isPicked ? "border-accent bg-accent/10" : "border-[#302C2A] hover:border-white/30"}`}
                   >
-                    <Icon className={`mt-0.5 size-5 shrink-0 ${isPicked ? "text-accent" : "text-white/40"}`} />
+                    <Icon className={`mt-0.5 size-5 shrink-0 ${isPicked ? "text-accent" : "text-white/50"}`} />
                     <span className="min-w-0 break-words">{option.text}</span>
                   </button>
                 );

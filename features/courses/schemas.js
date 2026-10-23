@@ -2,6 +2,11 @@ import { z } from "zod";
 
 export const LEVELS = ["Beginner", "Intermediate", "Advanced", "All levels"];
 
+export const STATUS_OPTIONS = [
+  { value: "draft", label: "Unpublished" },
+  { value: "published", label: "Published" },
+];
+
 const text = (max) => z.string().trim().max(max);
 const asset = z.object({ url: z.url(), publicId: z.string().min(1), name: z.string().max(200).optional() }).nullish();
 const textList = (max, itemMax) =>

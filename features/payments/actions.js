@@ -42,13 +42,14 @@ export const createManualOrder = async (courseId, input) => {
   const { receipt, ...data } = result.data;
   let stored;
   if (receipt) {
+    if (await Order.exists({ "receipt.publicId": receipt.publicId, userId: { $ne: user.id } })) return fail("Invalid upload", "receipt");
     const check = await verifyUpload("receipt", receipt.publicId);
     if (!check.ok) return fail(check.error, "receipt");
     stored = { publicId: check.asset.publicId, format: check.asset.format };
   }
   const fields = { amount: amountOf(course), currency: course.currency, method: data.method, receipt: stored, note: data.note || undefined };
   const providerRef = `manual:${data.reference}`;
-  const reopened = await Order.findOneAndUpdate({ userId: user.id, courseId, providerRef, status: "FAILED" }, { $set: { ...fields, status: "PENDING" }, $unset: { reviewedBy: 1 } });
+  const reopened = await Order.findOneAndUpdate({ userId: user.id, courseId, providerRef, status: "REJECTED" }, { $set: { ...fields, status: "PENDING" }, $unset: { reviewedBy: 1 } });
   const order =
     reopened ??
     (await Order.create({ ...fields, userId: user.id, courseId, provider: "manual", providerRef }).catch((error) => (error?.code === 11000 ? null : Promise.reject(error))));
@@ -79,7 +80,7 @@ export const payWithDemoCard = async (courseId, input) => {
   if (!charge.ok) return fail(charge.error, charge.field);
   const paidAt = new Date();
   const order = await Order.create({ userId: user.id, courseId, amount: amountOf(course), currency: course.currency, provider: "demo_card", method: `Card •••• ${charge.last4}`, providerRef: charge.ref, status: "PAID", paidAt });
-  await Order.updateMany({ userId: user.id, courseId, status: "PENDING" }, { $set: { status: "FAILED", note: "Paid by card instead" } });
+  await Order.updateMany({ userId: user.id, courseId, status: "PENDING" }, { $set: { status: "CANCELLED", note: "Paid by card instead" } });
   await grantEnrollment({ userId: user.id, courseId, source: "order", orderId: order._id });
   await notify(
     sendEmail({
@@ -96,7 +97,7 @@ export const enrollFree = async (courseId) => {
   const course = await loadPublishedCourse(courseId);
   if (!course) return fail("This course is not available");
   if (amountOf(course) !== 0) return fail("This course is not free");
-  await grantEnrollment({ userId: user.id, courseId, source: "manual" });
+  await grantEnrollment({ userId: user.id, courseId, source: "free" });
   return { ok: true };
 };
 
@@ -132,7 +133,7 @@ export const rejectOrder = async (orderId, input) => {
   if (!result.ok) return result;
   const order = await loadPendingOrder(orderId);
   if (!order) return fail("This order was already reviewed");
-  await Order.updateOne({ _id: order._id, status: "PENDING" }, { $set: { status: "FAILED", reviewedBy: admin.id, note: result.data.note } });
+  await Order.updateOne({ _id: order._id, status: "PENDING" }, { $set: { status: "REJECTED", reviewedBy: admin.id, note: result.data.note } });
   const student = await findUser(order.userId);
   if (student?.email)
     await notify(

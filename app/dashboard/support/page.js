@@ -31,9 +31,9 @@ const SupportPage = async () => {
                   <details key={faq.q} className="group rounded-2xl border border-white/5 bg-[#070707] p-4">
                     <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium [&::-webkit-details-marker]:hidden">
                       {faq.q}
-                      <span className="text-xl text-white/40 transition-transform group-open:rotate-45">+</span>
+                      <span className="text-xl text-white/50 transition-transform group-open:rotate-45">+</span>
                     </summary>
-                    <p className="mt-3 whitespace-pre-line text-sm text-white/60">{faq.a}</p>
+                    <p className="mt-3 whitespace-pre-line text-sm text-white/70">{faq.a}</p>
                   </details>
                 ))}
               </div>

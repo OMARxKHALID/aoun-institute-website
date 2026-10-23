@@ -1,5 +1,6 @@
 import { connectDB } from "@/lib/db";
-import { getUser, isAdmin } from "@/lib/dal";
+import { getUser } from "@/lib/dal";
+import { canTeach } from "@/features/courses/access";
 import { rateLimit } from "@/lib/rate-limit";
 import { privateDownloadUrl } from "@/lib/cloudinary";
 import { UPLOAD_RULES } from "@/lib/upload-rules";
@@ -19,7 +20,7 @@ export const GET = async (request) => {
     (await Lesson.findOne({ "attachments.publicId": publicId }, "courseId").lean());
   if (!owner) return Response.json({ error: "Not found" }, { status: 404 });
   const courseId = owner.courseId ?? owner._id;
-  const allowed = isAdmin(user) || (await Enrollment.exists({ userId: user.id, courseId, status: "active" }));
+  const allowed = (await canTeach(user, courseId)) || (await Enrollment.exists({ userId: user.id, courseId, status: "active" }));
   if (!allowed) return Response.json({ error: "Enroll in this course to download its files." }, { status: 403 });
   return Response.redirect(privateDownloadUrl(publicId, "pdf", "document"), 302);
 };

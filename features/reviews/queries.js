@@ -1,7 +1,8 @@
 import "server-only";
 import { Types } from "mongoose";
 import { connectDB } from "@/lib/db";
-import { requireAdmin, requireUser } from "@/lib/dal";
+import { requireStaff, requireUser } from "@/lib/dal";
+import { canTeach, courseScope, taughtCourseIds } from "@/features/courses/access";
 import Review from "@/features/reviews/model";
 import Course from "@/features/courses/models/course";
 
@@ -32,9 +33,9 @@ export const getMyReview = async (courseId) => {
 };
 
 export const getAdminReviews = async () => {
-  await requireAdmin();
+  const user = await requireStaff();
   await connectDB();
-  const reviews = await Review.find().sort({ createdAt: -1 }).limit(2000).lean();
+  const reviews = await Review.find(await courseScope(user)).sort({ createdAt: -1 }).limit(2000).lean();
   const courses = await Course.find({ _id: { $in: [...new Set(reviews.map((r) => String(r.courseId)))] } }, "title slug").lean();
   const byId = new Map(courses.map((c) => [String(c._id), c]));
   return plain(

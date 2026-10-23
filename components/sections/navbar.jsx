@@ -12,7 +12,6 @@ const navLinks = [
   { label: "Home", href: "/" },
   { label: "Courses", href: "/courses" },
   { label: "About", href: "/about" },
-  { label: "Contact", href: "/contact" },
 ];
 
 const isLightBehind = () => {
@@ -46,7 +45,8 @@ const Navbar = ({ brand }) => {
   }, [pathname]);
 
   const isActive = (href) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
-  const account = session ? { label: session.user.role === "ADMIN" ? "Admin" : "Dashboard", href: session.user.role === "ADMIN" ? "/admin" : "/dashboard" } : { label: "Sign In", href: "/login" };
+  const accounts = { ADMIN: { label: "Admin", href: "/admin" }, TEACHER: { label: "Teaching", href: "/admin/courses" } };
+  const account = session ? (accounts[session.user.role] ?? { label: "Dashboard", href: "/dashboard" }) : { label: "Sign In", href: "/login" };
 
   const handleToggle = () => setOpen((v) => !v);
 
@@ -59,7 +59,7 @@ const Navbar = ({ brand }) => {
 
         <div className="hidden min-[880px]:block">
           <div className="rounded-lg bg-linear-to-l from-white/30 via-transparent to-white/30 p-[.5px]">
-            <nav className="flex gap-10 rounded-lg bg-[#0C0C0C] px-8 py-4 tracking-wide text-white/70 lg:text-[1.12rem]">
+            <nav className="flex gap-10 rounded-lg bg-[#0C0C0C] px-8 py-4 tracking-wide text-white/70 lg:text-lg">
               {navLinks.map(({ label, href }) => (
                 <Link key={label} href={href} className={`group ${isActive(href) ? "text-white" : ""}`}>
                   <RollText hoverClass="text-accent">{label}</RollText>
@@ -74,8 +74,8 @@ const Navbar = ({ brand }) => {
             <Phone className="size-4" />
             <span>Contact us</span>
           </Link>
-          <Link href={account.href} className="group rounded-lg px-4 py-2 transition hover:bg-accent">
-            <RollText className="text-lg font-light">{account.label}</RollText>
+          <Link href={account.href} className="group rounded-full border border-current/20 px-4 py-2 transition hover:border-accent hover:bg-accent hover:text-white">
+            <RollText>{account.label}</RollText>
           </Link>
         </div>
 
@@ -93,10 +93,13 @@ const Navbar = ({ brand }) => {
       {open && (
         <nav className="flex flex-col gap-1 border-t border-white/10 bg-black/95 px-10 pb-8 pt-4 text-2xl min-[880px]:hidden">
           {navLinks.map(({ label, href }) => (
-            <Link key={label} href={href} onClick={handleToggle} className={`border-b border-white/10 py-4 ${isActive(href) ? "text-accent" : "text-white/80"}`}>
+            <Link key={label} href={href} onClick={handleToggle} className={`border-b border-white/10 py-4 ${isActive(href) ? "text-accent" : "text-white"}`}>
               {label}
             </Link>
           ))}
+          <Link href="/contact" onClick={handleToggle} className={`border-b border-white/10 py-4 ${isActive("/contact") ? "text-accent" : "text-white"}`}>
+            Contact
+          </Link>
           <Link href={account.href} onClick={handleToggle} className="mt-6 rounded-full border border-white/20 py-3 text-center text-xl">
             {account.label}
           </Link>

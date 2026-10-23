@@ -85,7 +85,7 @@ const PasswordForm = ({ hasPassword }) => {
   if (!hasPassword)
     return (
       <PanelCard title="Password">
-        <p className="text-sm text-white/55">You sign in with Google. Use “Forgot password” on the login page to add a password.</p>
+        <p className="text-sm text-white/50">You sign in with Google. Use “Forgot password” on the login page to add a password.</p>
       </PanelCard>
     );
 
@@ -152,10 +152,10 @@ const DangerZone = ({ requested }) => {
   return (
     <PanelCard title="Delete account">
       {done ? (
-        <p className="text-sm text-amber-200">Deletion requested. The institute will contact you by email to confirm.</p>
+        <p className="text-sm text-amber-300">Deletion requested. The institute will contact you by email to confirm.</p>
       ) : (
         <>
-          <p className="text-sm text-white/55">Your certificates stay verifiable, but your progress and profile will be removed.</p>
+          <p className="text-sm text-white/50">Your certificates stay verifiable, but your progress and profile will be removed.</p>
           <Button type="button" variant="danger" onClick={handleRequest} className="self-start">
             Request Deletion
           </Button>

@@ -5,7 +5,7 @@ const pageButton = "grid size-9 place-items-center rounded-full border border-[#
 const Pager = ({ from, to, total, page, pages, onPrev, onNext }) => {
   if (!total) return null;
   return (
-    <div className="flex flex-col items-center justify-between gap-3 text-sm text-white/60 sm:flex-row">
+    <div className="flex flex-col items-center justify-between gap-3 text-sm text-white/70 sm:flex-row">
       <p>
         Showing <span className="text-white">{from}</span>–<span className="text-white">{to}</span> of <span className="text-white">{total}</span>
       </p>

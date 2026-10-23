@@ -32,7 +32,7 @@ const AttemptPage = async ({ params }) => {
       <PanelHeader back={back} title="Your result" subtitle={`${quiz.title} · Attempt ${attempt.attemptNo}`} />
       <div className="flex flex-col gap-5 p-4 sm:p-5 lg:p-8">
         <div className={`flex flex-col items-start gap-3 rounded-3xl p-6 sm:flex-row sm:items-center ${attempt.passed ? "bg-green-500/10" : "bg-red-500/10"}`}>
-          {attempt.passed ? <Trophy className="size-12 shrink-0 text-green-300" /> : <XCircle className="size-12 shrink-0 text-red-300" />}
+          {attempt.passed ? <Trophy className="size-12 shrink-0 text-green-400" /> : <XCircle className="size-12 shrink-0 text-red-400" />}
           <div className="min-w-0 flex-1">
             <p className="font-machina text-4xl">{attempt.percent}%</p>
             <p className="text-white/70">
@@ -52,7 +52,7 @@ const AttemptPage = async ({ params }) => {
             <div className="flex items-start gap-3">
               {q.correct ? <CheckCircle2 className="mt-0.5 size-6 shrink-0 text-green-400" /> : <CircleX className="mt-0.5 size-6 shrink-0 text-red-400" />}
               <p className="min-w-0 whitespace-pre-line break-words">
-                <span className="text-white/45">{i + 1}. </span>
+                <span className="text-white/50">{i + 1}. </span>
                 {q.prompt}
               </p>
             </div>
@@ -60,9 +60,9 @@ const AttemptPage = async ({ params }) => {
               <div className="flex flex-col gap-2 text-sm">
                 <p className={`rounded-xl border p-3 ${q.correct ? "border-green-500/50 bg-green-500/10" : "border-red-500/40 bg-red-500/5"}`}>
                   <span className="block text-xs text-white/50">Your answer</span>
-                  {q.text || <span className="text-white/40">No answer</span>}
+                  {q.text || <span className="text-white/50">No answer</span>}
                 </p>
-                {reveal && q.acceptedAnswers?.length > 0 && <p className="text-white/60">Accepted: {q.acceptedAnswers.join(" · ")}</p>}
+                {reveal && q.acceptedAnswers?.length > 0 && <p className="text-white/70">Accepted: {q.acceptedAnswers.join(" · ")}</p>}
               </div>
             )}
             <ul className="flex flex-col gap-2">
@@ -78,7 +78,7 @@ const AttemptPage = async ({ params }) => {
                 );
               })}
             </ul>
-            {reveal && q.explanation && <p className="rounded-xl bg-white/[0.03] p-3 text-sm text-white/65">{q.explanation}</p>}
+            {reveal && q.explanation && <p className="rounded-xl bg-white/[0.03] p-3 text-sm text-white/70">{q.explanation}</p>}
           </PanelCard>
         ))}
       </div>

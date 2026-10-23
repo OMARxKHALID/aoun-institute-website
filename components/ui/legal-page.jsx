@@ -8,7 +8,7 @@ const LegalPage = ({ tag, title, updated, sections }) => (
         <section key={heading} className="flex flex-col gap-3 border-b border-white/10 pb-10">
           <h2 className="font-machina text-3xl">{heading}</h2>
           {body.map((p) => (
-            <p key={p} className="text-lg font-light leading-relaxed text-white/70">
+            <p key={p} className="text-lg font-normal leading-relaxed text-white/70">
               {p}
             </p>
           ))}

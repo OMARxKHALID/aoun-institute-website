@@ -27,10 +27,12 @@ const courseSchema = new Schema(
       requireQuizzes: { type: Boolean, default: true },
     },
     contentVersion: { type: Number, default: 1 },
+    teacherIds: { type: [String], default: [] },
   },
   { timestamps: true },
 );
 
 courseSchema.index({ status: 1, createdAt: -1 });
+courseSchema.index({ teacherIds: 1 });
 
 export default models.Course || model("Course", courseSchema);

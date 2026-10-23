@@ -25,6 +25,7 @@ export const updateAvatar = async (input) => {
   const user = await requireUser();
   const publicId = input?.publicId;
   if (publicId) {
+    if (await users().findOne({ avatarPublicId: publicId, _id: { $ne: new Types.ObjectId(user.id) } }, { projection: { _id: 1 } })) return fail("Invalid upload", "avatar");
     const check = await verifyUpload("avatar", publicId);
     if (!check.ok) return fail(check.error, "avatar");
     await users().updateOne({ _id: new Types.ObjectId(user.id) }, { $set: { avatarPublicId: check.asset.publicId } });

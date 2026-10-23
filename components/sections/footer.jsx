@@ -96,7 +96,7 @@ const Wordmark = ({ text }) => {
 };
 
 const FooterLink = ({ href, children }) => (
-  <Link href={href} className="w-fit font-light text-white/55 transition-colors hover:text-accent">
+  <Link href={href} className="w-fit font-normal text-white/50 transition-colors hover:text-accent">
     {children}
   </Link>
 );
@@ -114,7 +114,7 @@ const Footer = ({ settings }) => {
       <div className="mx-auto grid w-full max-w-[1500px] gap-12 px-6 pb-12 sm:px-10 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-16 lg:px-16">
         <div className="flex flex-col gap-5">
           <BrandLogo brand={brand} />
-          {footer.text && <p className="max-w-sm text-base font-light text-white/55">{footer.text}</p>}
+          {footer.text && <p className="max-w-sm text-base font-normal text-white/50">{footer.text}</p>}
           {socials.length > 0 && (
             <ul className="flex flex-wrap gap-2">
               {socials.map(({ label, url }) => (
@@ -125,7 +125,7 @@ const Footer = ({ settings }) => {
                     rel="noopener noreferrer"
                     aria-label={label}
                     title={label}
-                    className="grid size-11 place-items-center rounded-full border border-white/15 text-white/75 transition hover:border-accent hover:bg-accent/10 hover:text-accent"
+                    className="grid size-11 place-items-center rounded-full border border-white/15 text-white/70 transition hover:border-accent hover:bg-accent/10 hover:text-accent"
                   >
                     <SocialIcon label={label} />
                   </a>
@@ -137,7 +137,7 @@ const Footer = ({ settings }) => {
 
         <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-3 lg:grid-cols-[repeat(3,max-content)_minmax(0,18rem)] lg:gap-x-14">
           {linkColumns.map(({ title, links }) => (
-            <nav key={title} aria-label={title} className="flex flex-col gap-3 text-[15px]">
+            <nav key={title} aria-label={title} className="flex flex-col gap-3 text-base">
               <Heading>{title}</Heading>
               {links.map(({ label, href }) => (
                 <FooterLink key={label} href={href}>
@@ -146,22 +146,22 @@ const Footer = ({ settings }) => {
               ))}
             </nav>
           ))}
-          <div className="col-span-2 flex flex-col gap-3 text-[15px] sm:col-span-3 lg:col-span-1">
+          <div className="col-span-2 flex flex-col gap-3 text-base sm:col-span-3 lg:col-span-1">
             <Heading>Contact</Heading>
-            {contact.hours && <span className="font-light text-white">{contact.hours}</span>}
+            {contact.hours && <span className="font-normal text-white">{contact.hours}</span>}
             {contact.phone && <FooterLink href={phoneHref}>{contact.phone}</FooterLink>}
             {contact.email && (
-              <a href={`mailto:${contact.email}`} className="w-fit break-all font-light text-white/55 transition-colors hover:text-accent">
+              <a href={`mailto:${contact.email}`} className="w-fit break-all font-normal text-white/50 transition-colors hover:text-accent">
                 {contact.email}
               </a>
             )}
-            {contact.address && <span className="font-light text-white/55">{contact.address}</span>}
+            {contact.address && <span className="font-normal text-white/50">{contact.address}</span>}
           </div>
         </div>
       </div>
 
       <div className="border-t border-white/5">
-        <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-3 px-6 py-6 text-sm text-white/35 sm:flex-row sm:items-center sm:justify-between sm:px-10 lg:px-16">
+        <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-3 px-6 py-6 text-sm text-white/50 sm:flex-row sm:items-center sm:justify-between sm:px-10 lg:px-16">
           <p>© {brand.name}. All rights reserved.</p>
           <div className="flex flex-wrap gap-x-5 gap-y-2">
             <Link href="/privacy-policy" className="hover:text-white">

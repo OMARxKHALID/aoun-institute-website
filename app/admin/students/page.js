@@ -1,16 +1,17 @@
 import { getAdminStudents } from "@/features/students/queries";
 import StudentTable from "@/features/students/components/student-table";
 import PanelHeader from "@/components/ui/panel-header";
+import { getUser, isAdmin } from "@/lib/dal";
 
 export const metadata = { title: "Students" };
 
 const AdminStudentsPage = async ({ searchParams }) => {
-  const [{ q = "" }, students] = await Promise.all([searchParams, getAdminStudents()]);
+  const [{ q = "" }, students, user] = await Promise.all([searchParams, getAdminStudents(), getUser()]);
   return (
     <>
       <PanelHeader title="Students" subtitle={`${students.length} ${students.length === 1 ? "student" : "students"}`} />
       <div className="p-4 sm:p-5 lg:p-8">
-        <StudentTable students={students} initialSearch={q} />
+        <StudentTable students={students} initialSearch={q} owner={isAdmin(user)} />
       </div>
     </>
   );

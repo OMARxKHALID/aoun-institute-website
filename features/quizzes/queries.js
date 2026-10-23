@@ -1,13 +1,15 @@
 import "server-only";
 import { Types, isValidObjectId } from "mongoose";
 import { connectDB, db } from "@/lib/db";
-import { requireAdmin, requireUser } from "@/lib/dal";
+import { requireStaff, requireUser } from "@/lib/dal";
+import { canTeach } from "@/features/courses/access";
 import Course from "@/features/courses/models/course";
 import Section from "@/features/courses/models/section";
 import Lesson from "@/features/courses/models/lesson";
 import Quiz from "@/features/quizzes/models/quiz";
 import Question from "@/features/quizzes/models/question";
 import QuizAttempt from "@/features/quizzes/models/quiz-attempt";
+import AttemptGrant from "@/features/quizzes/models/attempt-grant";
 import Enrollment from "@/features/enrollments/model";
 import { buildOutline } from "@/features/progress/service";
 import { findQuizState, gradeAttempt, isExpired } from "@/features/quizzes/service";
@@ -16,8 +18,8 @@ import { isAnswerCorrect } from "@/features/quizzes/grading";
 const plain = (value) => JSON.parse(JSON.stringify(value));
 
 export const getQuizForEdit = async (courseId, quizId) => {
-  await requireAdmin();
-  if (!isValidObjectId(courseId) || !isValidObjectId(quizId)) return null;
+  const user = await requireStaff();
+  if (!isValidObjectId(courseId) || !isValidObjectId(quizId) || !(await canTeach(user, courseId))) return null;
   await connectDB();
   const quiz = await Quiz.findOne({ _id: quizId, courseId }).lean();
   if (!quiz) return null;
@@ -50,7 +52,7 @@ export const getStudentQuiz = async (quizId) => {
     QuizAttempt.find({ userId: user.id, quizId }, "attemptNo status percent passed score maxScore startedAt submittedAt").sort({ attemptNo: -1 }).lean(),
   ]);
   return plain({
-    quiz: { id: String(quiz._id), title: quiz.title, description: quiz.description, passingPercent: quiz.passingPercent, maxAttempts: quiz.maxAttempts, timeLimitSec: quiz.timeLimitSec, questionCount },
+    quiz: { id: String(quiz._id), title: quiz.title, description: quiz.description, passingPercent: quiz.passingPercent, maxAttempts: state.maxAttempts, timeLimitSec: quiz.timeLimitSec, questionCount },
     course: { title: course.title, slug: course.slug },
     lesson: lesson ? { id: lesson.id, title: lesson.title } : null,
     state,
@@ -135,11 +137,11 @@ export const getStudentQuizzes = async () => {
 };
 
 export const getQuizResults = async (quizId) => {
-  await requireAdmin();
+  const user = await requireStaff();
   if (!isValidObjectId(quizId)) return null;
   await connectDB();
   const quiz = await Quiz.findById(quizId).lean();
-  if (!quiz) return null;
+  if (!quiz || !(await canTeach(user, quiz.courseId))) return null;
   const [course, questions, attempts] = await Promise.all([
     Course.findById(quiz.courseId, "title").lean(),
     Question.find({ quizId }).sort({ order: 1 }).lean(),
@@ -154,9 +156,16 @@ export const getQuizResults = async (quizId) => {
     return { id: String(q._id), number: i + 1, prompt: q.prompt, rate: attempts.length ? Math.round((right / attempts.length) * 100) : 0 };
   });
   const students = new Set(attempts.map((a) => a.userId)).size;
-  const passedStudents = new Set(attempts.filter((a) => a.passed).map((a) => a.userId)).size;
+  const passedIds = new Set(attempts.filter((a) => a.passed).map((a) => a.userId));
+  const passedStudents = passedIds.size;
+  const grants = quiz.maxAttempts ? await AttemptGrant.find({ quizId }, "userId extra").lean() : [];
+  const extraBy = new Map(grants.map((g) => [g.userId, g.extra]));
+  const countBy = Map.groupBy(attempts, (a) => a.userId);
+  const latestIds = new Set([...countBy.values()].map((list) => String(list[0]._id)));
+  const canGrant = (a) =>
+    Boolean(quiz.maxAttempts) && latestIds.has(String(a._id)) && byUser.has(a.userId) && !passedIds.has(a.userId) && countBy.get(a.userId).length >= quiz.maxAttempts + (extraBy.get(a.userId) ?? 0);
   return plain({
-    quiz: { id: String(quiz._id), title: quiz.title, courseId: String(quiz.courseId), passingPercent: quiz.passingPercent },
+    quiz: { id: String(quiz._id), title: quiz.title, courseId: String(quiz.courseId), passingPercent: quiz.passingPercent, maxAttempts: quiz.maxAttempts ?? null },
     course: { title: course?.title },
     stats: {
       attempts: attempts.length,
@@ -167,7 +176,8 @@ export const getQuizResults = async (quizId) => {
     perQuestion,
     rows: attempts.map((a) => ({
       id: String(a._id),
-      student: byUser.get(a.userId)?.name ?? "Deleted user",
+      userId: a.userId,
+      student: byUser.get(a.userId)?.name ?? "Former student",
       email: byUser.get(a.userId)?.email ?? "",
       attemptNo: a.attemptNo,
       score: `${a.score ?? 0}/${a.maxScore ?? 0}`,
@@ -176,6 +186,7 @@ export const getQuizResults = async (quizId) => {
       status: a.status,
       submittedAt: a.submittedAt,
       durationSec: a.submittedAt ? Math.round((new Date(a.submittedAt) - new Date(a.startedAt)) / 1000) : 0,
+      canGrant: canGrant(a),
     })),
   });
 };

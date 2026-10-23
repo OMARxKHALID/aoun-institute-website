@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { updateLesson } from "@/features/courses/actions";
-import { lessonFormSchema } from "@/features/courses/schemas";
+import { STATUS_OPTIONS, lessonFormSchema } from "@/features/courses/schemas";
 import Field from "@/components/ui/field";
 import Button from "@/components/ui/button";
 import Checkbox from "@/components/ui/checkbox";
@@ -45,7 +45,7 @@ const LessonForm = ({ lesson }) => {
         {saved && <FormAlert type="success">Lesson saved.</FormAlert>}
       </div>
       <Field label="Lesson title" error={errors.title?.message} {...register("title")} />
-      <Field label="Status" options={["draft", "published"]} error={errors.status?.message} {...register("status")} />
+      <Field label="Status" options={STATUS_OPTIONS} error={errors.status?.message} {...register("status")} />
       <Field label="Description" rows={4} className="md:col-span-2" error={errors.description?.message} {...register("description")} />
       <Field label="Duration (minutes, auto-filled for uploads)" type="number" min="0" step="1" error={errors.durationMin?.message ?? errors.durationSec?.message} {...register("durationMin", { valueAsNumber: true })} />
       <Checkbox label="Free preview" hint="Anyone can watch this lesson before buying." {...register("isFreePreview")} />

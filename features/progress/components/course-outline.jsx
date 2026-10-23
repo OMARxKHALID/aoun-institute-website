@@ -5,8 +5,8 @@ import { formatDuration } from "@/lib/format";
 const lessonIcon = {
   completed: { icon: CheckCircle2, tone: "text-green-400", label: "Completed" },
   in_progress: { icon: PlayCircle, tone: "text-accent", label: "In progress" },
-  available: { icon: Circle, tone: "text-white/35", label: "Not started" },
-  locked: { icon: Lock, tone: "text-white/25", label: "Locked" },
+  available: { icon: Circle, tone: "text-white/50", label: "Not started" },
+  locked: { icon: Lock, tone: "text-white/30", label: "Locked" },
 };
 
 const quizIcon = {
@@ -14,7 +14,7 @@ const quizIcon = {
   available: { tone: "text-accent", label: "Ready" },
   retry: { tone: "text-amber-300", label: "Try again" },
   failed: { tone: "text-red-400", label: "No attempts left" },
-  locked: { tone: "text-white/25", label: "Locked" },
+  locked: { tone: "text-white/30", label: "Locked" },
 };
 
 const QuizItem = ({ quiz, nested }) => {
@@ -31,7 +31,7 @@ const QuizItem = ({ quiz, nested }) => {
     </>
   );
   const className = `flex items-center gap-3 rounded-xl px-3 py-2 text-sm ${nested ? "ml-7" : ""}`;
-  if (quiz.status === "locked") return <li className={`${className} text-white/40`} title="Finish the lesson to unlock this quiz">{content}</li>;
+  if (quiz.status === "locked") return <li className={`${className} text-white/50`} title="Finish the lesson to unlock this quiz">{content}</li>;
   return (
     <li>
       <Link href={`/dashboard/quizzes/${quiz.id}`} className={`${className} bg-accent/[0.04] transition hover:bg-accent/10`}>
@@ -49,11 +49,11 @@ const CourseOutline = ({ slug, outline, currentId, compact }) => (
           <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent/15 font-machina text-sm text-accent">{sIndex + 1}</span>
           <span className="min-w-0 flex-1">
             <span className="block truncate font-medium">{section.title}</span>
-            <span className="block text-xs text-white/45">
+            <span className="block text-xs text-white/50">
               {section.lessons.filter((l) => l.status === "completed").length}/{section.lessons.length} completed
             </span>
           </span>
-          <span className="text-xl text-white/40 transition-transform group-open:rotate-45">+</span>
+          <span className="text-xl text-white/50 transition-transform group-open:rotate-45">+</span>
         </summary>
         <ol className="flex flex-col gap-1 px-2 pb-3">
           {section.lessons.map((lesson) => {
@@ -63,14 +63,14 @@ const CourseOutline = ({ slug, outline, currentId, compact }) => (
               <>
                 <state.icon className={`size-4 shrink-0 ${state.tone}`} aria-label={state.label} />
                 <span className="min-w-0 flex-1 truncate">{lesson.title}</span>
-                {lesson.durationSec > 0 && <span className="shrink-0 text-xs text-white/40">{formatDuration(lesson.durationSec)}</span>}
+                {lesson.durationSec > 0 && <span className="shrink-0 text-xs text-white/50">{formatDuration(lesson.durationSec)}</span>}
               </>
             );
-            const className = `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${current ? "bg-accent/15 text-white" : "text-white/75 hover:bg-white/5"}`;
+            const className = `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${current ? "bg-accent/15 text-white" : "text-white/70 hover:bg-white/5"}`;
             return (
               <li key={lesson.id} className="flex flex-col gap-1">
                 {lesson.status === "locked" ? (
-                  <span className={`${className} cursor-not-allowed text-white/35 hover:bg-transparent`} title="Finish the previous lesson to unlock">
+                  <span className={`${className} cursor-not-allowed text-white/50 hover:bg-transparent`} title="Finish the previous lesson to unlock">
                     {inner}
                   </span>
                 ) : (

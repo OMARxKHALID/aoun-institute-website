@@ -1,10 +1,12 @@
 import { getSiteSettings } from "@/features/site-settings/queries";
 import SettingsForm from "@/features/site-settings/components/settings-form";
 import PanelHeader from "@/components/ui/panel-header";
+import { requireAdmin } from "@/lib/dal";
 
 export const metadata = { title: "Site Settings" };
 
 const AdminSettingsPage = async () => {
+  await requireAdmin();
   const settings = await getSiteSettings();
   return (
     <>

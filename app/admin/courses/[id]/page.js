@@ -13,7 +13,7 @@ const EditCoursePage = async ({ params }) => {
     <>
       <PanelHeader back={{ href: "/admin/courses", label: "All courses" }} title={data.course.title} subtitle={data.course.subtitle} />
       <div className="p-4 sm:p-5 lg:p-8">
-        <CourseEditor course={data.course} outline={data.outline} students={data.students} />
+        <CourseEditor course={data.course} outline={data.outline} students={data.students} owner={data.owner} teachers={data.teachers} />
       </div>
     </>
   );

@@ -267,7 +267,7 @@ const enroll = ({ user, b, daysBack, completed, method = pick(METHODS), source, 
       updatedAt: enrolledAt,
     });
   }
-  docs.enrollments.push({ userId: user.id, courseId: b.course._id, status: "active", source: paid && source !== "manual" ? "order" : "manual", orderId: paid && source !== "manual" ? orderId : undefined, enrolledAt, createdAt: enrolledAt, updatedAt: enrolledAt });
+  docs.enrollments.push({ userId: user.id, courseId: b.course._id, status: "active", source: paid ? (source === "manual" ? "gift" : "order") : "free", orderId: paid && source !== "manual" ? orderId : undefined, enrolledAt, createdAt: enrolledAt, updatedAt: enrolledAt });
   docs.activityLogs.push({ userId: user.id, courseId: b.course._id, type: "enrolled", refId: orderId, createdAt: enrolledAt });
 
   const ordered = lessonsInOrder(b);
@@ -368,7 +368,7 @@ pendingOrder(students[21], byslug("ui-ux-design-with-figma"), 9, "JazzCash");
 pendingOrder(students[22], byslug("flutter-mobile-app-development"), 20, "Easypaisa");
 
 const failed = byslug("python-for-data-analysis");
-docs.orders.push({ _id: new ObjectId(), userId: students[23].id, courseId: failed.course._id, amount: failed.course.discountPrice, currency: "PKR", provider: "manual", method: "JazzCash", status: "FAILED", providerRef: "manual:TXN00000000", note: "Transaction ID not found in our JazzCash statement", reviewedBy: adminUser.id, createdAt: daysAgo(4), updatedAt: daysAgo(3) });
+docs.orders.push({ _id: new ObjectId(), userId: students[23].id, courseId: failed.course._id, amount: failed.course.discountPrice, currency: "PKR", provider: "manual", method: "JazzCash", status: "REJECTED", providerRef: "manual:TXN00000000", note: "Transaction ID not found in our JazzCash statement", reviewedBy: adminUser.id, createdAt: daysAgo(4), updatedAt: daysAgo(3) });
 
 const refunded = byslug("flutter-mobile-app-development");
 const refundOrderId = new ObjectId();
@@ -490,7 +490,7 @@ const log = (date, action, summary, targetType, targetId) => audits.push({ actor
 built.forEach((b) => log(b.course.createdAt, "course.create", `Created course "${b.course.title}"`, "course", b.course._id));
 published.forEach((b) => log(new Date(b.course.createdAt.getTime() + DAY), "course.publish_all", `Published all lessons in "${b.course.title}"`, "course", b.course._id));
 docs.orders.filter((o) => o.status === "PAID").slice(-25).forEach((o) => log(o.paidAt, "order.approve", `Approved payment of Rs ${o.amount.toLocaleString("en-PK")} from ${nameOf.get(o.userId)}`, "order", o._id));
-docs.orders.filter((o) => o.status === "FAILED").forEach((o) => log(o.updatedAt, "order.reject", `Rejected payment from ${nameOf.get(o.userId)}: ${o.note}`, "order", o._id));
+docs.orders.filter((o) => o.status === "REJECTED").forEach((o) => log(o.updatedAt, "order.reject", `Rejected payment from ${nameOf.get(o.userId)}: ${o.note}`, "order", o._id));
 docs.orders.filter((o) => o.status === "REFUNDED").forEach((o) => log(o.refundedAt, "order.refund", `Refunded Rs ${o.amount.toLocaleString("en-PK")} to ${nameOf.get(o.userId)}`, "order", o._id));
 ANNOUNCEMENTS.forEach(([slug, title], i) => log(daysAgo(i * 4 + 1), "announcement.create", `Posted "${title}" to ${byslug(slug).course.title}`, "announcement"));
 discussions.filter((d) => d.instructor).forEach((d) => log(d.createdAt, "discussion.answer", `Answered a question from ${discussions.find((x) => String(x._id) === String(d.parentId)).authorName}`, "course", d.courseId));

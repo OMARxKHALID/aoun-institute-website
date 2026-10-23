@@ -23,7 +23,7 @@ const filters = [
   { value: "hidden", label: "Hidden" },
 ];
 
-const ReviewTable = ({ reviews }) => {
+const ReviewTable = ({ reviews, owner }) => {
   const dialog = useDialog();
   const router = useRouter();
   const [filter, setFilter] = useState("all");
@@ -48,7 +48,7 @@ const ReviewTable = ({ reviews }) => {
       cell: ({ row }) => (
         <span>
           <span className="block font-medium">{row.original.studentName}</span>
-          <span className="block text-sm text-white/45">{row.original.course}</span>
+          <span className="block text-sm text-white/50">{row.original.course}</span>
         </span>
       ),
     }),
@@ -57,12 +57,12 @@ const ReviewTable = ({ reviews }) => {
       header: "Review",
       cell: ({ row }) => (
         <span className="block max-w-md text-sm">
-          <span className="line-clamp-3 text-white/70">{row.original.body || <span className="text-white/35">No text</span>}</span>
+          <span className="line-clamp-3 text-white/70">{row.original.body || <span className="text-white/50">No text</span>}</span>
           {row.original.reply && <span className="mt-1 block truncate text-xs text-accent">Replied: {row.original.reply}</span>}
         </span>
       ),
     }),
-    helper.accessor("createdAt", { header: "Date", sortingFn: "datetime", cell: ({ getValue }) => <span className="text-white/60">{formatDate(getValue())}</span> }),
+    helper.accessor("createdAt", { header: "Date", sortingFn: "datetime", cell: ({ getValue }) => <span className="text-white/70">{formatDate(getValue())}</span> }),
     helper.accessor("status", { header: "Status", cell: ({ getValue }) => <StatusPill status={getValue() === "hidden" ? "draft" : "published"} label={getValue()} /> }),
     helper.display({
       id: "actions",
@@ -74,9 +74,9 @@ const ReviewTable = ({ reviews }) => {
             label={`Actions for review by ${r.studentName}`}
             items={[
               { label: r.reply ? "Edit reply" : "Reply", icon: MessageSquareReply, onClick: () => handleReply(r) },
-              r.status === "published" ? { label: "Hide from course page", icon: EyeOff, onClick: () => run(() => setReviewStatus(r.id, "hidden")) } : { label: "Show on course page", icon: Eye, onClick: () => run(() => setReviewStatus(r.id, "published")) },
+              owner && (r.status === "published" ? { label: "Hide from course page", icon: EyeOff, onClick: () => run(() => setReviewStatus(r.id, "hidden")) } : { label: "Show on course page", icon: Eye, onClick: () => run(() => setReviewStatus(r.id, "published")) }),
               r.slug && { label: "View course page", icon: Eye, href: `/courses/${r.slug}#reviews`, external: true },
-              { label: "Delete", icon: Trash2, danger: true, onClick: async () => (await dialog.confirm({ title: "Delete this review?", message: `${r.rating}-star review by ${r.studentName}. This cannot be undone.`, confirmLabel: "Delete", danger: true })) && run(() => deleteReview(r.id)) },
+              owner && { label: "Delete", icon: Trash2, danger: true, onClick: async () => (await dialog.confirm({ title: "Delete this review?", message: `${r.rating}-star review by ${r.studentName}. This cannot be undone.`, confirmLabel: "Delete", danger: true })) && run(() => deleteReview(r.id)) },
             ]}
           />
         );

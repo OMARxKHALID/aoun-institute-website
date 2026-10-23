@@ -1,12 +1,13 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowUpRight, House, ChevronLeft, Menu, X } from "lucide-react";
 import SignOutButton from "@/features/auth/components/sign-out-button";
 import { railLabel } from "@/lib/ui";
 import { navs } from "@/lib/nav";
+import { authClient } from "@/lib/auth-client";
 
 const STORAGE_KEY = "panel-sidebar-collapsed";
 
@@ -24,14 +25,13 @@ const writeCollapsed = (value) => {
   } catch {}
 };
 
-const NavList = ({ groups, activeHref, collapsed }) => {
-  const root = groups[0].items[0].href;
+const NavList = ({ groups, root, activeHref, collapsed, onNavigate }) => {
   const isActive = (href) => activeHref != null && (href === root ? activeHref === root : activeHref === href || activeHref.startsWith(`${href}/`));
   return (
     <nav className="flex w-full flex-col gap-3 short:gap-1.5">
       {groups.map((group) => (
         <div key={group.label} className="flex flex-col gap-0.5">
-          <p className={`relative h-5 whitespace-nowrap px-[17px] text-[10px] short:h-3 short:text-transparent font-medium uppercase tracking-[0.14em] text-white/35 transition-opacity duration-300 ${collapsed ? "lg:text-transparent" : ""}`}>
+          <p className={`relative h-5 whitespace-nowrap px-[17px] text-xs short:h-3 short:text-transparent font-medium uppercase tracking-[0.14em] text-white/50 transition-opacity duration-300 ${collapsed ? "lg:text-transparent" : ""}`}>
             {group.label}
             <span aria-hidden="true" className={`absolute inset-x-4 top-1/2 hidden h-px bg-white/10 short:block ${collapsed ? "lg:block" : ""}`} />
           </p>
@@ -44,8 +44,9 @@ const NavList = ({ groups, activeHref, collapsed }) => {
                 title={collapsed ? label : undefined}
                 aria-label={label}
                 aria-current={active ? "page" : undefined}
-                className={`flex items-center rounded-full px-[17px] py-2 text-[15px] transition-colors short:py-1.5 tiny:py-1 tiny:text-sm ${
-                  active ? "bg-linear-to-b from-[#E8602E] to-[#A8401A] font-medium text-white shadow-[0_0_24px_rgba(232,96,46,0.35)]" : "text-white/65 hover:bg-white/5 hover:text-white"
+                onClick={onNavigate}
+                className={`flex items-center rounded-full px-[17px] py-2 text-sm transition-colors short:py-1.5 tiny:py-1 tiny:text-sm ${
+                  active ? "bg-linear-to-b from-[#E8602E] to-[#A8401A] font-medium text-white shadow-[0_0_24px_rgba(232,96,46,0.35)]" : "text-white/70 hover:bg-white/5 hover:text-white"
                 }`}
               >
                 <Icon className="size-5 shrink-0 tiny:size-[18px]" />
@@ -59,16 +60,8 @@ const NavList = ({ groups, activeHref, collapsed }) => {
   );
 };
 
-const ActiveNavList = ({ onNavigate, ...props }) => {
+const ActiveNavList = (props) => {
   const pathname = usePathname();
-  const lastPath = useRef(pathname);
-
-  useEffect(() => {
-    if (lastPath.current === pathname) return;
-    lastPath.current = pathname;
-    onNavigate();
-  }, [pathname, onNavigate]);
-
   return <NavList {...props} activeHref={pathname} />;
 };
 
@@ -76,8 +69,12 @@ const PanelNav = ({ panel, brand }) => {
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [ready, setReady] = useState(false);
-  const { groups, promo } = navs[panel];
-  const root = groups[0].items[0].href;
+  const { data: session } = authClient.useSession();
+  const teacher = session?.user?.role === "TEACHER";
+  const root = navs[panel].groups[0].items[0].href;
+  const { promo } = navs[panel];
+  const groups = navs[panel].groups.map((g) => ({ ...g, items: g.items.filter((item) => !(teacher && item.owner)) })).filter((g) => g.items.length);
+  const badge = panel === "student" ? "Student" : teacher ? "Teacher" : "Admin";
 
   useEffect(() => {
     setCollapsed(readCollapsed());
@@ -88,16 +85,21 @@ const PanelNav = ({ panel, brand }) => {
   useEffect(() => {
     if (!open) return;
     const handleKey = (e) => e.key === "Escape" && setOpen(false);
+    const desktop = window.matchMedia("(min-width: 64rem)");
+    const handleResize = (e) => e.matches && setOpen(false);
+    if (desktop.matches) return setOpen(false);
     document.addEventListener("keydown", handleKey);
+    desktop.addEventListener("change", handleResize);
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", handleKey);
+      desktop.removeEventListener("change", handleResize);
       document.body.style.overflow = "";
     };
   }, [open]);
 
   const handleOpen = () => setOpen(true);
-  const handleClose = useCallback(() => setOpen(false), []);
+  const handleClose = () => setOpen(false);
   const handleCollapse = () =>
     setCollapsed((v) => {
       writeCollapsed(!v);
@@ -130,38 +132,42 @@ const PanelNav = ({ panel, brand }) => {
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         aria-expanded={!collapsed}
         title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        className="absolute -right-3 top-9 z-10 hidden size-7 place-items-center rounded-full border border-[#302C2A] bg-[#0C0C0C] text-white/60 shadow-lg transition hover:border-accent hover:text-accent lg:grid"
+        className="absolute -right-3 top-9 z-10 hidden size-7 place-items-center rounded-full border border-[#302C2A] bg-[#0C0C0C] text-white/70 shadow-lg transition hover:border-accent hover:text-accent lg:grid"
       >
         <ChevronLeft className={`size-4 transition-transform duration-300 ${collapsed ? "rotate-180" : ""}`} />
       </button>
 
       <aside
         id="panel-sidebar"
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col gap-5 overflow-x-hidden overflow-y-auto short:gap-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden border-r border-white/5 bg-[#0C0C0C] p-5 transition-transform duration-300 lg:static lg:z-auto lg:h-full lg:w-auto lg:max-w-none lg:translate-x-0 lg:rounded-3xl lg:border lg:px-3 lg:py-6 short:lg:py-4 tiny:lg:py-3 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col gap-5 overflow-hidden short:gap-3 border-r border-white/5 bg-[#0C0C0C] p-5 transition-transform duration-300 lg:static lg:z-auto lg:h-full lg:w-auto lg:max-w-none lg:translate-x-0 lg:rounded-3xl lg:border lg:px-3 lg:py-6 short:lg:py-4 tiny:lg:py-3 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-3">
           <Link href="/" aria-label={brand.name} className="flex min-w-0 flex-1 items-center lg:pl-[7px]">
             <span className="grid size-10 shrink-0 place-items-center rounded-full bg-white font-machina text-xl font-bold text-black">{brand.name?.[0]}</span>
             <span className={`truncate font-machina text-2xl leading-none ${railLabel(collapsed)}`}>{brand.shortName || brand.name}</span>
-            {panel === "admin" && (
-              <span className={`ml-auto shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-xs uppercase tracking-wider text-accent ${collapsed ? "lg:hidden" : ""}`}>Admin</span>
-            )}
+            <span
+              className={`ml-auto max-w-24 shrink-0 overflow-hidden whitespace-nowrap rounded-full bg-accent/15 px-2 py-0.5 text-xs uppercase tracking-wider text-accent opacity-100 transition-[max-width,opacity,padding] duration-300 ease-out ${collapsed ? "lg:max-w-0 lg:px-0 lg:opacity-0" : ""}`}
+            >
+              {badge}
+            </span>
           </Link>
-          <button type="button" onClick={handleClose} aria-label="Close navigation" className="rounded-xl p-2 text-white/60 hover:bg-white/5 hover:text-white lg:hidden">
+          <button type="button" onClick={handleClose} aria-label="Close navigation" className="rounded-xl p-2 text-white/70 hover:bg-white/5 hover:text-white lg:hidden">
             <X className="size-5" />
           </button>
         </div>
 
-        <Suspense fallback={<NavList groups={groups} activeHref={null} collapsed={collapsed} />}>
-          <ActiveNavList groups={groups} collapsed={collapsed} onNavigate={handleClose} />
-        </Suspense>
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <Suspense fallback={<NavList groups={groups} root={root} activeHref={null} collapsed={collapsed} onNavigate={handleClose} />}>
+            <ActiveNavList groups={groups} root={root} collapsed={collapsed} onNavigate={handleClose} />
+          </Suspense>
+        </div>
 
-        <div className="mt-auto flex w-full flex-col gap-3">
-          <div className={`grid grid-rows-[1fr] opacity-100 transition-[grid-template-rows,opacity] duration-300 ease-out [@media(max-height:960px)]:hidden ${collapsed ? "lg:pointer-events-none lg:grid-rows-[0fr] lg:opacity-0" : ""}`}>
+        <div className="flex w-full shrink-0 flex-col gap-3 border-t border-white/5 pt-3 short:pt-2">
+          <div className={`grid grid-rows-[1fr] opacity-100 transition-[grid-template-rows,opacity] duration-300 ease-out [@media(max-height:1060px)]:hidden ${collapsed ? "lg:pointer-events-none lg:grid-rows-[0fr] lg:opacity-0" : ""}`}>
             <div className="min-h-0 overflow-hidden">
-              <Link href={promo.href} tabIndex={collapsed ? -1 : undefined} className="group relative block w-[246px] max-w-full overflow-hidden rounded-2xl bg-[#FFF3EF] p-5 text-black lg:w-[262px]">
+              <Link href={promo.href} tabIndex={collapsed ? -1 : undefined} onClick={handleClose} className="group relative block w-[246px] max-w-full overflow-hidden rounded-2xl bg-[#FFF3EF] p-5 text-black lg:w-[262px]">
                 <span className="absolute right-4 top-4 grid size-9 place-items-center rounded-full bg-black text-white transition-transform group-hover:rotate-45">
                   <ArrowUpRight className="size-4" />
                 </span>

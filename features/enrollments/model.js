@@ -5,7 +5,7 @@ const enrollmentSchema = new Schema(
     userId: { type: String, required: true },
     courseId: { type: Schema.Types.ObjectId, ref: "Course", required: true },
     status: { type: String, enum: ["active", "revoked"], default: "active" },
-    source: { type: String, enum: ["order", "manual"], required: true },
+    source: { type: String, enum: ["order", "free", "gift"], required: true },
     orderId: { type: Schema.Types.ObjectId, ref: "Order" },
     enrolledAt: { type: Date, default: Date.now },
   },

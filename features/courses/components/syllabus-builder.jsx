@@ -87,7 +87,7 @@ const Stat = ({ icon: Icon, label, value, tone = "text-accent" }) => (
     <Icon className={`size-5 shrink-0 ${tone}`} />
     <div className="min-w-0">
       <p className="text-lg font-semibold leading-tight">{value}</p>
-      <p className="truncate text-xs text-white/45">{label}</p>
+      <p className="truncate text-xs text-white/50">{label}</p>
     </div>
   </div>
 );
@@ -112,11 +112,11 @@ const QuizRow = ({ courseId, quiz, label, nested }) => (
   >
     <FileQuestion className="size-4 shrink-0 text-accent" />
     <span className="min-w-0 flex-1 truncate">
-      <span className="text-white/45">{label}: </span>
+      <span className="text-white/50">{label}: </span>
       {quiz.title}
     </span>
     <StatusPill status={quiz.status} />
-    <Pencil className="size-3.5 shrink-0 text-white/40" />
+    <Pencil className="size-3.5 shrink-0 text-white/50" />
   </Link>
 );
 
@@ -287,7 +287,7 @@ const SyllabusBuilder = ({ courseId, outline }) => {
                 <form onSubmit={handleRename(section.id)} className="flex min-w-0 flex-1 flex-wrap gap-2">
                   <input name="title" defaultValue={section.title} autoFocus aria-label="Section title" className="min-w-0 flex-1 basis-40 rounded-lg border border-accent bg-[#070707] px-3 py-1.5 outline-hidden" />
                   <button className="rounded-lg bg-accent px-3 py-1.5 text-sm">Save</button>
-                  <button type="button" onClick={() => setRenaming(null)} className="rounded-lg px-3 py-1.5 text-sm text-white/60 hover:bg-white/5">
+                  <button type="button" onClick={() => setRenaming(null)} className="rounded-lg px-3 py-1.5 text-sm text-white/70 hover:bg-white/5">
                     Cancel
                   </button>
                 </form>
@@ -296,12 +296,12 @@ const SyllabusBuilder = ({ courseId, outline }) => {
                   <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent/15 font-machina text-accent">{sIndex + 1}</span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-machina text-lg sm:text-xl">{section.title}</span>
-                    <span className="block text-xs text-white/45">
+                    <span className="block text-xs text-white/50">
                       {plural(section.lessons.length, "lesson")}{sectionDuration > 0 && ` · ${formatDuration(sectionDuration)}`}
                       {section.quizzes.length > 0 && ` · ${section.quizzes.length} quiz`}
                     </span>
                   </span>
-                  <ChevronDown className={`size-5 shrink-0 text-white/40 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`size-5 shrink-0 text-white/50 transition-transform ${isOpen ? "rotate-180" : ""}`} />
                 </button>
               )}
               <ActionMenu
@@ -335,13 +335,13 @@ const SyllabusBuilder = ({ courseId, outline }) => {
                           className={`flex items-center gap-1.5 rounded-2xl border bg-[#070707] p-2 pl-1 transition-[border-color,box-shadow] duration-200 sm:gap-2 ${raised ? "border-accent/60 shadow-[0_18px_40px_rgba(0,0,0,0.6)]" : "border-white/5 hover:border-white/15"}`}
                         >
                           <Grip label={`Drag lesson ${lesson.title}`} onPointerDown={start("lesson", lesson.id)} />
-                          <span className="w-7 shrink-0 text-xs tabular-nums text-white/35 sm:w-8">
+                          <span className="w-7 shrink-0 text-xs tabular-nums text-white/50 sm:w-8">
                             {sIndex + 1}.{lIndex + 1}
                           </span>
                           <video.icon className={`size-4 shrink-0 ${video.tone}`} aria-label={video.label} />
                           <Link href={lessonHref} className="min-w-0 flex-1 py-1 hover:text-accent">
                             <span className="block truncate">{lesson.title}</span>
-                            <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-white/45">
+                            <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-white/50">
                               <StatusPill status={lesson.status} />
                               {lesson.isFreePreview && (
                                 <span className="flex items-center gap-1 text-accent">
@@ -352,7 +352,7 @@ const SyllabusBuilder = ({ courseId, outline }) => {
                               {!lesson.video?.provider && <span className="text-amber-300/80">Add video</span>}
                             </span>
                           </Link>
-                          <Link href={lessonHref} aria-label={`Edit ${lesson.title}`} title="Edit lesson and video" className="hidden size-9 shrink-0 place-items-center rounded-full text-white/60 transition hover:bg-white/5 hover:text-white sm:grid">
+                          <Link href={lessonHref} aria-label={`Edit ${lesson.title}`} title="Edit lesson and video" className="hidden size-9 shrink-0 place-items-center rounded-full text-white/70 transition hover:bg-white/5 hover:text-white sm:grid">
                             <Pencil className="size-4" />
                           </Link>
                           <ActionMenu
@@ -386,7 +386,7 @@ const SyllabusBuilder = ({ courseId, outline }) => {
                   <QuizRow key={quiz.id} courseId={courseId} quiz={quiz} label="Section quiz" />
                 ))}
                 {otherLessons.length === 0 && section.quizzes.length === 0 && (
-                  <p className={`flex flex-col items-center gap-2 rounded-2xl border border-dashed px-4 py-6 text-center text-sm transition-colors ${isDropTarget ? "border-accent/60 text-accent" : "border-white/10 text-white/40"}`}>
+                  <p className={`flex flex-col items-center gap-2 rounded-2xl border border-dashed px-4 py-6 text-center text-sm transition-colors ${isDropTarget ? "border-accent/60 text-accent" : "border-white/10 text-white/50"}`}>
                     <CircleDashed className="size-5" /> Drop lessons here or add the first one below.
                   </p>
                 )}

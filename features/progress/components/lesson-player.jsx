@@ -23,7 +23,7 @@ export const CompleteButton = ({ lessonId, completed }) => {
 
   if (completed)
     return (
-      <span className="flex items-center gap-2 rounded-full bg-green-500/10 px-4 py-2 text-sm text-green-300">
+      <span className="flex items-center gap-2 rounded-full bg-green-500/10 px-4 py-2 text-sm text-green-400">
         <CheckCircle2 className="size-4" /> Completed
       </span>
     );
