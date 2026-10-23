@@ -15,6 +15,7 @@ import { getSiteSettings } from "@/features/site-settings/queries";
 import { cardSchema, checkoutSchema, rejectSchema } from "@/features/payments/schemas";
 import { chargeDemoCard, demoPaymentsEnabled } from "@/features/payments/providers/demo-card";
 import { audit } from "@/features/audit/service";
+import { claimCoupon, priceWithCoupon, releaseCoupon } from "@/features/coupons/pricing";
 import { SITE_URL } from "@/lib/site";
 
 const loadPublishedCourse = async (courseId) => {
@@ -29,7 +30,14 @@ const findUser = (userId) => db.collection("user").findOne({ _id: new Types.Obje
 
 const notify = (task) => task.catch((error) => console.error("[payments] email failed", error));
 
-export const createManualOrder = async (courseId, input) => {
+const cancelPending = async (userId, courseId, note) => {
+  const pending = await Order.find({ userId, courseId, status: "PENDING" }, "coupon").lean();
+  if (!pending.length) return;
+  await Order.updateMany({ _id: { $in: pending.map((o) => o._id) } }, { $set: { status: "CANCELLED", note } });
+  await Promise.all(pending.filter((o) => o.coupon?.code).map((o) => releaseCoupon({ code: o.coupon.code })));
+};
+
+export const createManualOrder = async (courseId, input, couponCode) => {
   const user = await requireUser();
   if (!(await rateLimit("payment", user.id))) return fail("Too many payment submissions. Try again in a few minutes.");
   const result = parse(checkoutSchema, input);
@@ -39,6 +47,9 @@ export const createManualOrder = async (courseId, input) => {
   if (amountOf(course) === 0) return fail("This course is free. Use the enroll button.");
   if (await Enrollment.exists({ userId: user.id, courseId, status: "active" })) return fail("You are already enrolled in this course");
   if (await Order.exists({ userId: user.id, courseId, status: "PENDING" })) return fail("Your payment for this course is already under review");
+  const priced = await priceWithCoupon(course, couponCode);
+  if (priced.error) return fail(priced.error);
+  if (priced.amount === 0) return fail("This code makes the course free. Use the enroll button.");
   const { receipt, ...data } = result.data;
   let stored;
   if (receipt) {
@@ -47,13 +58,17 @@ export const createManualOrder = async (courseId, input) => {
     if (!check.ok) return fail(check.error, "receipt");
     stored = { publicId: check.asset.publicId, format: check.asset.format };
   }
-  const fields = { amount: amountOf(course), currency: course.currency, method: data.method, receipt: stored, note: data.note || undefined };
+  const fields = { amount: priced.amount, currency: course.currency, method: data.method, receipt: stored, note: data.note || undefined, coupon: priced.applied };
   const providerRef = `manual:${data.reference}`;
-  const reopened = await Order.findOneAndUpdate({ userId: user.id, courseId, providerRef, status: "REJECTED" }, { $set: { ...fields, status: "PENDING" }, $unset: { reviewedBy: 1 } });
+  if (priced.coupon && !(await claimCoupon(priced.coupon._id))) return fail("This code has just been used up");
+  const reopened = await Order.findOneAndUpdate({ userId: user.id, courseId, providerRef, status: "REJECTED" }, { $set: { ...fields, status: "PENDING" }, $unset: { reviewedBy: 1, ...(!priced.applied && { coupon: 1 }) } });
   const order =
     reopened ??
     (await Order.create({ ...fields, userId: user.id, courseId, provider: "manual", providerRef }).catch((error) => (error?.code === 11000 ? null : Promise.reject(error))));
-  if (!order) return fail("This transaction ID was already submitted", "reference");
+  if (!order) {
+    if (priced.coupon) await releaseCoupon({ _id: priced.coupon._id });
+    return fail("This transaction ID was already submitted", "reference");
+  }
   const { contact } = await getSiteSettings();
   if (contact?.email)
     await notify(
@@ -66,7 +81,7 @@ export const createManualOrder = async (courseId, input) => {
   return { ok: true };
 };
 
-export const payWithDemoCard = async (courseId, input) => {
+export const payWithDemoCard = async (courseId, input, couponCode) => {
   const user = await requireUser();
   if (!demoPaymentsEnabled()) return fail("Card payments are not available");
   if (!(await rateLimit("payment", user.id))) return fail("Too many payment attempts. Try again in a few minutes.");
@@ -76,17 +91,24 @@ export const payWithDemoCard = async (courseId, input) => {
   if (!course) return fail("This course is not available");
   if (amountOf(course) === 0) return fail("This course is free. Use the enroll button.");
   if (await Enrollment.exists({ userId: user.id, courseId, status: "active" })) return fail("You are already enrolled in this course");
+  const priced = await priceWithCoupon(course, couponCode);
+  if (priced.error) return fail(priced.error);
+  if (priced.amount === 0) return fail("This code makes the course free. Use the enroll button.");
+  if (priced.coupon && !(await claimCoupon(priced.coupon._id))) return fail("This code has just been used up");
   const charge = await chargeDemoCard(result.data);
-  if (!charge.ok) return fail(charge.error, charge.field);
+  if (!charge.ok) {
+    if (priced.coupon) await releaseCoupon({ _id: priced.coupon._id });
+    return fail(charge.error, charge.field);
+  }
   const paidAt = new Date();
-  const order = await Order.create({ userId: user.id, courseId, amount: amountOf(course), currency: course.currency, provider: "demo_card", method: `Card •••• ${charge.last4}`, providerRef: charge.ref, status: "PAID", paidAt });
-  await Order.updateMany({ userId: user.id, courseId, status: "PENDING" }, { $set: { status: "CANCELLED", note: "Paid by card instead" } });
+  const order = await Order.create({ userId: user.id, courseId, amount: priced.amount, currency: course.currency, provider: "demo_card", method: `Card •••• ${charge.last4}`, providerRef: charge.ref, status: "PAID", paidAt, coupon: priced.applied });
+  await cancelPending(user.id, courseId, "Paid by card instead");
   await grantEnrollment({ userId: user.id, courseId, source: "order", orderId: order._id });
   await notify(
     sendEmail({
       to: user.email,
       subject: `You're enrolled in ${course.title}`,
-      html: linkEmail({ title: "Payment received", text: `We charged ${course.currency} ${amountOf(course)} to your card ending ${charge.last4}. You now have lifetime access to ${course.title}.`, url: `${SITE_URL}/dashboard/courses/${course.slug}`, cta: "Start learning" }),
+      html: linkEmail({ title: "Payment received", text: `We charged ${course.currency} ${priced.amount} to your card ending ${charge.last4}. You now have lifetime access to ${course.title}.`, url: `${SITE_URL}/dashboard/courses/${course.slug}`, cta: "Start learning" }),
     }),
   );
   return { ok: true, data: { slug: course.slug } };
@@ -99,6 +121,22 @@ export const enrollFree = async (courseId) => {
   if (amountOf(course) !== 0) return fail("This course is not free");
   await grantEnrollment({ userId: user.id, courseId, source: "free" });
   return { ok: true };
+};
+
+export const enrollWithCoupon = async (courseId, couponCode) => {
+  const user = await requireUser();
+  if (!(await rateLimit("payment", user.id))) return fail("Too many attempts. Try again in a few minutes.");
+  const course = await loadPublishedCourse(courseId);
+  if (!course) return fail("This course is not available");
+  if (await Enrollment.exists({ userId: user.id, courseId, status: "active" })) return fail("You are already enrolled in this course");
+  const priced = await priceWithCoupon(course, couponCode);
+  if (priced.error) return fail(priced.error);
+  if (priced.amount !== 0) return fail("This code does not make the course free");
+  if (!(await claimCoupon(priced.coupon._id))) return fail("This code has just been used up");
+  const order = await Order.create({ userId: user.id, courseId, amount: 0, currency: course.currency, provider: "coupon", method: `Coupon ${priced.applied.code}`, status: "PAID", paidAt: new Date(), coupon: priced.applied });
+  await cancelPending(user.id, courseId, "Enrolled with a coupon instead");
+  await grantEnrollment({ userId: user.id, courseId, source: "order", orderId: order._id });
+  return { ok: true, data: { slug: course.slug } };
 };
 
 const loadPendingOrder = async (orderId) => {
@@ -133,7 +171,9 @@ export const rejectOrder = async (orderId, input) => {
   if (!result.ok) return result;
   const order = await loadPendingOrder(orderId);
   if (!order) return fail("This order was already reviewed");
-  await Order.updateOne({ _id: order._id, status: "PENDING" }, { $set: { status: "REJECTED", reviewedBy: admin.id, note: result.data.note } });
+  const updated = await Order.updateOne({ _id: order._id, status: "PENDING" }, { $set: { status: "REJECTED", reviewedBy: admin.id, note: result.data.note } });
+  if (!updated.modifiedCount) return fail("This order was already reviewed");
+  if (order.coupon?.code) await releaseCoupon({ code: order.coupon.code });
   const student = await findUser(order.userId);
   if (student?.email)
     await notify(

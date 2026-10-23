@@ -10,12 +10,12 @@ import Field from "@/components/ui/field";
 import Button from "@/components/ui/button";
 import FormAlert from "@/components/ui/form-alert";
 import ImageUpload from "@/components/ui/image-upload";
+import { numberOrNull } from "@/lib/validate";
 
 const blank = { title: "", slug: "", subtitle: "", description: "", category: "", level: "Beginner", price: 0, discountPrice: null, status: "draft", thumbnail: null };
 
 const pick = (course) => Object.fromEntries(Object.keys(blank).map((key) => [key, course?.[key] ?? blank[key]]));
 
-const numberOrNull = (value) => (value === "" || Number.isNaN(Number(value)) ? null : Number(value));
 
 const CourseDetailsForm = ({ course, owner = true }) => {
   const router = useRouter();

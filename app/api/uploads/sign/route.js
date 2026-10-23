@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUser, isStaff } from "@/lib/dal";
+import { getUser, isAdmin, isStaff } from "@/lib/dal";
 import { signParams } from "@/lib/cloudinary";
 import { rateLimit } from "@/lib/rate-limit";
 import { UPLOAD_RULES } from "@/lib/upload-rules";
@@ -11,7 +11,7 @@ export const POST = async (request) => {
   const kind = request.nextUrl.searchParams.get("kind");
   const rule = UPLOAD_RULES[kind];
   if (!rule) return NextResponse.json({ error: "Unknown upload type" }, { status: 400 });
-  if (rule.admin && !isStaff(user)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if ((rule.admin && !isStaff(user)) || (rule.owner && !isAdmin(user))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const { paramsToSign } = await request.json().catch(() => ({}));
   const signature = signParams(kind, paramsToSign);
   if (!signature) return NextResponse.json({ error: "Invalid upload parameters" }, { status: 400 });

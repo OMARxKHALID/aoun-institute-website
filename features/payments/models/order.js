@@ -11,6 +11,7 @@ const orderSchema = new Schema(
     status: { type: String, enum: ["PENDING", "PAID", "REJECTED", "CANCELLED", "REFUNDED"], default: "PENDING" },
     providerRef: String,
     receipt: { publicId: String, format: String },
+    coupon: { code: String, discount: Number },
     note: String,
     reviewedBy: String,
     paidAt: Date,

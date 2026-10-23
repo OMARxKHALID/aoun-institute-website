@@ -16,6 +16,7 @@ import TabList from "@/components/ui/tab-list";
 import { useDialog } from "@/components/ui/dialog-provider";
 import { inputClass, labelClass } from "@/lib/ui";
 import { plural } from "@/lib/format";
+import { numberOrNull } from "@/lib/validate";
 
 const firstError = (result) => Object.values(result.errors ?? {}).flat()[0] ?? "Something went wrong";
 
@@ -41,7 +42,7 @@ const SettingsForm = ({ quiz }) => {
     },
   });
   const { errors, isSubmitting } = formState;
-  const optionalNumber = { setValueAs: (v) => (v === "" || v == null ? null : Number(v)) };
+  const optionalNumber = { setValueAs: numberOrNull };
 
   const handleSave = async (values) => {
     setSaved(false);

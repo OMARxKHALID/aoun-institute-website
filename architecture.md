@@ -82,7 +82,8 @@ Better Auth owns `user`, `session`, `account`, `verification`, `rateLimit`; `use
 | quizzes | courseId, sectionId?, lessonId?, title, order, passingPercent, maxAttempts, timeLimitSec, shuffleQuestions, shuffleOptions, showAnswers, displayMode, requiredForCertificate, dueAt, status | courseId; sectionId+order |
 | questions | quizId, type (single/multiple/true_false; short_answer later via acceptedAnswers), prompt, options[{text,isCorrect}], points, explanation, order | quizId+order |
 | enrollments | userId, courseId, status active/revoked, source order/free/gift, orderId, enrolledAt | userId+courseId unique |
-| orders | userId, courseId, amount, currency, provider, status PENDING/PAID/REJECTED/CANCELLED/REFUNDED, providerRef, receipt, reviewedBy, paidAt, refundedAt | userId+createdAt; status+createdAt; providerRef unique sparse |
+| orders | userId, courseId, amount, currency, provider, status PENDING/PAID/REJECTED/CANCELLED/REFUNDED, providerRef, receipt, coupon{code,discount}, reviewedBy, paidAt, refundedAt | userId+createdAt; status+createdAt; providerRef unique sparse |
+| coupons | code, kind percent/fixed, value, courseId?, expiresOn, maxUses, uses, active | code unique |
 | paymentEvents | provider, eventId, orderId, processedAt | provider+eventId unique |
 | lessonProgress | userId, courseId, lessonId, watchedSeconds, lastPosition, percent, completedAt | userId+lessonId unique; userId+courseId |
 | quizAttempts | userId, quizId, courseId, attemptNo, questionOrder[], optionOrder, answers[], startedAt, expiresAt, submittedAt, score, maxScore, percent, passed, status | userId+quizId+attemptNo unique; quizId |

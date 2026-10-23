@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CreditCard, Landmark, Lock } from "lucide-react";
-import { createManualOrder, enrollFree, payWithDemoCard } from "@/features/payments/actions";
+import { createManualOrder, enrollFree, enrollWithCoupon, payWithDemoCard } from "@/features/payments/actions";
 import { cardSchema, checkoutSchema } from "@/features/payments/schemas";
 import TabList from "@/components/ui/tab-list";
 import Field from "@/components/ui/field";
 import Button from "@/components/ui/button";
 import FormAlert from "@/components/ui/form-alert";
 import ImageUpload from "@/components/ui/image-upload";
+import CouponBox from "@/features/coupons/components/coupon-box";
 
 const BANK = "Bank transfer";
 
@@ -46,7 +47,7 @@ export const FreeEnrollButton = ({ courseId }) => {
   );
 };
 
-const ManualForm = ({ courseId, payment }) => {
+const ManualForm = ({ courseId, payment, couponCode, amount }) => {
   const router = useRouter();
   const bank = payment.bank ?? {};
   const methods = [...(bank.accountNumber || bank.iban ? [BANK] : []), ...payment.wallets.map((w) => w.name)];
@@ -59,7 +60,7 @@ const ManualForm = ({ courseId, payment }) => {
   const wallet = payment.wallets.find((w) => w.name === method);
 
   const handleSave = async (values) => {
-    const result = await createManualOrder(courseId, values);
+    const result = await createManualOrder(courseId, values, couponCode);
     if (!result.ok) return Object.entries(result.errors).forEach(([field, messages]) => setError(field, { message: messages[0] }));
     router.refresh();
   };
@@ -83,7 +84,9 @@ const ManualForm = ({ courseId, payment }) => {
       </div>
 
       <div className="flex flex-col gap-2">
-        <p className="text-base text-white/70">2. Send the exact amount to</p>
+        <p className="text-base text-white/70">
+          2. Send exactly <span className="font-medium text-white">{amount}</span> to
+        </p>
         <dl className="divide-y divide-white/5 rounded-2xl border border-[#302C2A] bg-[#0C0C0C] px-5 py-2">
           {method === BANK ? (
             <>
@@ -131,7 +134,7 @@ const formatExpiry = (value) => {
   return digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
 };
 
-const CardForm = ({ courseId, amount }) => {
+const CardForm = ({ courseId, amount, couponCode }) => {
   const router = useRouter();
   const { register, handleSubmit, setError, setValue, formState } = useForm({
     resolver: zodResolver(cardSchema),
@@ -142,7 +145,7 @@ const CardForm = ({ courseId, amount }) => {
   const handleTestCard = () => Object.entries(TEST_CARD).forEach(([key, value]) => setValue(key, value, { shouldValidate: true }));
 
   const handlePay = async (values) => {
-    const result = await payWithDemoCard(courseId, values);
+    const result = await payWithDemoCard(courseId, values, couponCode);
     if (!result.ok) return Object.entries(result.errors).forEach(([field, messages]) => setError(field, { message: messages[0] }));
     router.push(`/dashboard/courses/${result.data.slug}`);
   };
@@ -171,11 +174,52 @@ const CardForm = ({ courseId, amount }) => {
   );
 };
 
+const CouponEnroll = ({ courseId, coupon }) => {
+  const router = useRouter();
+  const [error, setError] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  const handleEnroll = async () => {
+    setBusy(true);
+    const result = await enrollWithCoupon(courseId, coupon.code);
+    setBusy(false);
+    if (!result.ok) return setError(Object.values(result.errors).flat()[0]);
+    router.push(`/dashboard/courses/${result.data.slug}`);
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-white/70">Your code covers the full price.</p>
+      <FormAlert>{error}</FormAlert>
+      <Button size="lg" type="button" loading={busy} onClick={handleEnroll} className="self-start">
+        Enroll for free
+      </Button>
+    </div>
+  );
+};
+
 const CheckoutForm = ({ courseId, payment, demoCard, amount }) => {
   const [tab, setTab] = useState(demoCard ? "card" : "manual");
-  if (!demoCard) return <ManualForm courseId={courseId} payment={payment} />;
+  const [coupon, setCoupon] = useState(null);
+  const total = coupon?.amountLabel ?? amount;
+  const couponBox = <CouponBox courseId={courseId} applied={coupon} onChange={setCoupon} />;
+  if (coupon?.amount === 0)
+    return (
+      <div className="flex flex-col gap-6">
+        {couponBox}
+        <CouponEnroll courseId={courseId} coupon={coupon} />
+      </div>
+    );
+  if (!demoCard)
+    return (
+      <div className="flex flex-col gap-6">
+        {couponBox}
+        <ManualForm courseId={courseId} payment={payment} couponCode={coupon?.code} amount={total} />
+      </div>
+    );
   return (
     <div className="flex flex-col gap-6">
+      {couponBox}
       <TabList
         tabs={[
           { value: "card", label: "Card", icon: CreditCard },
@@ -185,7 +229,7 @@ const CheckoutForm = ({ courseId, payment, demoCard, amount }) => {
         onChange={setTab}
         label="Payment method"
       />
-      {tab === "card" ? <CardForm courseId={courseId} amount={amount} /> : <ManualForm courseId={courseId} payment={payment} />}
+      {tab === "card" ? <CardForm courseId={courseId} amount={total} couponCode={coupon?.code} /> : <ManualForm courseId={courseId} payment={payment} couponCode={coupon?.code} amount={total} />}
     </div>
   );
 };

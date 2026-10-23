@@ -53,6 +53,10 @@ What a course normally costs. Only the owner sets it.
 A lower price the owner sets for a course; while it exists, it is what students pay.
 _Avoid_: Discount price, offer
 
+**Coupon**:
+A code that lowers a course's price at checkout, by a percent or a fixed amount, optionally for one course, until a date or a number of uses. Only the owner creates coupons; a code that covers the full price enrolls the student without payment.
+_Avoid_: Voucher, promo, discount code
+
 **Free course**:
 A published course whose price is zero. A student enrolls in it directly, without an order.
 
