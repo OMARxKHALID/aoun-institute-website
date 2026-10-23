@@ -88,6 +88,10 @@ _Avoid_: Failed, declined
 An order closed without review because another payment for the same course replaced it. It is never reopened.
 _Avoid_: Failed, superseded
 
+**Refund request**:
+A student's request to have a paid order refunded, with a reason. The owner either refunds the order, which ends the enrollment, or declines with a reason and the student keeps access.
+_Avoid_: Refund claim, cancellation
+
 **Refunded**:
 A paid order whose money was returned. Refunding ends the enrollment it granted.
 

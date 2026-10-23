@@ -12,6 +12,13 @@ const orderSchema = new Schema(
     providerRef: String,
     receipt: { publicId: String, format: String },
     coupon: { code: String, discount: Number },
+    refundRequest: {
+      reason: String,
+      requestedAt: Date,
+      status: { type: String, enum: ["open", "approved", "declined"] },
+      note: String,
+      decidedAt: Date,
+    },
     note: String,
     reviewedBy: String,
     paidAt: Date,

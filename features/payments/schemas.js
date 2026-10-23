@@ -7,6 +7,8 @@ export const checkoutSchema = z.strictObject({
   note: z.string().trim().max(500),
 });
 
+export const refundRequestSchema = z.strictObject({ reason: z.string().trim().min(10, { error: "Tell us why in a few words (at least 10 characters)" }).max(1000) });
+
 export const rejectSchema = z.strictObject({ note: z.string().trim().min(3, { error: "Tell the student why" }).max(500) });
 
 const expiryOk = (value) => {

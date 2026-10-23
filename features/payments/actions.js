@@ -12,7 +12,7 @@ import Order from "@/features/payments/models/order";
 import Enrollment from "@/features/enrollments/model";
 import { grantEnrollment } from "@/features/enrollments/enroll";
 import { getSiteSettings } from "@/features/site-settings/queries";
-import { cardSchema, checkoutSchema, rejectSchema } from "@/features/payments/schemas";
+import { cardSchema, checkoutSchema, refundRequestSchema, rejectSchema } from "@/features/payments/schemas";
 import { chargeDemoCard, demoPaymentsEnabled } from "@/features/payments/providers/demo-card";
 import { audit } from "@/features/audit/service";
 import { claimCoupon, priceWithCoupon, releaseCoupon } from "@/features/coupons/pricing";
@@ -199,6 +199,7 @@ export const refundOrder = async (orderId, input) => {
   ).populate({ path: "courseId", select: "title slug", model: Course });
   if (!order) return fail("Only paid orders can be refunded");
   await Enrollment.updateOne({ userId: order.userId, courseId: order.courseId._id, orderId: order._id }, { $set: { status: "revoked" } });
+  if (order.refundRequest?.status === "open") await Order.updateOne({ _id: order._id }, { $set: { "refundRequest.status": "approved", "refundRequest.decidedAt": new Date() } });
   const student = await findUser(order.userId);
   if (student?.email)
     await notify(
@@ -209,5 +210,56 @@ export const refundOrder = async (orderId, input) => {
       }),
     );
   await audit(admin, "order.refund", `Refunded ${order.currency} ${order.amount} for "${order.courseId.title}"`, { type: "order", id: order._id });
+  return { ok: true };
+};
+
+export const requestRefund = async (orderId, input) => {
+  const user = await requireUser();
+  if (!(await rateLimit("payment", user.id))) return fail("Too many requests. Try again in a few minutes.");
+  const result = parse(refundRequestSchema, input);
+  if (!result.ok) return result;
+  if (!isValidObjectId(orderId)) return fail("Order not found");
+  await connectDB();
+  const order = await Order.findOne({ _id: orderId, userId: user.id, status: "PAID" }).populate({ path: "courseId", select: "title", model: Course }).lean();
+  if (!order) return fail("Only paid orders can be refunded");
+  if (!order.amount) return fail("Free enrollments cannot be refunded");
+  const updated = await Order.updateOne(
+    { _id: order._id, status: "PAID", "refundRequest.status": { $ne: "open" } },
+    { $set: { refundRequest: { reason: result.data.reason, requestedAt: new Date(), status: "open" } } },
+  );
+  if (!updated.modifiedCount) return fail("Your refund request is already being reviewed");
+  const { contact } = await getSiteSettings();
+  if (contact?.email)
+    await notify(
+      sendEmail({
+        to: contact.email,
+        subject: `Refund requested: ${order.courseId?.title ?? "a course"}`,
+        html: linkEmail({ title: "A student asked for a refund", text: `${user.name} (${user.email}) asked for a refund of ${order.currency} ${order.amount}. Reason: ${result.data.reason}`, url: `${SITE_URL}/admin/orders`, cta: "Review request" }),
+      }),
+    );
+  return { ok: true };
+};
+
+export const declineRefund = async (orderId, input) => {
+  const admin = await requireAdmin();
+  const result = parse(rejectSchema, input);
+  if (!result.ok) return result;
+  if (!isValidObjectId(orderId)) return fail("Order not found");
+  await connectDB();
+  const order = await Order.findOneAndUpdate(
+    { _id: orderId, status: "PAID", "refundRequest.status": "open" },
+    { $set: { "refundRequest.status": "declined", "refundRequest.note": result.data.note, "refundRequest.decidedAt": new Date() } },
+  ).populate({ path: "courseId", select: "title", model: Course });
+  if (!order) return fail("This request was already handled");
+  const student = await findUser(order.userId);
+  if (student?.email)
+    await notify(
+      sendEmail({
+        to: student.email,
+        subject: `Refund request for ${order.courseId?.title ?? "your course"}`,
+        html: linkEmail({ title: "We could not approve your refund", text: `Reason: ${result.data.note}. You keep full access to the course.`, url: `${SITE_URL}/dashboard/orders`, cta: "View orders" }),
+      }),
+    );
+  await audit(admin, "order.refund_decline", `Declined a refund request for "${order.courseId?.title}": ${result.data.note}`, { type: "order", id: order._id });
   return { ok: true };
 };

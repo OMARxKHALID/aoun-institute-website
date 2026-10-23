@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createColumnHelper } from "@tanstack/react-table";
-import { Check, FileText, Undo2, X } from "lucide-react";
-import { approveOrder, refundOrder, rejectOrder } from "@/features/payments/actions";
+import { Ban, Check, FileText, Undo2, X } from "lucide-react";
+import { approveOrder, declineRefund, refundOrder, rejectOrder } from "@/features/payments/actions";
 import ActionMenu from "@/components/ui/action-menu";
 import { useDialog } from "@/components/ui/dialog-provider";
 import DataTable from "@/components/ui/data-table";
@@ -15,7 +15,13 @@ import TabList from "@/components/ui/tab-list";
 
 const helper = createColumnHelper();
 
-const filters = ["PENDING", "PAID", "REJECTED", "CANCELLED", "REFUNDED", "ALL"];
+const filters = ["PENDING", "REFUND", "PAID", "REJECTED", "CANCELLED", "REFUNDED", "ALL"];
+
+const filterLabels = { REFUND: "Refund requests" };
+
+const refundOpen = (order) => order.status === "PAID" && order.refund?.status === "open";
+
+const matches = (order, filter) => filter === "ALL" || (filter === "REFUND" ? refundOpen(order) : order.status === filter);
 
 const OrderActions = ({ order, onResult }) => {
   const dialog = useDialog();
@@ -33,6 +39,7 @@ const OrderActions = ({ order, onResult }) => {
     ["Amount", formatPrice(order.amount, order.currency)],
     ["Method", order.method],
     ["Reference", order.reference || "—"],
+    ...(order.refund?.reason ? [["Refund reason", order.refund.reason]] : []),
   ];
 
   const handleApprove = async () => {
@@ -73,7 +80,26 @@ const OrderActions = ({ order, onResult }) => {
     if (note) run(() => refundOrder(order.id, { note }));
   };
 
-  if (order.status === "PAID") return <ActionMenu label={`Actions for order by ${order.student}`} items={[{ label: "Mark refunded & remove access", icon: Undo2, danger: true, onClick: handleRefund }]} />;
+  const handleDecline = async () => {
+    const note = await dialog.prompt({
+      title: "Decline this refund request?",
+      message: "The student keeps access and is emailed this reason.",
+      details,
+      label: "Reason",
+      placeholder: "e.g. More than 7 days and most lessons watched",
+      minLength: 3,
+      confirmLabel: "Decline request",
+    });
+    if (note) run(() => declineRefund(order.id, { note }));
+  };
+
+  if (order.status === "PAID")
+    return (
+      <ActionMenu
+        label={`Actions for order by ${order.student}`}
+        items={[{ label: "Mark refunded & remove access", icon: Undo2, danger: true, onClick: handleRefund }, refundOpen(order) && { label: "Decline refund request", icon: Ban, onClick: handleDecline }]}
+      />
+    );
   if (order.status !== "PENDING") return <span className="text-sm text-white/50">{order.note}</span>;
 
   return (
@@ -92,7 +118,7 @@ const OrderTable = ({ orders, initialSearch = "" }) => {
   const router = useRouter();
   const [filter, setFilter] = useState(initialSearch ? "ALL" : "PENDING");
   const [error, setError] = useState(null);
-  const shown = filter === "ALL" ? orders : orders.filter((o) => o.status === filter);
+  const shown = orders.filter((o) => matches(o, filter));
 
   const handleResult = (result) => {
     setError(result.ok ? null : Object.values(result.errors).flat()[0]);
@@ -134,13 +160,22 @@ const OrderTable = ({ orders, initialSearch = "" }) => {
         ),
     }),
     helper.accessor("createdAt", { header: "Date", sortingFn: "datetime", meta: { className: "hidden xl:table-cell" }, cell: ({ getValue }) => <span className="text-white/70">{formatDate(getValue())}</span> }),
-    helper.accessor("status", { header: "Status", cell: ({ getValue }) => <StatusPill status={getValue()} /> }),
+    helper.accessor("status", {
+      header: "Status",
+      cell: ({ row }) => (
+        <span className="flex flex-col items-start gap-1">
+          <StatusPill status={row.original.status} />
+          {refundOpen(row.original) && <StatusPill status="refund" label="refund requested" tone="amber" />}
+          {refundOpen(row.original) && <span className="line-clamp-2 max-w-56 text-xs text-white/50">{row.original.refund.reason}</span>}
+        </span>
+      ),
+    }),
     helper.display({ id: "actions", header: "", cell: ({ row }) => <OrderActions order={row.original} onResult={handleResult} /> }),
   ]);
 
   return (
     <div className="flex flex-col gap-4">
-      <TabList tabs={filters.map((f) => ({ value: f, label: `${f.charAt(0)}${f.slice(1).toLowerCase()} (${f === "ALL" ? orders.length : orders.filter((o) => o.status === f).length})` }))} value={filter} onChange={setFilter} label="Order status" size="sm" />
+      <TabList tabs={filters.map((f) => ({ value: f, label: `${filterLabels[f] ?? `${f.charAt(0)}${f.slice(1).toLowerCase()}`} (${orders.filter((o) => matches(o, f)).length})` }))} value={filter} onChange={setFilter} label="Order status" size="sm" />
       <FormAlert>{error}</FormAlert>
       <DataTable key={filter} columns={columns} data={shown} searchPlaceholder="Search student, course or reference" initialSearch={initialSearch} empty="No orders here." />
     </div>

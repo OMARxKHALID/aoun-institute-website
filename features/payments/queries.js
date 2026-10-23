@@ -24,6 +24,7 @@ export const getAdminOrders = async () => {
     hasReceipt: Boolean(o.receipt?.publicId),
     note: o.note ?? "",
     status: o.status,
+    refund: o.refundRequest?.status ? { status: o.refundRequest.status, reason: o.refundRequest.reason ?? "", note: o.refundRequest.note ?? "" } : null,
     createdAt: o.createdAt.toISOString(),
   }));
 };
@@ -42,6 +43,8 @@ export const getMyOrders = async () => {
     reference: o.providerRef?.replace(/^manual:/, "") ?? "",
     note: o.status === "REJECTED" || o.status === "CANCELLED" ? (o.note ?? "") : "",
     status: o.status,
+    refund: o.refundRequest?.status ? { status: o.refundRequest.status, reason: o.refundRequest.reason ?? "", note: o.refundRequest.note ?? "" } : null,
+    canRequestRefund: o.status === "PAID" && o.amount > 0 && o.refundRequest?.status !== "open",
     createdAt: o.createdAt.toISOString(),
   }));
 };
