@@ -2,6 +2,7 @@ import "server-only";
 import { Types } from "mongoose";
 import { connectDB, db } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
+import { deletionDate } from "@/features/students/service";
 
 export const getProfile = async () => {
   const user = await requireUser();
@@ -23,6 +24,7 @@ export const getProfile = async () => {
     notifyCertificate: doc.notifyCertificate !== false,
     notifyReminders: doc.notifyReminders !== false,
     deletionRequestedAt: doc.deletionRequestedAt ? new Date(doc.deletionRequestedAt).toISOString() : null,
+    deletionScheduledFor: doc.deletionRequestedAt ? deletionDate(doc.deletionRequestedAt).toISOString() : null,
     hasPassword: Boolean(await db.collection("account").findOne({ userId: doc._id, providerId: "credential" }, { projection: { _id: 1 } })),
   };
 };

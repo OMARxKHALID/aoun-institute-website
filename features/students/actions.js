@@ -9,22 +9,12 @@ import { requireAdmin } from "@/lib/dal";
 import { fail, parse } from "@/lib/validate";
 import Course from "@/features/courses/models/course";
 import Enrollment from "@/features/enrollments/model";
-import LessonProgress from "@/features/progress/models/lesson-progress";
-import CourseProgress from "@/features/progress/models/course-progress";
-import ActivityLog from "@/features/progress/models/activity-log";
-import QuizAttempt from "@/features/quizzes/models/quiz-attempt";
-import AttemptGrant from "@/features/quizzes/models/attempt-grant";
 import PlaybackSession from "@/features/video/playback-session";
 import { grantEnrollment } from "@/features/enrollments/enroll";
 import { audit } from "@/features/audit/service";
-import Note from "@/features/notes/model";
-import StudyPlan from "@/features/calendar/model";
-import Review from "@/features/reviews/model";
-import Discussion from "@/features/discussions/model";
+import { eraseStudyData } from "@/features/students/service";
 import { linkEmail, sendEmail } from "@/lib/email";
 import { SITE_URL } from "@/lib/site";
-
-const FORMER_STUDENT = "Former student";
 
 const passwordSchema = z.strictObject({ password: z.string().min(8, { error: "At least 8 characters" }).max(128) });
 
@@ -76,19 +66,7 @@ export const revokeEnrollment = async (userId, courseId) => {
 export const deleteStudent = async (userId) => {
   const admin = await requireAdmin();
   if (!(await loadStudent(userId))) return fail("Student not found");
-  await Promise.all([
-    Enrollment.deleteMany({ userId }),
-    LessonProgress.deleteMany({ userId }),
-    CourseProgress.deleteMany({ userId }),
-    ActivityLog.deleteMany({ userId }),
-    QuizAttempt.deleteMany({ userId }),
-    AttemptGrant.deleteMany({ userId }),
-    PlaybackSession.deleteMany({ userId }),
-    Note.deleteMany({ userId }),
-    StudyPlan.deleteMany({ userId }),
-    Review.deleteMany({ userId }),
-    Discussion.updateMany({ userId }, { $set: { authorName: FORMER_STUDENT } }),
-  ]);
+  await eraseStudyData(userId);
   await auth.api.removeUser({ headers: await headers(), body: { userId } });
   await audit(admin, "student.delete", "Deleted a student account", { type: "student", id: userId });
   return { ok: true };

@@ -18,6 +18,10 @@ _Avoid_: Instructor, tutor, admin
 The one person who runs the institute. The owner is also a teacher and can act on every course, whether or not they teach it. Only the owner handles money (payments, refunds, prices, payment details, revenue), accounts (making or removing teachers, gifts, revoking, banning, deleting, passwords) and the institute itself (site settings, contact messages, the activity log). There is exactly one owner.
 _Avoid_: Admin, super admin
 
+**Deletion request**:
+A student's request to have their account deleted. It is carried out 30 days later unless the student cancels first; the owner can also delete an account straight away.
+_Avoid_: Account closure
+
 **Former student**:
 How a deleted student appears on the questions they asked. Deleting a student removes their account and study history, but their certificates and orders stay as institute records.
 _Avoid_: Deleted user, anonymous

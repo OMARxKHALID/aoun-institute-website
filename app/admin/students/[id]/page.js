@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { Award, BookOpen, FileQuestion, Receipt } from "lucide-react";
 import { getAdminStudent } from "@/features/students/queries";
+import { deletionDate } from "@/features/students/service";
 import { AccountControls, EnrollControl, RevokeEnrollmentButton } from "@/features/students/components/student-controls";
 import PanelHeader from "@/components/ui/panel-header";
 import PanelCard from "@/components/ui/panel-card";
@@ -90,7 +91,7 @@ const StudentPage = async ({ params }) => {
             <div className="flex flex-wrap gap-2">
               <StatusPill status={student.banned ? "banned" : "active"} />
               {!student.emailVerified && <StatusPill status="unverified" label="email not verified" />}
-              {student.deletionRequestedAt && <StatusPill status="deletion" label="asked for deletion" />}
+              {student.deletionRequestedAt && <StatusPill status="deletion" label={`auto-deletes ${formatDate(deletionDate(student.deletionRequestedAt))}`} />}
               {student.role === "TEACHER" && <StatusPill status="new" label="teacher" />}
             </div>
             {student.banned && student.banReason && <p className="text-sm text-red-400/80">Blocked: {student.banReason}</p>}

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { authClient } from "@/lib/auth-client";
-import { requestAccountDeletion, updateAvatar, updateNotifications, updateProfile } from "@/features/profile/actions";
+import { cancelAccountDeletion, requestAccountDeletion, updateAvatar, updateNotifications, updateProfile } from "@/features/profile/actions";
 import { NOTIFICATIONS, notificationsSchema, passwordSchema, profileSchema } from "@/features/profile/schemas";
 import Field from "@/components/ui/field";
 import Button from "@/components/ui/button";
@@ -15,6 +15,7 @@ import ImageUpload from "@/components/ui/image-upload";
 import PanelCard from "@/components/ui/panel-card";
 import TabList from "@/components/ui/tab-list";
 import { useDialog } from "@/components/ui/dialog-provider";
+import { formatDate } from "@/lib/format";
 
 const applyErrors = (result, setError) => Object.entries(result.errors).forEach(([field, messages]) => setError(field, { message: messages[0] }));
 
@@ -139,24 +140,39 @@ const NotificationsForm = ({ profile }) => {
   );
 };
 
-const DangerZone = ({ requested }) => {
+const DangerZone = ({ scheduledFor }) => {
   const dialog = useDialog();
-  const [done, setDone] = useState(Boolean(requested));
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
 
   const handleRequest = async () => {
-    if (!(await dialog.confirm({ title: "Delete your account?", message: "The institute will delete your account and data. Your certificates stay verifiable. This cannot be undone once processed.", confirmLabel: "Request deletion", danger: true }))) return;
-    const result = await requestAccountDeletion();
-    if (result.ok) setDone(true);
+    if (!(await dialog.confirm({ title: "Delete your account?", message: "Your account and study history are deleted 30 days from now. You can cancel until then. Your certificates and order records are kept.", confirmLabel: "Request deletion", danger: true }))) return;
+    setBusy(true);
+    await requestAccountDeletion();
+    setBusy(false);
+    router.refresh();
+  };
+
+  const handleCancel = async () => {
+    setBusy(true);
+    await cancelAccountDeletion();
+    setBusy(false);
+    router.refresh();
   };
 
   return (
     <PanelCard title="Delete account">
-      {done ? (
-        <p className="text-sm text-amber-300">Deletion requested. The institute will contact you by email to confirm.</p>
+      {scheduledFor ? (
+        <>
+          <p className="text-sm text-amber-300">Your account will be deleted on {formatDate(scheduledFor)}. You can cancel until then.</p>
+          <Button type="button" variant="outline" loading={busy} onClick={handleCancel} className="self-start">
+            Cancel deletion
+          </Button>
+        </>
       ) : (
         <>
           <p className="text-sm text-white/50">Your certificates stay verifiable, but your progress and profile will be removed.</p>
-          <Button type="button" variant="danger" onClick={handleRequest} className="self-start">
+          <Button type="button" variant="danger" loading={busy} onClick={handleRequest} className="self-start">
             Request Deletion
           </Button>
         </>
@@ -177,7 +193,7 @@ const SettingsForms = ({ profile }) => {
       </div>
       <div hidden={tab !== "Security"} className="flex flex-col gap-5">
         <PasswordForm hasPassword={profile.hasPassword} />
-        <DangerZone requested={profile.deletionRequestedAt} />
+        <DangerZone scheduledFor={profile.deletionScheduledFor} />
       </div>
       <div hidden={tab !== "Notifications"}>
         <NotificationsForm profile={profile} />

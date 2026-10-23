@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { createColumnHelper } from "@tanstack/react-table";
 import { Eye } from "lucide-react";
 import DataTable from "@/components/ui/data-table";
 import ActionMenu from "@/components/ui/action-menu";
 import StatusPill from "@/components/ui/status-pill";
+import TabList from "@/components/ui/tab-list";
 import { formatDate, formatPrice } from "@/lib/format";
 import { imageUrl } from "@/lib/upload-rules";
 
@@ -47,6 +49,35 @@ const columns = helper.columns([
   helper.display({ id: "actions", header: "", cell: ({ row }) => <ActionMenu label={`Actions for ${row.original.name}`} items={[{ label: "View student", icon: Eye, href: `/admin/students/${row.original.id}` }]} /> }),
 ]);
 
-const StudentTable = ({ students, initialSearch, owner }) => <DataTable columns={owner ? columns : columns.filter((c) => c.accessorKey !== "spent")} data={students} initialSearch={initialSearch} searchPlaceholder="Search name or email" empty="No students yet." />;
+const StudentTable = ({ students, initialSearch, owner }) => {
+  const [view, setView] = useState("all");
+  const deletions = students.filter((s) => s.status === "deletion");
+  const table = (
+    <DataTable
+      key={view}
+      columns={owner ? columns : columns.filter((c) => c.accessorKey !== "spent")}
+      data={view === "deletion" ? deletions : students}
+      initialSearch={initialSearch}
+      searchPlaceholder="Search name or email"
+      empty={view === "deletion" ? "No deletion requests." : "No students yet."}
+    />
+  );
+  if (!owner) return table;
+  return (
+    <div className="flex flex-col gap-4">
+      <TabList
+        tabs={[
+          { value: "all", label: `All (${students.length})` },
+          { value: "deletion", label: `Deletion requests (${deletions.length})` },
+        ]}
+        value={view}
+        onChange={setView}
+        label="Student filter"
+        size="sm"
+      />
+      {table}
+    </div>
+  );
+};
 
 export default StudentTable;

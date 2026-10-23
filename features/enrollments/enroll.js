@@ -11,3 +11,5 @@ export const grantEnrollment = async ({ userId, courseId, source, orderId }) => 
   if (result.upsertedCount) await ActivityLog.create({ userId, courseId, type: "enrolled", refId: orderId });
   return result;
 };
+
+export const endEnrollment = ({ userId, courseId, orderId }) => Enrollment.updateOne({ userId, courseId, orderId }, { $set: { status: "revoked" } });

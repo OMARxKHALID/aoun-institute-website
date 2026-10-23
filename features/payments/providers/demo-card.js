@@ -20,3 +20,13 @@ export const chargeDemoCard = async ({ number }) => {
   await new Promise((resolve) => setTimeout(resolve, 900));
   return { ok: true, ref: `demo_${randomBytes(8).toString("hex")}`, last4: number.slice(-4) };
 };
+
+export const demoCardPayment = {
+  instant: true,
+  cancelNote: "Paid by card instead",
+  pay: async (card) => {
+    const charge = await chargeDemoCard(card);
+    if (!charge.ok) return charge;
+    return { ok: true, status: "PAID", last4: charge.last4, fields: { provider: "demo_card", method: `Card •••• ${charge.last4}`, providerRef: charge.ref } };
+  },
+};
