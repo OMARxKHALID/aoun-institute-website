@@ -4,6 +4,7 @@ import { connectDB, db } from "@/lib/db";
 import { isAdmin, requireAdmin, requireUser } from "@/lib/dal";
 import Course from "@/features/courses/models/course";
 import Order from "@/features/payments/models/order";
+import { canRequestRefund } from "@/features/payments/transitions";
 
 export const getAdminOrders = async () => {
   await requireAdmin();
@@ -44,7 +45,7 @@ export const getMyOrders = async () => {
     note: o.status === "REJECTED" || o.status === "CANCELLED" ? (o.note ?? "") : "",
     status: o.status,
     refund: o.refundRequest?.status ? { status: o.refundRequest.status, reason: o.refundRequest.reason ?? "", note: o.refundRequest.note ?? "" } : null,
-    canRequestRefund: o.status === "PAID" && o.amount > 0 && o.refundRequest?.status !== "open",
+    canRequestRefund: canRequestRefund(o),
     createdAt: o.createdAt.toISOString(),
   }));
 };

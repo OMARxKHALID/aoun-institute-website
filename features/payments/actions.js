@@ -3,19 +3,17 @@
 import { Types, isValidObjectId } from "mongoose";
 import { requireAdmin, requireUser } from "@/lib/dal";
 import { fail, parse } from "@/lib/validate";
-import { verifyUpload } from "@/lib/cloudinary";
 import { rateLimit } from "@/lib/rate-limit";
 import { linkEmail, sendEmail } from "@/lib/email";
 import { connectDB, db } from "@/lib/db";
 import Course from "@/features/courses/models/course";
-import Order from "@/features/payments/models/order";
-import Enrollment from "@/features/enrollments/model";
 import { grantEnrollment } from "@/features/enrollments/enroll";
 import { getSiteSettings } from "@/features/site-settings/queries";
 import { cardSchema, checkoutSchema, refundRequestSchema, rejectSchema } from "@/features/payments/schemas";
-import { chargeDemoCard, demoPaymentsEnabled } from "@/features/payments/providers/demo-card";
+import { demoCardPayment, demoPaymentsEnabled } from "@/features/payments/providers/demo-card";
+import { manualPayment } from "@/features/payments/providers/manual";
+import { approve, checkout, declineRefundRequest, openRefundRequest, refund, reject } from "@/features/payments/lifecycle";
 import { audit } from "@/features/audit/service";
-import { claimCoupon, priceWithCoupon, releaseCoupon } from "@/features/coupons/pricing";
 import { SITE_URL } from "@/lib/site";
 
 const loadPublishedCourse = async (courseId) => {
@@ -24,17 +22,18 @@ const loadPublishedCourse = async (courseId) => {
   return Course.findOne({ _id: courseId, status: "published" }, "title slug price discountPrice currency").lean();
 };
 
-const amountOf = (course) => course.discountPrice ?? course.price;
-
 const findUser = (userId) => db.collection("user").findOne({ _id: new Types.ObjectId(userId) }, { projection: { name: 1, email: 1 } }).catch(() => null);
 
 const notify = (task) => task.catch((error) => console.error("[payments] email failed", error));
 
-const cancelPending = async (userId, courseId, note) => {
-  const pending = await Order.find({ userId, courseId, status: "PENDING" }, "coupon").lean();
-  if (!pending.length) return;
-  await Order.updateMany({ _id: { $in: pending.map((o) => o._id) } }, { $set: { status: "CANCELLED", note } });
-  await Promise.all(pending.filter((o) => o.coupon?.code).map((o) => releaseCoupon({ code: o.coupon.code })));
+const notifyStudent = async (userId, message) => {
+  const student = await findUser(userId);
+  if (student?.email) await notify(sendEmail({ to: student.email, ...message }));
+};
+
+const notifyOwner = async (message) => {
+  const { contact } = await getSiteSettings();
+  if (contact?.email) await notify(sendEmail({ to: contact.email, ...message }));
 };
 
 export const createManualOrder = async (courseId, input, couponCode) => {
@@ -44,40 +43,13 @@ export const createManualOrder = async (courseId, input, couponCode) => {
   if (!result.ok) return result;
   const course = await loadPublishedCourse(courseId);
   if (!course) return fail("This course is not available");
-  if (amountOf(course) === 0) return fail("This course is free. Use the enroll button.");
-  if (await Enrollment.exists({ userId: user.id, courseId, status: "active" })) return fail("You are already enrolled in this course");
-  if (await Order.exists({ userId: user.id, courseId, status: "PENDING" })) return fail("Your payment for this course is already under review");
-  const priced = await priceWithCoupon(course, couponCode);
-  if (priced.error) return fail(priced.error);
-  if (priced.amount === 0) return fail("This code makes the course free. Use the enroll button.");
-  const { receipt, ...data } = result.data;
-  let stored;
-  if (receipt) {
-    if (await Order.exists({ "receipt.publicId": receipt.publicId, userId: { $ne: user.id } })) return fail("Invalid upload", "receipt");
-    const check = await verifyUpload("receipt", receipt.publicId);
-    if (!check.ok) return fail(check.error, "receipt");
-    stored = { publicId: check.asset.publicId, format: check.asset.format };
-  }
-  const fields = { amount: priced.amount, currency: course.currency, method: data.method, receipt: stored, note: data.note || undefined, coupon: priced.applied };
-  const providerRef = `manual:${data.reference}`;
-  if (priced.coupon && !(await claimCoupon(priced.coupon._id))) return fail("This code has just been used up");
-  const reopened = await Order.findOneAndUpdate({ userId: user.id, courseId, providerRef, status: "REJECTED" }, { $set: { ...fields, status: "PENDING" }, $unset: { reviewedBy: 1, ...(!priced.applied && { coupon: 1 }) } });
-  const order =
-    reopened ??
-    (await Order.create({ ...fields, userId: user.id, courseId, provider: "manual", providerRef }).catch((error) => (error?.code === 11000 ? null : Promise.reject(error))));
-  if (!order) {
-    if (priced.coupon) await releaseCoupon({ _id: priced.coupon._id });
-    return fail("This transaction ID was already submitted", "reference");
-  }
-  const { contact } = await getSiteSettings();
-  if (contact?.email)
-    await notify(
-      sendEmail({
-        to: contact.email,
-        subject: `New payment to review: ${course.title}`,
-        html: linkEmail({ title: "New payment to review", text: `${user.name} (${user.email}) paid for ${course.title} by ${data.method}. Reference: ${data.reference}.`, url: `${SITE_URL}/admin/orders`, cta: "Review payment" }),
-      }),
-    );
+  const done = await checkout({ userId: user.id, course, couponCode, adapter: manualPayment, input: result.data });
+  if (!done.ok) return done;
+  const { method, reference } = result.data;
+  await notifyOwner({
+    subject: `New payment to review: ${course.title}`,
+    html: linkEmail({ title: "New payment to review", text: `${user.name} (${user.email}) paid for ${course.title} by ${method}. Reference: ${reference}.`, url: `${SITE_URL}/admin/orders`, cta: "Review payment" }),
+  });
   return { ok: true };
 };
 
@@ -89,26 +61,14 @@ export const payWithDemoCard = async (courseId, input, couponCode) => {
   if (!result.ok) return result;
   const course = await loadPublishedCourse(courseId);
   if (!course) return fail("This course is not available");
-  if (amountOf(course) === 0) return fail("This course is free. Use the enroll button.");
-  if (await Enrollment.exists({ userId: user.id, courseId, status: "active" })) return fail("You are already enrolled in this course");
-  const priced = await priceWithCoupon(course, couponCode);
-  if (priced.error) return fail(priced.error);
-  if (priced.amount === 0) return fail("This code makes the course free. Use the enroll button.");
-  if (priced.coupon && !(await claimCoupon(priced.coupon._id))) return fail("This code has just been used up");
-  const charge = await chargeDemoCard(result.data);
-  if (!charge.ok) {
-    if (priced.coupon) await releaseCoupon({ _id: priced.coupon._id });
-    return fail(charge.error, charge.field);
-  }
-  const paidAt = new Date();
-  const order = await Order.create({ userId: user.id, courseId, amount: priced.amount, currency: course.currency, provider: "demo_card", method: `Card •••• ${charge.last4}`, providerRef: charge.ref, status: "PAID", paidAt, coupon: priced.applied });
-  await cancelPending(user.id, courseId, "Paid by card instead");
-  await grantEnrollment({ userId: user.id, courseId, source: "order", orderId: order._id });
+  const done = await checkout({ userId: user.id, course, couponCode, adapter: demoCardPayment, input: result.data });
+  if (!done.ok) return done;
+  const { order, payment } = done.data;
   await notify(
     sendEmail({
       to: user.email,
       subject: `You're enrolled in ${course.title}`,
-      html: linkEmail({ title: "Payment received", text: `We charged ${course.currency} ${priced.amount} to your card ending ${charge.last4}. You now have lifetime access to ${course.title}.`, url: `${SITE_URL}/dashboard/courses/${course.slug}`, cta: "Start learning" }),
+      html: linkEmail({ title: "Payment received", text: `We charged ${course.currency} ${order.amount} to your card ending ${payment.last4}. You are now enrolled in ${course.title}.`, url: `${SITE_URL}/dashboard/courses/${course.slug}`, cta: "Start learning" }),
     }),
   );
   return { ok: true, data: { slug: course.slug } };
@@ -118,7 +78,7 @@ export const enrollFree = async (courseId) => {
   const user = await requireUser();
   const course = await loadPublishedCourse(courseId);
   if (!course) return fail("This course is not available");
-  if (amountOf(course) !== 0) return fail("This course is not free");
+  if ((course.discountPrice ?? course.price) !== 0) return fail("This course is not free");
   await grantEnrollment({ userId: user.id, courseId, source: "free" });
   return { ok: true };
 };
@@ -128,39 +88,20 @@ export const enrollWithCoupon = async (courseId, couponCode) => {
   if (!(await rateLimit("payment", user.id))) return fail("Too many attempts. Try again in a few minutes.");
   const course = await loadPublishedCourse(courseId);
   if (!course) return fail("This course is not available");
-  if (await Enrollment.exists({ userId: user.id, courseId, status: "active" })) return fail("You are already enrolled in this course");
-  const priced = await priceWithCoupon(course, couponCode);
-  if (priced.error) return fail(priced.error);
-  if (priced.amount !== 0) return fail("This code does not make the course free");
-  if (!(await claimCoupon(priced.coupon._id))) return fail("This code has just been used up");
-  const order = await Order.create({ userId: user.id, courseId, amount: 0, currency: course.currency, provider: "coupon", method: `Coupon ${priced.applied.code}`, status: "PAID", paidAt: new Date(), coupon: priced.applied });
-  await cancelPending(user.id, courseId, "Enrolled with a coupon instead");
-  await grantEnrollment({ userId: user.id, courseId, source: "order", orderId: order._id });
+  const done = await checkout({ userId: user.id, course, couponCode, adapter: null });
+  if (!done.ok) return done;
   return { ok: true, data: { slug: course.slug } };
-};
-
-const loadPendingOrder = async (orderId) => {
-  if (!isValidObjectId(orderId)) return null;
-  await connectDB();
-  return Order.findOne({ _id: orderId, status: "PENDING" }).populate({ path: "courseId", select: "title slug", model: Course });
 };
 
 export const approveOrder = async (orderId) => {
   const admin = await requireAdmin();
-  const order = await loadPendingOrder(orderId);
-  if (!order) return fail("This order was already reviewed");
-  const updated = await Order.updateOne({ _id: order._id, status: "PENDING" }, { $set: { status: "PAID", paidAt: new Date(), reviewedBy: admin.id } });
-  if (!updated.modifiedCount) return fail("This order was already reviewed");
-  await grantEnrollment({ userId: order.userId, courseId: order.courseId._id, source: "order", orderId: order._id });
-  const student = await findUser(order.userId);
-  if (student?.email)
-    await notify(
-      sendEmail({
-        to: student.email,
-        subject: `You're enrolled in ${order.courseId.title}`,
-        html: linkEmail({ title: "Payment approved", text: `Your payment was confirmed. You now have lifetime access to ${order.courseId.title}.`, url: `${SITE_URL}/dashboard/courses/${order.courseId.slug}`, cta: "Start learning" }),
-      }),
-    );
+  const done = await approve(orderId, { by: admin.id });
+  if (!done.ok) return done;
+  const order = done.data;
+  await notifyStudent(order.userId, {
+    subject: `You're enrolled in ${order.courseId.title}`,
+    html: linkEmail({ title: "Payment approved", text: `Your payment was confirmed. You are now enrolled in ${order.courseId.title}.`, url: `${SITE_URL}/dashboard/courses/${order.courseId.slug}`, cta: "Start learning" }),
+  });
   await audit(admin, "order.approve", `Approved ${order.currency} ${order.amount} for "${order.courseId.title}"`, { type: "order", id: order._id });
   return { ok: true };
 };
@@ -169,21 +110,15 @@ export const rejectOrder = async (orderId, input) => {
   const admin = await requireAdmin();
   const result = parse(rejectSchema, input);
   if (!result.ok) return result;
-  const order = await loadPendingOrder(orderId);
-  if (!order) return fail("This order was already reviewed");
-  const updated = await Order.updateOne({ _id: order._id, status: "PENDING" }, { $set: { status: "REJECTED", reviewedBy: admin.id, note: result.data.note } });
-  if (!updated.modifiedCount) return fail("This order was already reviewed");
-  if (order.coupon?.code) await releaseCoupon({ code: order.coupon.code });
-  const student = await findUser(order.userId);
-  if (student?.email)
-    await notify(
-      sendEmail({
-        to: student.email,
-        subject: `Payment not confirmed: ${order.courseId.title}`,
-        html: linkEmail({ title: "We could not confirm your payment", text: `Reason: ${result.data.note}. You can submit your payment details again.`, url: `${SITE_URL}/checkout/${order.courseId.slug}`, cta: "Try again" }),
-      }),
-    );
-  await audit(admin, "order.reject", `Rejected a payment for "${order.courseId.title}": ${result.data.note}`, { type: "order", id: order._id });
+  const { note } = result.data;
+  const done = await reject(orderId, { by: admin.id, note });
+  if (!done.ok) return done;
+  const order = done.data;
+  await notifyStudent(order.userId, {
+    subject: `Payment not confirmed: ${order.courseId.title}`,
+    html: linkEmail({ title: "We could not confirm your payment", text: `Reason: ${note}. You can submit your payment details again.`, url: `${SITE_URL}/checkout/${order.courseId.slug}`, cta: "Try again" }),
+  });
+  await audit(admin, "order.reject", `Rejected a payment for "${order.courseId.title}": ${note}`, { type: "order", id: order._id });
   return { ok: true };
 };
 
@@ -191,24 +126,14 @@ export const refundOrder = async (orderId, input) => {
   const admin = await requireAdmin();
   const result = parse(rejectSchema, input);
   if (!result.ok) return result;
-  if (!isValidObjectId(orderId)) return fail("Order not found");
-  await connectDB();
-  const order = await Order.findOneAndUpdate(
-    { _id: orderId, status: "PAID" },
-    { $set: { status: "REFUNDED", refundedAt: new Date(), reviewedBy: admin.id, note: result.data.note } },
-  ).populate({ path: "courseId", select: "title slug", model: Course });
-  if (!order) return fail("Only paid orders can be refunded");
-  await Enrollment.updateOne({ userId: order.userId, courseId: order.courseId._id, orderId: order._id }, { $set: { status: "revoked" } });
-  if (order.refundRequest?.status === "open") await Order.updateOne({ _id: order._id }, { $set: { "refundRequest.status": "approved", "refundRequest.decidedAt": new Date() } });
-  const student = await findUser(order.userId);
-  if (student?.email)
-    await notify(
-      sendEmail({
-        to: student.email,
-        subject: `Refund for ${order.courseId.title}`,
-        html: linkEmail({ title: "Your payment was refunded", text: `Reason: ${result.data.note}. Your access to ${order.courseId.title} has been removed.`, url: `${SITE_URL}/dashboard/orders`, cta: "View orders" }),
-      }),
-    );
+  const { note } = result.data;
+  const done = await refund(orderId, { by: admin.id, note });
+  if (!done.ok) return done;
+  const order = done.data;
+  await notifyStudent(order.userId, {
+    subject: `Refund for ${order.courseId.title}`,
+    html: linkEmail({ title: "Your payment was refunded", text: `Reason: ${note}. Your access to ${order.courseId.title} has been removed.`, url: `${SITE_URL}/dashboard/orders`, cta: "View orders" }),
+  });
   await audit(admin, "order.refund", `Refunded ${order.currency} ${order.amount} for "${order.courseId.title}"`, { type: "order", id: order._id });
   return { ok: true };
 };
@@ -218,25 +143,14 @@ export const requestRefund = async (orderId, input) => {
   if (!(await rateLimit("payment", user.id))) return fail("Too many requests. Try again in a few minutes.");
   const result = parse(refundRequestSchema, input);
   if (!result.ok) return result;
-  if (!isValidObjectId(orderId)) return fail("Order not found");
-  await connectDB();
-  const order = await Order.findOne({ _id: orderId, userId: user.id, status: "PAID" }).populate({ path: "courseId", select: "title", model: Course }).lean();
-  if (!order) return fail("Only paid orders can be refunded");
-  if (!order.amount) return fail("Free enrollments cannot be refunded");
-  const updated = await Order.updateOne(
-    { _id: order._id, status: "PAID", "refundRequest.status": { $ne: "open" } },
-    { $set: { refundRequest: { reason: result.data.reason, requestedAt: new Date(), status: "open" } } },
-  );
-  if (!updated.modifiedCount) return fail("Your refund request is already being reviewed");
-  const { contact } = await getSiteSettings();
-  if (contact?.email)
-    await notify(
-      sendEmail({
-        to: contact.email,
-        subject: `Refund requested: ${order.courseId?.title ?? "a course"}`,
-        html: linkEmail({ title: "A student asked for a refund", text: `${user.name} (${user.email}) asked for a refund of ${order.currency} ${order.amount}. Reason: ${result.data.reason}`, url: `${SITE_URL}/admin/orders`, cta: "Review request" }),
-      }),
-    );
+  const { reason } = result.data;
+  const done = await openRefundRequest(orderId, { userId: user.id, reason });
+  if (!done.ok) return done;
+  const order = done.data;
+  await notifyOwner({
+    subject: `Refund requested: ${order.courseId?.title ?? "a course"}`,
+    html: linkEmail({ title: "A student asked for a refund", text: `${user.name} (${user.email}) asked for a refund of ${order.currency} ${order.amount}. Reason: ${reason}`, url: `${SITE_URL}/admin/orders`, cta: "Review request" }),
+  });
   return { ok: true };
 };
 
@@ -244,22 +158,14 @@ export const declineRefund = async (orderId, input) => {
   const admin = await requireAdmin();
   const result = parse(rejectSchema, input);
   if (!result.ok) return result;
-  if (!isValidObjectId(orderId)) return fail("Order not found");
-  await connectDB();
-  const order = await Order.findOneAndUpdate(
-    { _id: orderId, status: "PAID", "refundRequest.status": "open" },
-    { $set: { "refundRequest.status": "declined", "refundRequest.note": result.data.note, "refundRequest.decidedAt": new Date() } },
-  ).populate({ path: "courseId", select: "title", model: Course });
-  if (!order) return fail("This request was already handled");
-  const student = await findUser(order.userId);
-  if (student?.email)
-    await notify(
-      sendEmail({
-        to: student.email,
-        subject: `Refund request for ${order.courseId?.title ?? "your course"}`,
-        html: linkEmail({ title: "We could not approve your refund", text: `Reason: ${result.data.note}. You keep full access to the course.`, url: `${SITE_URL}/dashboard/orders`, cta: "View orders" }),
-      }),
-    );
-  await audit(admin, "order.refund_decline", `Declined a refund request for "${order.courseId?.title}": ${result.data.note}`, { type: "order", id: order._id });
+  const { note } = result.data;
+  const done = await declineRefundRequest(orderId, { note });
+  if (!done.ok) return done;
+  const order = done.data;
+  await notifyStudent(order.userId, {
+    subject: `Refund request for ${order.courseId?.title ?? "your course"}`,
+    html: linkEmail({ title: "We could not approve your refund", text: `Reason: ${note}. You keep full access to the course.`, url: `${SITE_URL}/dashboard/orders`, cta: "View orders" }),
+  });
+  await audit(admin, "order.refund_decline", `Declined a refund request for "${order.courseId?.title}": ${note}`, { type: "order", id: order._id });
   return { ok: true };
 };
