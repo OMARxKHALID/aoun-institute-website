@@ -25,6 +25,8 @@ export const getProfile = async () => {
     notifyReminders: doc.notifyReminders !== false,
     deletionRequestedAt: doc.deletionRequestedAt ? new Date(doc.deletionRequestedAt).toISOString() : null,
     deletionScheduledFor: doc.deletionRequestedAt ? deletionDate(doc.deletionRequestedAt).toISOString() : null,
+    twoFactorEnabled: Boolean(doc.twoFactorEnabled),
+    publicProfile: Boolean(doc.publicProfile),
     hasPassword: Boolean(await db.collection("account").findOne({ userId: doc._id, providerId: "credential" }, { projection: { _id: 1 } })),
   };
 };

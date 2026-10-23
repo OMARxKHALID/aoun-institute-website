@@ -31,6 +31,7 @@ export const quizSettingsSchema = z.strictObject({
   description: z.string().trim().max(2000),
   passingPercent: z.number({ error: "Enter a number" }).int().min(0).max(100),
   maxAttempts: z.number().int().min(1).max(100).nullish(),
+  drawCount: z.number().int().min(1, { error: "At least 1" }).max(500).nullish(),
   timeLimitMin: z.number().min(0).max(600).nullish(),
   shuffleQuestions: z.boolean(),
   shuffleOptions: z.boolean(),

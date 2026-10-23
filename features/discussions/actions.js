@@ -14,6 +14,7 @@ import Discussion from "@/features/discussions/model";
 import { audit } from "@/features/audit/service";
 import { canTeach } from "@/features/courses/access";
 import { SITE_URL } from "@/lib/site";
+import { notifyInApp } from "@/features/notifications/service";
 
 const bodySchema = z.strictObject({ body: z.string().trim().min(3, { error: "Write a little more" }).max(3000) });
 
@@ -51,6 +52,7 @@ export const replyToQuestion = async (questionId, input) => {
       Course.findById(question.courseId, "slug title").lean(),
       Lesson.findById(question.lessonId, "title").lean(),
     ]);
+    if (question.userId !== user.id) await notifyInApp(question.userId, { title: "Your question was answered", text: `${lesson?.title ?? "A lesson"} in ${course?.title ?? "your course"}`, path: `/dashboard/courses/${course?.slug}/lessons/${question.lessonId}#questions` });
     if (asker?.email && asker.notifyAnnouncement !== false && question.userId !== user.id)
       await sendEmail({
         to: asker.email,

@@ -58,6 +58,7 @@ export const lessonSchema = z.strictObject({
   status: z.enum(["draft", "published"]),
   durationSec: z.number().int().min(0).max(36000),
   attachments: z.array(asset.unwrap().unwrap()).max(10),
+  releaseOn: z.union([z.literal(""), z.null(), z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { error: "Pick a date" })]).optional(),
 });
 
 export const lessonFormSchema = lessonSchema.omit({ durationSec: true }).extend({ durationMin: z.number({ error: "Enter minutes" }).min(0).max(600) });

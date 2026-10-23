@@ -5,8 +5,7 @@ import { requireAdmin, requireUser } from "@/lib/dal";
 import Certificate from "@/features/certificates/model";
 import Course from "@/features/courses/models/course";
 import { CODE_PATTERN } from "@/features/certificates/service";
-
-const plain = (value) => JSON.parse(JSON.stringify(value));
+import { plain } from "@/lib/format";
 
 export const getCertificateByCode = async (code) => {
   const normalized = String(code ?? "").trim().toUpperCase();
@@ -34,4 +33,18 @@ export const getAdminCertificates = async () => {
     certificates: list.map((c) => ({ id: String(c._id), code: c.code, studentName: c.studentName, email: emails.get(c.userId) ?? "", courseTitle: c.courseTitle, issuedAt: c.issuedAt, status: c.status, reason: c.reason ?? "" })),
     courses: courses.map((c) => ({ value: String(c._id), label: c.title })),
   });
+};
+
+export const getPublicLearner = async (id) => {
+  if (!Types.ObjectId.isValid(id)) return null;
+  await connectDB();
+  const user = await db.collection("user").findOne({ _id: new Types.ObjectId(id), publicProfile: true, banned: { $ne: true } }, { projection: { name: 1, image: 1, city: 1, country: 1 } });
+  if (!user) return null;
+  const certificates = await Certificate.find({ userId: id, status: "VALID" }, "code courseTitle issuedAt").sort({ issuedAt: -1 }).lean();
+  return {
+    name: user.name,
+    image: user.image ?? null,
+    location: [user.city, user.country].filter(Boolean).join(", "),
+    certificates: certificates.map((c) => ({ code: c.code, courseTitle: c.courseTitle, issuedAt: c.issuedAt.toISOString() })),
+  };
 };

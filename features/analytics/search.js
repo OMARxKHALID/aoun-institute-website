@@ -12,8 +12,7 @@ import Quiz from "@/features/quizzes/models/quiz";
 import Note from "@/features/notes/model";
 import Announcement from "@/features/announcements/model";
 import { navs } from "@/lib/nav";
-
-const plain = (value) => JSON.parse(JSON.stringify(value));
+import { plain } from "@/lib/format";
 
 const pages = (panel, re) =>
   navs[panel].groups.flatMap((g) => g.items.filter((i) => re.test(i.label) || re.test(g.label)).map((i) => ({ id: i.href, title: i.label, meta: g.label, href: i.href })));

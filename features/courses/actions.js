@@ -234,7 +234,8 @@ export const updateLesson = async (lessonId, input) => {
   const rejected = await verifyNew("document", result.data.attachments, lesson.attachments);
   if (rejected) return fail(rejected.error, "attachments");
   if (lesson.video?.provider === "mux" && lesson.video.status === "ready" && lesson.durationSec) result.data.durationSec = lesson.durationSec;
-  const structural = lesson.status !== result.data.status || lesson.durationSec !== result.data.durationSec;
+  result.data.releaseOn = result.data.releaseOn || null;
+  const structural = lesson.status !== result.data.status || lesson.durationSec !== result.data.durationSec || (lesson.releaseOn ?? null) !== result.data.releaseOn;
   await Lesson.updateOne({ _id: lessonId }, { $set: result.data }, { runValidators: true });
   await destroyRemoved("document", result.data.attachments, lesson.attachments);
   if (lesson.status === "draft" && result.data.status === "published") await announceLesson({ ...lesson.toObject(), ...result.data });

@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ExternalLink, Trash2 } from "lucide-react";
+import { ChartColumn, ExternalLink, Trash2 } from "lucide-react";
 import { deleteCourse } from "@/features/courses/actions";
 import CourseDetailsForm from "@/features/courses/components/course-details-form";
 import SyllabusBuilder from "@/features/courses/components/syllabus-builder";
@@ -40,8 +41,11 @@ const CourseEditor = ({ course, outline, students, owner, teachers = [] }) => {
           {students} enrolled {students === 1 ? "student" : "students"}
           {course.status === "draft" && students > 0 && ` still ${students === 1 ? "has" : "have"} access`}
         </span>
+        <Link href={`/admin/courses/${course.id}/analytics`} className="ml-auto flex items-center gap-1.5 text-sm text-accent hover:underline">
+          <ChartColumn className="size-3.5" /> Lesson analytics
+        </Link>
         {course.status === "published" && (
-          <a href={`/courses/${course.slug}`} target="_blank" rel="noopener noreferrer" className="ml-auto flex items-center gap-1.5 text-sm text-accent hover:underline">
+          <a href={`/courses/${course.slug}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-sm text-accent hover:underline">
             View public page <ExternalLink className="size-3.5" />
           </a>
         )}

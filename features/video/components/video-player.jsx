@@ -20,6 +20,7 @@ const messages = {
   "no-video": "No video has been added to this lesson yet.",
   unavailable: "Video playback is not configured yet.",
   sequence: "Finish the previous lesson to unlock this one.",
+  scheduled: "This lesson opens soon. Check the course outline for the date.",
   busy: "Too many requests. Wait a moment and reload.",
 };
 

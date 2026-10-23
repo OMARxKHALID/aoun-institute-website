@@ -12,8 +12,7 @@ import Enrollment from "@/features/enrollments/model";
 import Review from "@/features/reviews/model";
 import { reviewStats } from "@/features/reviews/queries";
 import { getCourseCountries, getCourseCounts } from "@/features/analytics/public-stats";
-
-const plain = (value) => JSON.parse(JSON.stringify(value));
+import { plain } from "@/lib/format";
 
 export const getAdminCourses = async () => {
   const user = await requireStaff();

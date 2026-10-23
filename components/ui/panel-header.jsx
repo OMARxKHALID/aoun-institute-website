@@ -4,15 +4,9 @@ import { ArrowLeft, Search } from "lucide-react";
 import { getUser, isAdmin, isTeacher } from "@/lib/dal";
 import { imageUrl } from "@/lib/upload-rules";
 import AccountMenu from "@/features/auth/components/account-menu";
+import NotificationBell from "@/features/notifications/components/notification-bell";
 import { searchClass } from "@/lib/ui";
-
-const initials = (name = "") =>
-  name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+import { initials } from "@/lib/format";
 
 const PanelHeader = async ({ title, subtitle, back, query = "", children }) => {
   const user = await getUser();
@@ -47,6 +41,7 @@ const PanelHeader = async ({ title, subtitle, back, query = "", children }) => {
             />
           </Form>
         )}
+        <NotificationBell />
         <AccountMenu role={role}>{user?.image ? <img src={imageUrl(user.image, 96)} alt="" className="size-full object-cover" /> : initials(user?.name)}</AccountMenu>
       </div>
     </header>

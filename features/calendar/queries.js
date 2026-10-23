@@ -1,13 +1,11 @@
 import "server-only";
 import { connectDB } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
-import { TIME_ZONE, dayKey } from "@/lib/format";
+import { dayKey, plain, TIME_ZONE } from "@/lib/format";
 import StudyPlan from "@/features/calendar/model";
 import ActivityLog from "@/features/progress/models/activity-log";
 import Course from "@/features/courses/models/course";
 import Enrollment from "@/features/enrollments/model";
-
-const plain = (value) => JSON.parse(JSON.stringify(value));
 
 const timeOf = (date) => new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: TIME_ZONE }).format(date);
 

@@ -4,7 +4,7 @@ import { dayKey } from "@/lib/format";
 import Coupon from "@/features/coupons/model";
 import { couponCodeSchema } from "@/features/coupons/schemas";
 
-export const discountFor = (coupon, base) => Math.min(base, coupon.kind === "percent" ? Math.round((base * coupon.value) / 100) : coupon.value);
+const discountFor = (coupon, base) => Math.min(base, coupon.kind === "percent" ? Math.round((base * coupon.value) / 100) : coupon.value);
 
 export const couponState = (coupon) => {
   if (!coupon.active) return "paused";
@@ -15,7 +15,7 @@ export const couponState = (coupon) => {
 
 const problems = { paused: "This code is not valid", expired: "This code has expired", "used up": "This code has been used up" };
 
-export const findUsableCoupon = async (code, courseId) => {
+const findUsableCoupon = async (code, courseId) => {
   const parsed = couponCodeSchema.safeParse(code ?? "");
   if (!parsed.success) return { error: "This code is not valid" };
   await connectDB();

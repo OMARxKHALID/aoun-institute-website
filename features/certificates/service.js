@@ -4,6 +4,7 @@ import Certificate from "@/features/certificates/model";
 import ActivityLog from "@/features/progress/models/activity-log";
 import { linkEmail, sendEmail } from "@/lib/email";
 import { SITE_URL } from "@/lib/site";
+import { notifyInApp } from "@/features/notifications/service";
 
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
@@ -23,7 +24,8 @@ export const createCertificate = async ({ user, course, reissuedFrom }) => {
   throw new Error("Could not generate a unique certificate code");
 };
 
-export const notifyCertificate = (user, certificate) => {
+export const notifyCertificate = async (user, certificate) => {
+  await notifyInApp(user.id, { title: "You earned a certificate", text: certificate.courseTitle, path: "/dashboard/certificates" });
   if (user.notifyCertificate === false || !user.email) return null;
   return sendEmail({
     to: user.email,

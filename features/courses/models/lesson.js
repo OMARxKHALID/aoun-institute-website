@@ -8,6 +8,7 @@ const lessonSchema = new Schema(
     order: { type: Number, required: true },
     description: String,
     isFreePreview: { type: Boolean, default: false },
+    releaseOn: { type: String, default: null },
     durationSec: { type: Number, default: 0 },
     status: { type: String, enum: ["draft", "published"], default: "draft" },
     video: {

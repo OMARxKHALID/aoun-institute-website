@@ -2,11 +2,10 @@ import "server-only";
 import { Types } from "mongoose";
 import { connectDB } from "@/lib/db";
 import { requireStaff, requireUser } from "@/lib/dal";
-import { canTeach, courseScope, taughtCourseIds } from "@/features/courses/access";
+import { courseScope } from "@/features/courses/access";
 import Review from "@/features/reviews/model";
 import Course from "@/features/courses/models/course";
-
-const plain = (value) => JSON.parse(JSON.stringify(value));
+import { plain } from "@/lib/format";
 
 export const reviewStats = async (courseIds) => {
   const rows = await Review.aggregate([

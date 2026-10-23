@@ -6,8 +6,7 @@ import Course from "@/features/courses/models/course";
 import Enrollment from "@/features/enrollments/model";
 import Order from "@/features/payments/models/order";
 import Certificate from "@/features/certificates/model";
-
-const plain = (value) => JSON.parse(JSON.stringify(value));
+import { plain } from "@/lib/format";
 
 export const getAdminDashboard = async () => {
   const admin = await requireAdmin();

@@ -1,16 +1,19 @@
 import Link from "next/link";
-import { Award, Download, ExternalLink } from "lucide-react";
+import { Award, Download, ExternalLink, Share2 } from "lucide-react";
 import { getMyCertificates } from "@/features/certificates/queries";
 import PanelHeader from "@/components/ui/panel-header";
 import EmptyState from "@/components/ui/empty-state";
 import StatusPill from "@/components/ui/status-pill";
 import { formatDate } from "@/lib/format";
 import { btn } from "@/lib/ui";
+import { SITE_URL } from "@/lib/site";
+import { getSiteSettings } from "@/features/site-settings/queries";
+import { linkedInAddUrl } from "@/features/certificates/share";
 
 export const metadata = { title: "Certificates" };
 
 const CertificatesPage = async () => {
-  const certificates = await getMyCertificates();
+  const [certificates, { brand }] = await Promise.all([getMyCertificates(), getSiteSettings()]);
   return (
     <>
       <PanelHeader title="Certificates" subtitle="Download your certificates or share their public verification link." />
@@ -38,6 +41,9 @@ const CertificatesPage = async () => {
                     <Link href={`/verify/${c.code}`} className={btn.outline}>
                       <ExternalLink className="size-4" /> Public link
                     </Link>
+                    <a href={linkedInAddUrl({ certificate: c, organization: brand.name, verifyUrl: `${SITE_URL}/verify/${c.code}` })} target="_blank" rel="noopener noreferrer" className={btn.outline}>
+                      <Share2 className="size-4" /> Add to LinkedIn
+                    </a>
                   </div>
                 ) : (
                   <p className="text-sm text-red-400/80">Revoked{c.reason ? `: ${c.reason}` : ""}</p>

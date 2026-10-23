@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { authClient } from "@/lib/auth-client";
-import { cancelAccountDeletion, requestAccountDeletion, updateAvatar, updateNotifications, updateProfile } from "@/features/profile/actions";
+import { cancelAccountDeletion, requestAccountDeletion, setPublicProfile, updateAvatar, updateNotifications, updateProfile } from "@/features/profile/actions";
 import { NOTIFICATIONS, notificationsSchema, passwordSchema, profileSchema } from "@/features/profile/schemas";
 import Field from "@/components/ui/field";
 import Button from "@/components/ui/button";
@@ -16,6 +16,7 @@ import PanelCard from "@/components/ui/panel-card";
 import TabList from "@/components/ui/tab-list";
 import { useDialog } from "@/components/ui/dialog-provider";
 import { formatDate } from "@/lib/format";
+import TwoFactorCard from "@/features/auth/components/two-factor-card";
 
 const applyErrors = (result, setError) => Object.entries(result.errors).forEach(([field, messages]) => setError(field, { message: messages[0] }));
 
@@ -181,23 +182,50 @@ const DangerZone = ({ scheduledFor }) => {
   );
 };
 
-const tabs = ["Profile", "Security", "Notifications"];
+const PublicProfileCard = ({ userId, enabled }) => {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const href = `/learners/${userId}`;
 
-const SettingsForms = ({ profile }) => {
+  const handleToggle = async (e) => {
+    setBusy(true);
+    await setPublicProfile(e.target.checked);
+    setBusy(false);
+    router.refresh();
+  };
+
+  return (
+    <PanelCard title="Public certificate page">
+      <Checkbox label="Show my certificates on a public page" hint="Anyone with the link sees your name and your valid certificates. Nothing else." checked={enabled} disabled={busy} onChange={handleToggle} />
+      {enabled && (
+        <a href={href} target="_blank" rel="noopener noreferrer" className="self-start text-sm text-accent hover:underline">
+          Open my public page
+        </a>
+      )}
+    </PanelCard>
+  );
+};
+
+const SettingsForms = ({ profile, staff = false }) => {
+  const tabs = staff ? ["Profile", "Security"] : ["Profile", "Security", "Notifications"];
   const [tab, setTab] = useState(tabs[0]);
   return (
     <div className="flex flex-col gap-5">
       <TabList tabs={tabs} value={tab} onChange={setTab} label="Settings" />
-      <div hidden={tab !== "Profile"}>
+      <div hidden={tab !== "Profile"} className="flex flex-col gap-5">
         <ProfileForm profile={profile} />
+        {!staff && <PublicProfileCard userId={profile.id} enabled={profile.publicProfile} />}
       </div>
       <div hidden={tab !== "Security"} className="flex flex-col gap-5">
         <PasswordForm hasPassword={profile.hasPassword} />
-        <DangerZone scheduledFor={profile.deletionScheduledFor} />
+        {staff && <TwoFactorCard enabled={profile.twoFactorEnabled} hasPassword={profile.hasPassword} />}
+        {!staff && <DangerZone scheduledFor={profile.deletionScheduledFor} />}
       </div>
-      <div hidden={tab !== "Notifications"}>
-        <NotificationsForm profile={profile} />
-      </div>
+      {!staff && (
+        <div hidden={tab !== "Notifications"}>
+          <NotificationsForm profile={profile} />
+        </div>
+      )}
     </div>
   );
 };

@@ -8,10 +8,15 @@ const playbackRestrictionId = process.env.MUX_PLAYBACK_RESTRICTION_ID;
 
 export const mux = muxEnabled ? new Mux() : null;
 
+const captionsLanguage = process.env.MUX_CAPTIONS_LANGUAGE ?? "en";
+
+const captionInputs = captionsLanguage && captionsLanguage !== "off" ? { inputs: [{ generated_subtitles: [{ language_code: captionsLanguage, name: "Captions (auto)" }] }] } : {};
+
 export const createDirectUpload = (lessonId) =>
   mux.video.uploads.create({
     cors_origin: process.env.BETTER_AUTH_URL,
     new_asset_settings: {
+      ...captionInputs,
       passthrough: lessonId,
       video_quality: drmConfigurationId ? "plus" : "basic",
       advanced_playback_policies: [drmConfigurationId ? { policy: "drm", drm_configuration_id: drmConfigurationId } : { policy: "signed" }],

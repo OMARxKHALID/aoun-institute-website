@@ -46,6 +46,12 @@ export const updateNotifications = async (input) => {
   return { ok: true };
 };
 
+export const setPublicProfile = async (enabled) => {
+  const user = await requireUser();
+  await users().updateOne({ _id: new Types.ObjectId(user.id) }, { $set: { publicProfile: Boolean(enabled) } });
+  return { ok: true };
+};
+
 export const cancelAccountDeletion = async () => {
   const user = await requireUser();
   await users().updateOne({ _id: new Types.ObjectId(user.id) }, { $unset: { deletionRequestedAt: 1 } });

@@ -32,6 +32,7 @@ const SettingsForm = ({ quiz }) => {
       description: quiz.description ?? "",
       passingPercent: quiz.passingPercent,
       maxAttempts: quiz.maxAttempts ?? null,
+      drawCount: quiz.drawCount ?? null,
       timeLimitMin: quiz.timeLimitSec ? Math.round(quiz.timeLimitSec / 60) : null,
       shuffleQuestions: quiz.shuffleQuestions,
       shuffleOptions: quiz.shuffleOptions,
@@ -62,6 +63,7 @@ const SettingsForm = ({ quiz }) => {
       <Field label="Instructions (optional)" rows={3} className="md:col-span-2" error={errors.description?.message} {...register("description")} />
       <Field label="Pass mark (%)" type="number" min="0" max="100" error={errors.passingPercent?.message} {...register("passingPercent", { valueAsNumber: true })} />
       <Field label="Max attempts (empty = unlimited)" type="number" min="1" error={errors.maxAttempts?.message} {...register("maxAttempts", optionalNumber)} />
+      <Field label="Questions per attempt (empty = all)" type="number" min="1" error={errors.drawCount?.message} {...register("drawCount", optionalNumber)} />
       <Field label="Time limit in minutes (empty = none)" type="number" min="0" error={errors.timeLimitMin?.message} {...register("timeLimitMin", optionalNumber)} />
       <Field label="Show correct answers" options={SHOW_ANSWERS} error={errors.showAnswers?.message} {...register("showAnswers")} />
       <Field label="Question layout" options={DISPLAY_MODES} error={errors.displayMode?.message} {...register("displayMode")} />

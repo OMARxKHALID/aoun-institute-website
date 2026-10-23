@@ -8,6 +8,7 @@ import Enrollment from "@/features/enrollments/model";
 import LessonProgress from "@/features/progress/models/lesson-progress";
 import { buildOutline } from "@/features/progress/service";
 import { muxEnabled, signPlayback } from "@/features/video/mux";
+import { dayKey } from "@/lib/format";
 
 const denied = (reason) => ({ ok: false, reason });
 
@@ -15,6 +16,7 @@ const access = async (lesson, user) => {
   if (user && (await canTeach(user, lesson.courseId))) return { enrolled: false };
   const course = await Course.findById(lesson.courseId, "status sequentialUnlock").lean();
   if (!course || lesson.status !== "published") return { reason: "not-found" };
+  if (lesson.releaseOn && lesson.releaseOn > dayKey()) return { reason: "scheduled" };
   const enrolled = user && (await Enrollment.exists({ userId: user.id, courseId: lesson.courseId, status: "active" }));
   if (!enrolled) {
     if (course.status !== "published") return { reason: "not-found" };
@@ -31,7 +33,7 @@ const access = async (lesson, user) => {
 export const getPlayback = async (lessonId, user) => {
   if (!isValidObjectId(lessonId)) return denied("not-found");
   await connectDB();
-  const lesson = await Lesson.findById(lessonId, "courseId title status isFreePreview durationSec video").lean();
+  const lesson = await Lesson.findById(lessonId, "courseId title status isFreePreview releaseOn durationSec video").lean();
   if (!lesson) return denied("not-found");
   const { reason, enrolled } = await access(lesson, user);
   if (reason) return denied(reason);

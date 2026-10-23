@@ -26,6 +26,7 @@ const LessonForm = ({ lesson }) => {
       status: lesson.status,
       durationMin: toMinutes(lesson.durationSec),
       attachments: lesson.attachments ?? [],
+      releaseOn: lesson.releaseOn ?? "",
     },
   });
   const { errors, isSubmitting } = formState;
@@ -48,6 +49,7 @@ const LessonForm = ({ lesson }) => {
       <Field label="Status" options={STATUS_OPTIONS} error={errors.status?.message} {...register("status")} />
       <Field label="Description" rows={4} className="md:col-span-2" error={errors.description?.message} {...register("description")} />
       <Field label="Duration (minutes, auto-filled for uploads)" type="number" min="0" step="1" error={errors.durationMin?.message ?? errors.durationSec?.message} {...register("durationMin", { valueAsNumber: true })} />
+      <Field label="Opens on (optional)" type="date" error={errors.releaseOn?.message} {...register("releaseOn")} />
       <Checkbox label="Free preview" hint="Anyone can watch this lesson before buying." {...register("isFreePreview")} />
       <div className="md:col-span-2">
         <Controller control={control} name="attachments" render={({ field }) => <AttachmentsField value={field.value} onChange={field.onChange} error={errors.attachments?.message} />} />

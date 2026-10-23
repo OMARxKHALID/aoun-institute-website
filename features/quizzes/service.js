@@ -36,7 +36,9 @@ export const findQuizState = async (user, quizId) => {
 export const createAttempt = async (user, quiz) => {
   const questions = await Question.find({ quizId: quiz._id }, "_id options._id").sort({ order: 1 }).lean();
   if (!questions.length) return null;
-  const ordered = quiz.shuffleQuestions ? shuffle(questions) : questions;
+  const drawn = quiz.drawCount && quiz.drawCount < questions.length ? new Set(shuffle(questions).slice(0, quiz.drawCount)) : null;
+  const pool = drawn ? questions.filter((q) => drawn.has(q)) : questions;
+  const ordered = quiz.shuffleQuestions ? shuffle(pool) : pool;
   const optionOrder = Object.fromEntries(ordered.map((q) => [String(q._id), quiz.shuffleOptions ? shuffle(q.options.map((o) => o._id)) : q.options.map((o) => o._id)]));
   const count = await QuizAttempt.countDocuments({ userId: user.id, quizId: quiz._id });
   const now = Date.now();

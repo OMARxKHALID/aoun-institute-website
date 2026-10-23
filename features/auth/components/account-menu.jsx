@@ -1,17 +1,18 @@
 "use client";
 
-import { LayoutDashboard, LogOut, Settings } from "lucide-react";
+import { LayoutDashboard, LogOut, Settings, UserRound } from "lucide-react";
 import ActionMenu from "@/components/ui/action-menu";
 import { useSignOut } from "@/features/auth/hooks/use-sign-out";
 
 const links = {
   owner: [
     { label: "Overview", icon: LayoutDashboard, href: "/admin" },
+    { label: "My profile", icon: UserRound, href: "/admin/profile" },
     { label: "Site settings", icon: Settings, href: "/admin/settings" },
   ],
   teacher: [
     { label: "My courses", icon: LayoutDashboard, href: "/admin/courses" },
-    { label: "Settings", icon: Settings, href: "/dashboard/settings" },
+    { label: "My profile", icon: UserRound, href: "/admin/profile" },
   ],
   student: [
     { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },

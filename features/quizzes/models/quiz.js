@@ -10,6 +10,7 @@ const quizSchema = new Schema(
     order: { type: Number, default: 0 },
     passingPercent: { type: Number, min: 0, max: 100, default: 70 },
     maxAttempts: { type: Number, min: 1, default: null },
+    drawCount: { type: Number, min: 1, default: null },
     timeLimitSec: { type: Number, min: 0, default: null },
     shuffleQuestions: { type: Boolean, default: false },
     shuffleOptions: { type: Boolean, default: false },

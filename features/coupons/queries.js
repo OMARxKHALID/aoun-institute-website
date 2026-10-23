@@ -4,8 +4,7 @@ import { requireAdmin } from "@/lib/dal";
 import Course from "@/features/courses/models/course";
 import Coupon from "@/features/coupons/model";
 import { couponState } from "@/features/coupons/pricing";
-
-const plain = (value) => JSON.parse(JSON.stringify(value));
+import { plain } from "@/lib/format";
 
 export const getAdminCoupons = async () => {
   await requireAdmin();

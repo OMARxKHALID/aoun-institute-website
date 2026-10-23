@@ -9,8 +9,7 @@ import CourseProgress from "@/features/progress/models/course-progress";
 import Order from "@/features/payments/models/order";
 import Certificate from "@/features/certificates/model";
 import QuizAttempt from "@/features/quizzes/models/quiz-attempt";
-
-const plain = (value) => JSON.parse(JSON.stringify(value));
+import { plain } from "@/lib/format";
 
 export const getAdminStudents = async () => {
   const viewer = await requireStaff();

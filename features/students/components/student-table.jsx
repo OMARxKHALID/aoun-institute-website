@@ -8,20 +8,12 @@ import DataTable from "@/components/ui/data-table";
 import ActionMenu from "@/components/ui/action-menu";
 import StatusPill from "@/components/ui/status-pill";
 import TabList from "@/components/ui/tab-list";
-import { formatDate, formatPrice } from "@/lib/format";
+import { formatDate, formatPrice, initials } from "@/lib/format";
 import { imageUrl } from "@/lib/upload-rules";
 
 const helper = createColumnHelper();
 
 const statusLabel = { active: "active", banned: "banned", deletion: "wants deletion", unverified: "unverified" };
-
-const initials = (name = "") =>
-  name
-    .split(" ")
-    .map((p) => p[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 
 const columns = helper.columns([
   helper.accessor("name", {

@@ -5,8 +5,7 @@ import { requireUser } from "@/lib/dal";
 import Note from "@/features/notes/model";
 import Course from "@/features/courses/models/course";
 import Lesson from "@/features/courses/models/lesson";
-
-const plain = (value) => JSON.parse(JSON.stringify(value));
+import { plain } from "@/lib/format";
 
 export const getLessonNotes = async (lessonId) => {
   const user = await requireUser();

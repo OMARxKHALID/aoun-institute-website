@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CheckCircle2, Circle, CircleX, FileQuestion, Lock, PlayCircle } from "lucide-react";
-import { formatDuration } from "@/lib/format";
+import { formatDate, formatDuration } from "@/lib/format";
 
 const lessonIcon = {
   completed: { icon: CheckCircle2, tone: "text-green-400", label: "Completed" },
@@ -63,14 +63,18 @@ const CourseOutline = ({ slug, outline, currentId, compact }) => (
               <>
                 <state.icon className={`size-4 shrink-0 ${state.tone}`} aria-label={state.label} />
                 <span className="min-w-0 flex-1 truncate">{lesson.title}</span>
-                {lesson.durationSec > 0 && <span className="shrink-0 text-xs text-white/50">{formatDuration(lesson.durationSec)}</span>}
+                {lesson.opensOn ? (
+                  <span className="shrink-0 text-xs text-amber-300">Opens {formatDate(lesson.opensOn)}</span>
+                ) : (
+                  lesson.durationSec > 0 && <span className="shrink-0 text-xs text-white/50">{formatDuration(lesson.durationSec)}</span>
+                )}
               </>
             );
             const className = `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${current ? "bg-accent/15 text-white" : "text-white/70 hover:bg-white/5"}`;
             return (
               <li key={lesson.id} className="flex flex-col gap-1">
                 {lesson.status === "locked" ? (
-                  <span className={`${className} cursor-not-allowed text-white/50 hover:bg-transparent`} title="Finish the previous lesson to unlock">
+                  <span className={`${className} cursor-not-allowed text-white/50 hover:bg-transparent`} title={lesson.opensOn ? `Opens ${formatDate(lesson.opensOn)}` : "Finish the previous lesson to unlock"}>
                     {inner}
                   </span>
                 ) : (

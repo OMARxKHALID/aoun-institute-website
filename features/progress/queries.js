@@ -2,7 +2,7 @@ import "server-only";
 import { isValidObjectId } from "mongoose";
 import { connectDB } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
-import { TIME_ZONE, dayKey } from "@/lib/format";
+import { dayKey, plain, TIME_ZONE } from "@/lib/format";
 import Course from "@/features/courses/models/course";
 import Lesson from "@/features/courses/models/lesson";
 import Enrollment from "@/features/enrollments/model";
@@ -17,8 +17,6 @@ import { evaluateBadges } from "@/features/progress/badges";
 import Note from "@/features/notes/model";
 import Review from "@/features/reviews/model";
 import Discussion from "@/features/discussions/model";
-
-const plain = (value) => JSON.parse(JSON.stringify(value));
 
 export const getMyCourses = async () => {
   const user = await requireUser();

@@ -2,12 +2,11 @@ import "server-only";
 import { isValidObjectId } from "mongoose";
 import { connectDB } from "@/lib/db";
 import { requireStaff, requireUser } from "@/lib/dal";
-import { canTeach, courseScope, taughtCourseIds } from "@/features/courses/access";
+import { courseScope } from "@/features/courses/access";
 import Discussion from "@/features/discussions/model";
 import Course from "@/features/courses/models/course";
 import Lesson from "@/features/courses/models/lesson";
-
-const plain = (value) => JSON.parse(JSON.stringify(value));
+import { plain } from "@/lib/format";
 
 const threads = async (questions, viewerId) => {
   const replies = await Discussion.find({ parentId: { $in: questions.map((q) => q._id) } }).sort({ createdAt: 1 }).lean();

@@ -2,7 +2,7 @@ import { getUser } from "@/lib/dal";
 import { rateLimit } from "@/lib/rate-limit";
 import { getPlayback } from "@/features/video/queries";
 
-const statusFor = { "not-found": 404, login: 401, locked: 403 };
+const statusFor = { "not-found": 404, login: 401, locked: 403, scheduled: 403 };
 
 export const GET = async (_request, { params }) => {
   const { lessonId } = await params;

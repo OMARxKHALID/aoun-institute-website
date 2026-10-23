@@ -14,8 +14,7 @@ import Enrollment from "@/features/enrollments/model";
 import { buildOutline } from "@/features/progress/service";
 import { findQuizState, gradeAttempt, isExpired } from "@/features/quizzes/service";
 import { isAnswerCorrect } from "@/features/quizzes/grading";
-
-const plain = (value) => JSON.parse(JSON.stringify(value));
+import { plain } from "@/lib/format";
 
 export const getQuizForEdit = async (courseId, quizId) => {
   const user = await requireStaff();
@@ -52,7 +51,7 @@ export const getStudentQuiz = async (quizId) => {
     QuizAttempt.find({ userId: user.id, quizId }, "attemptNo status percent passed score maxScore startedAt submittedAt").sort({ attemptNo: -1 }).lean(),
   ]);
   return plain({
-    quiz: { id: String(quiz._id), title: quiz.title, description: quiz.description, passingPercent: quiz.passingPercent, maxAttempts: state.maxAttempts, timeLimitSec: quiz.timeLimitSec, questionCount },
+    quiz: { id: String(quiz._id), title: quiz.title, description: quiz.description, passingPercent: quiz.passingPercent, maxAttempts: state.maxAttempts, timeLimitSec: quiz.timeLimitSec, questionCount: quiz.drawCount ? Math.min(quiz.drawCount, questionCount) : questionCount },
     course: { title: course.title, slug: course.slug },
     lesson: lesson ? { id: lesson.id, title: lesson.title } : null,
     state,

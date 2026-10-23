@@ -57,7 +57,7 @@ export const updateQuizSettings = async (quizId, input) => {
   if (!quiz) return fail("Quiz not found");
   const { timeLimitMin, ...data } = result.data;
   if (data.status === "published" && !(await Question.exists({ quizId }))) return fail("Add at least one question before publishing", "status");
-  await Quiz.updateOne({ _id: quizId }, { $set: { ...data, maxAttempts: data.maxAttempts ?? null, timeLimitSec: timeLimitMin ? Math.round(timeLimitMin * 60) : null } });
+  await Quiz.updateOne({ _id: quizId }, { $set: { ...data, maxAttempts: data.maxAttempts ?? null, drawCount: data.drawCount ?? null, timeLimitSec: timeLimitMin ? Math.round(timeLimitMin * 60) : null } });
   await touch(quiz.courseId);
   if (quiz.status === "draft" && data.status === "published") {
     const course = await Course.findById(quiz.courseId, "title status").lean();

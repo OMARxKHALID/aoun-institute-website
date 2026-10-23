@@ -7,6 +7,7 @@ import QuizAttempt from "@/features/quizzes/models/quiz-attempt";
 import AttemptGrant from "@/features/quizzes/models/attempt-grant";
 import LessonProgress from "@/features/progress/models/lesson-progress";
 import CourseProgress from "@/features/progress/models/course-progress";
+import { dayKey } from "@/lib/format";
 
 export const COMPLETE_RATIO = 0.9;
 
@@ -35,7 +36,7 @@ export const buildOutline = async (userId, courseId) => {
   if (!course) return null;
   const [sections, lessons, quizzes, progress] = await Promise.all([
     Section.find({ courseId }, "title order").sort({ order: 1 }).lean(),
-    Lesson.find({ courseId, status: "published" }, "sectionId title order durationSec isFreePreview video.provider video.status attachments description").sort({ order: 1 }).lean(),
+    Lesson.find({ courseId, status: "published" }, "sectionId title order durationSec isFreePreview releaseOn video.provider video.status attachments description").sort({ order: 1 }).lean(),
     Quiz.find({ courseId, status: "published" }, "sectionId lessonId title order passingPercent maxAttempts timeLimitSec requiredForCertificate").sort({ order: 1 }).lean(),
     LessonProgress.find({ userId, courseId }, "lessonId percent lastPosition completedAt").lean(),
   ]);
@@ -43,6 +44,7 @@ export const buildOutline = async (userId, courseId) => {
   const progressBy = new Map(progress.map((p) => [id(p.lessonId), p]));
 
   let previousDone = true;
+  const today = dayKey();
   const outline = sections
     .map((section) => {
       const sectionLessons = lessons
@@ -50,7 +52,8 @@ export const buildOutline = async (userId, courseId) => {
         .map((l) => {
           const p = progressBy.get(id(l._id));
           const completed = Boolean(p?.completedAt);
-          const locked = course.sequentialUnlock && !previousDone;
+          const opensOn = l.releaseOn && l.releaseOn > today ? l.releaseOn : null;
+          const locked = Boolean(opensOn) || (course.sequentialUnlock && !previousDone);
           previousDone = completed;
           return {
             id: id(l._id),
@@ -60,6 +63,7 @@ export const buildOutline = async (userId, courseId) => {
             provider: l.video?.provider,
             percent: Math.round((p?.percent ?? 0) * 100),
             lastPosition: p?.lastPosition ?? 0,
+            opensOn,
             status: completed ? "completed" : locked ? "locked" : p ? "in_progress" : "available",
           };
         });

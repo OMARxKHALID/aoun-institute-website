@@ -12,6 +12,7 @@ import Note from "@/features/notes/model";
 import StudyPlan from "@/features/calendar/model";
 import Review from "@/features/reviews/model";
 import Discussion from "@/features/discussions/model";
+import Notification from "@/features/notifications/model";
 
 export const DELETION_GRACE_DAYS = 30;
 
@@ -29,6 +30,7 @@ export const eraseStudyData = (userId) =>
     Note.deleteMany({ userId }),
     StudyPlan.deleteMany({ userId }),
     Review.deleteMany({ userId }),
+    Notification.deleteMany({ userId }),
     Discussion.updateMany({ userId }, { $set: { authorName: "Former student" } }),
   ]);
 
