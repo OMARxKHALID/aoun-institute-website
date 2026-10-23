@@ -88,6 +88,10 @@ _Avoid_: Failed, declined
 An order closed without review because another payment for the same course replaced it. It is never reopened.
 _Avoid_: Failed, superseded
 
+**Invoice**:
+A PDF record of what a student paid for an order: course, any coupon, total, method and date. Paid and refunded orders have one; only the order's student and the owner can open it.
+_Avoid_: Receipt, bill
+
 **Refund request**:
 A student's request to have a paid order refunded, with a reason. The owner either refunds the order, which ends the enrollment, or declines with a reason and the student keeps access.
 _Avoid_: Refund claim, cancellation

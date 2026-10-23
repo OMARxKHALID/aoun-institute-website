@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createColumnHelper } from "@tanstack/react-table";
-import { Undo2 } from "lucide-react";
+import { FileText, Undo2 } from "lucide-react";
 import { requestRefund } from "@/features/payments/actions";
 import DataTable from "@/components/ui/data-table";
 import ActionMenu from "@/components/ui/action-menu";
@@ -20,6 +20,8 @@ const refundPill = {
   approved: { label: "refunded", tone: "gray" },
   declined: { label: "refund declined", tone: "red" },
 };
+
+const hasInvoice = (order) => order.status === "PAID" || order.status === "REFUNDED";
 
 const MyOrdersTable = ({ orders }) => {
   const dialog = useDialog();
@@ -86,8 +88,11 @@ const MyOrdersTable = ({ orders }) => {
     helper.display({
       id: "actions",
       header: "",
-      cell: ({ row }) =>
-        row.original.canRequestRefund ? <ActionMenu label={`Actions for ${row.original.course}`} items={[{ label: "Request a refund", icon: Undo2, onClick: () => handleRefund(row.original) }]} /> : null,
+      cell: ({ row }) => {
+        const o = row.original;
+        const items = [hasInvoice(o) && { label: "Download invoice", icon: FileText, href: `/api/orders/${o.id}/invoice`, external: true }, o.canRequestRefund && { label: "Request a refund", icon: Undo2, onClick: () => handleRefund(o) }].filter(Boolean);
+        return items.length ? <ActionMenu label={`Actions for ${o.course}`} items={items} /> : null;
+      },
     }),
   ]);
 

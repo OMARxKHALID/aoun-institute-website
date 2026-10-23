@@ -93,13 +93,16 @@ const OrderActions = ({ order, onResult }) => {
     if (note) run(() => declineRefund(order.id, { note }));
   };
 
+  const invoiceItem = { label: "Download invoice", icon: FileText, href: `/api/orders/${order.id}/invoice`, external: true };
+
   if (order.status === "PAID")
     return (
       <ActionMenu
         label={`Actions for order by ${order.student}`}
-        items={[{ label: "Mark refunded & remove access", icon: Undo2, danger: true, onClick: handleRefund }, refundOpen(order) && { label: "Decline refund request", icon: Ban, onClick: handleDecline }]}
+        items={[invoiceItem, { label: "Mark refunded & remove access", icon: Undo2, danger: true, onClick: handleRefund }, refundOpen(order) && { label: "Decline refund request", icon: Ban, onClick: handleDecline }]}
       />
     );
+  if (order.status === "REFUNDED") return <ActionMenu label={`Actions for order by ${order.student}`} items={[invoiceItem]} />;
   if (order.status !== "PENDING") return <span className="text-sm text-white/50">{order.note}</span>;
 
   return (

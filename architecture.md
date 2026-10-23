@@ -53,7 +53,7 @@ app/
   admin/       layout.js, page.js, courses/, courses/new/, courses/[id]/, courses/[id]/lessons/[lessonId]/, courses/[id]/quizzes/[quizId]/,
                quizzes/[id]/results/, students/, students/[id]/, orders/, certificates/, announcements/, settings/
   api/auth/[...all]/route.js · api/webhooks/mux/route.js · api/lessons/[lessonId]/playback/route.js · api/progress/route.js
-  api/certificates/[code]/pdf/route.js · api/admin/orders/[id]/receipt/route.js · api/admin/quiz-results/[quizId]/route.js (CSV)
+  api/certificates/[code]/pdf/route.js · api/orders/[id]/invoice/route.js · api/admin/orders/[id]/receipt/route.js · api/admin/quiz-results/[quizId]/route.js (CSV)
 features/<name>/   model(s).js · schemas.js · actions.js · queries.js · components/ · (providers/, store.js, *.test.js)
   auth · site-settings · courses · video · payments · enrollments · progress · quizzes ·
   certificates · announcements · students · analytics · profile · notifications

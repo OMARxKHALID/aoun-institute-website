@@ -1,7 +1,7 @@
 import "server-only";
 import { Types } from "mongoose";
 import { connectDB, db } from "@/lib/db";
-import { requireAdmin, requireUser } from "@/lib/dal";
+import { isAdmin, requireAdmin, requireUser } from "@/lib/dal";
 import Course from "@/features/courses/models/course";
 import Order from "@/features/payments/models/order";
 
@@ -47,4 +47,29 @@ export const getMyOrders = async () => {
     canRequestRefund: o.status === "PAID" && o.amount > 0 && o.refundRequest?.status !== "open",
     createdAt: o.createdAt.toISOString(),
   }));
+};
+
+export const getInvoice = async (orderId, user) => {
+  if (!user || !Types.ObjectId.isValid(orderId)) return null;
+  await connectDB();
+  const order = await Order.findOne({ _id: orderId, status: { $in: ["PAID", "REFUNDED"] }, ...(isAdmin(user) ? {} : { userId: user.id }) })
+    .populate({ path: "courseId", select: "title", model: Course })
+    .lean();
+  if (!order) return null;
+  const student = Types.ObjectId.isValid(order.userId) ? await db.collection("user").findOne({ _id: new Types.ObjectId(order.userId) }, { projection: { name: 1, email: 1 } }) : null;
+  const paidAt = order.paidAt ?? order.updatedAt;
+  return {
+    number: `INV-${new Date(paidAt).getFullYear()}-${String(order._id).slice(-8).toUpperCase()}`,
+    studentName: student?.name ?? "Former student",
+    studentEmail: student?.email ?? "",
+    courseTitle: order.courseId?.title ?? "Deleted course",
+    currency: order.currency,
+    amount: order.amount,
+    subtotal: order.amount + (order.coupon?.discount ?? 0),
+    coupon: order.coupon?.code ? { code: order.coupon.code, discount: order.coupon.discount } : null,
+    method: order.method ?? order.provider,
+    reference: order.providerRef?.replace(/^manual:/, "") ?? "",
+    paidAt,
+    refundedAt: order.status === "REFUNDED" ? (order.refundedAt ?? order.updatedAt) : null,
+  };
 };
