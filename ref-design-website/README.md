@@ -20,8 +20,13 @@ Reference only — study layout/rhythm, never copy assets, copy text or photos.
 | 13 | `13-submit-projects.png` | /submit-projects | redirects to Sign In (auth-gated) |
 | 14 | `14-bootcamp.png` | bootcamp.sheryians.com | 14.1k |
 | 15 | `15-offline.png` | offline.sheryians.com | 16.2k |
+| 16 | `16-course-detail-data-science.png` | /courses/data-science-and-analytics-with-genai | 10.9k |
+| 17 | `17-course-detail-data-analytics.png` | /courses/complete-data-analytics | 11.2k |
+| 18 | `18-course-detail-cohort-2.png` | /courses/2-0-job-ready-ai-powered-cohort | 9.2k |
 
-Capture caveats: `04` shows a "Get Discount" modal over the hero (auto popup). `15` has a long empty black band where a GSAP scroll-pinned section did not render in a static capture.
+Capture notes: course pages auto-open a "Get Discount" modal; it was hidden with CSS before capture on `04` and `18`. `15` was stitched from viewport shots because its scroll-pinned section breaks full-page capture (small seams visible).
+
+Comparison with the Aoun public pages: see `comparison.md` (Aoun shots in `screenshots/aoun/`).
 
 ---
 
@@ -145,3 +150,5 @@ Our brand is already black/orange/cream — very close match. Worth adopting:
 - Glows (radial gradients) for depth instead of shadows.
 
 Avoid: auto discount popup on load, and inconsistent sub-brand styles (Hire/Jobs look like different companies).
+
+Landing page deep-dive (components, motion, scroll, responsive): see `landing-comparison.md` (shots in `screenshots/responsive/`).
