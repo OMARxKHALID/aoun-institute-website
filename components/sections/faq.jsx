@@ -18,7 +18,7 @@ const FaqItem = ({ q, a, open, onToggle }) => (
   </div>
 );
 
-const Faq = ({ faqs }) => {
+const Faq = ({ faqs, heading = true }) => {
   const [openIndex, setOpenIndex] = useState(0);
 
   const handleToggle = (i) => () => setOpenIndex((cur) => (cur === i ? -1 : i));
@@ -26,7 +26,7 @@ const Faq = ({ faqs }) => {
   return (
     <section className="relative isolate flex w-full flex-col items-center justify-center gap-10 overflow-hidden bg-black px-18 pb-20 max-md:px-8">
       <div className="pointer-events-none absolute bottom-[5%] left-1/2 -z-10 h-[400px] w-[60%] -translate-x-1/2 rounded-full bg-accent opacity-10 blur-3xl" />
-      <SectionHeading tag="FAQs" title="Frequently asked questions from our learners" />
+      {heading && <SectionHeading tag="FAQs" title="Frequently asked questions from our learners" />}
       <div className="flex flex-col gap-6 max-md:w-full md:gap-4">
         {faqs.map((f, i) => (
           <FaqItem key={f.q} {...f} open={openIndex === i} onToggle={handleToggle(i)} />

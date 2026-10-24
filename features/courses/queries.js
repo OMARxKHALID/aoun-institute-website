@@ -1,6 +1,6 @@
 import "server-only";
 import { cacheTag } from "next/cache";
-import { isValidObjectId } from "mongoose";
+import { Types, isValidObjectId } from "mongoose";
 import { connectDB, db, hasDatabase } from "@/lib/db";
 import { isAdmin, requireStaff } from "@/lib/dal";
 import { canTeach } from "@/features/courses/access";
@@ -88,12 +88,12 @@ export const getFreePreviews = async () => {
   cacheTag("catalog");
   if (noDatabase()) return [];
   await connectDB();
-  const courses = await Course.find({ status: "published" }, "title slug category").lean();
+  const courses = await Course.find({ status: "published" }, "title slug category thumbnail").lean();
   const lessons = await Lesson.find({ courseId: { $in: courses.map((c) => c._id) }, status: "published", isFreePreview: true, "video.status": "ready" }, "courseId title durationSec").sort({ order: 1 }).limit(12).lean();
   const byId = new Map(courses.map((c) => [String(c._id), c]));
   return lessons.map((l) => {
     const course = byId.get(String(l.courseId));
-    return { id: String(l._id), title: l.title, durationSec: l.durationSec, course: course.title, slug: course.slug, category: course.category };
+    return { id: String(l._id), title: l.title, durationSec: l.durationSec, course: course.title, slug: course.slug, category: course.category, thumbnail: course.thumbnail?.url ?? null };
   });
 };
 
@@ -118,11 +118,13 @@ export const getPublicCourse = async (slug) => {
         .map((l) => ({ id: String(l._id), title: l.title, durationSec: l.durationSec, preview: l.isFreePreview && l.video?.status === "ready" })),
     }))
     .filter((s) => s.lessons.length);
-  const [ratings, reviews, counts, countries] = await Promise.all([
+  const teacherIds = (course.teacherIds ?? []).map(String).filter(isValidObjectId).map((id) => new Types.ObjectId(id));
+  const [ratings, reviews, counts, countries, teachers] = await Promise.all([
     reviewStats([course._id]),
     Review.find({ courseId: course._id, status: "published" }, "studentName rating body reply createdAt").sort({ createdAt: -1 }).limit(12).lean(),
     getCourseCounts([course._id]),
     getCourseCountries(course._id),
+    teacherIds.length ? db.collection("user").find({ _id: { $in: teacherIds } }, { projection: { name: 1, image: 1, bio: 1 } }).toArray() : [],
   ]);
   return plain({
     ...course,
@@ -134,6 +136,7 @@ export const getPublicCourse = async (slug) => {
     students: counts.enrolled.get(String(course._id)) ?? 0,
     graduates: counts.graduated.get(String(course._id)) ?? 0,
     countries,
+    teachers: teachers.map((t) => ({ id: String(t._id), name: t.name, image: t.image ?? null, bio: t.bio ?? "" })),
   });
 };
 

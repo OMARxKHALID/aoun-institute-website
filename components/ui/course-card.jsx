@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BookOpen, Clock, MoveUpRight, Signal, Star, Users } from "lucide-react";
-import { formatDuration, formatPrice, plural } from "@/lib/format";
+import { discountPercent, formatDuration, formatPrice, plural } from "@/lib/format";
 import { imageUrl } from "@/lib/upload-rules";
 
 const priceLabel = (price, discountPrice, currency) => (price === 0 || discountPrice === 0 ? "Free" : formatPrice(discountPrice ?? price, currency));
@@ -82,6 +82,9 @@ const FullCard = ({ slug, title, subtitle, category, level, thumbnail, price, di
       <p className="border-t border-white/10 pt-4 text-2xl font-medium">
         {priceLabel(price, discountPrice, currency)}
         {discountPrice != null && discountPrice < price && <span className="ml-2 text-base font-normal text-white/50 line-through">{formatPrice(price, currency)}</span>}
+        {discountPercent(price, discountPrice) > 0 && discountPrice > 0 && (
+          <span className="float-right mt-1 rounded-md border border-accent/40 bg-accent/15 px-2 py-0.5 text-sm font-medium text-accent">{discountPercent(price, discountPrice)}% OFF</span>
+        )}
       </p>
     </div>
   </Link>

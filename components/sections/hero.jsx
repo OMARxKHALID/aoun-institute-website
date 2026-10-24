@@ -4,6 +4,7 @@ import CornerDots from "@/components/ui/corner-dots";
 import GlowButton from "@/components/ui/glow-button";
 import AvatarStack from "@/components/ui/avatar-stack";
 import HeroBackground from "@/components/ui/hero-background";
+import StaggerIn from "@/components/motion/stagger-in";
 import { imageUrl } from "@/lib/upload-rules";
 
 const StatCard = ({ icon, value, label, text }) => (
@@ -37,6 +38,7 @@ const Hero = ({ hero, stats: fallback, live, courses = [] }) => {
 
   <section className="mt-50 flex w-full flex-col items-center justify-center gap-3 overflow-hidden px-18 max-md:mt-36 max-md:px-8 md:gap-6">
     <HeroBackground />
+    <StaggerIn className="flex w-full flex-col items-center gap-3 md:gap-6">
     <h4 className="mb-2 text-center uppercase text-accent md:text-2xl">{hero.eyebrow}</h4>
     <h1 className="w-[90%] text-center font-machina text-[2.7rem] font-normal capitalize tracking-tight max-sm:leading-[3.4rem] md:text-[5rem] md:leading-20 lg:w-[70%] lg:text-[4.7rem]">
       {hero.title}{" "}
@@ -55,6 +57,7 @@ const Hero = ({ hero, stats: fallback, live, courses = [] }) => {
       learners building in our programs
     </div>
     <GlowButton href="/courses" className="mb-10 mt-5">Start Journey</GlowButton>
+    </StaggerIn>
 
     <div className="mt-14 flex w-full flex-col gap-6 rounded-2xl border border-[#302C2A] p-7 lg:w-[80%] lg:flex-row">
       <div className="w-full gap-6 max-md:space-y-6 md:grid md:grid-cols-2 md:grid-rows-2 lg:w-1/2">

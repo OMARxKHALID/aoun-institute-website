@@ -1,19 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Lock, PlayCircle, X } from "lucide-react";
-import VideoPlayer from "@/features/video/components/video-player";
+import { useState } from "react";
+import { Lock, PlayCircle } from "lucide-react";
+import PreviewModal from "@/features/courses/components/preview-modal";
 import { formatDuration, plural } from "@/lib/format";
 
 const CourseCurriculum = ({ outline }) => {
   const [preview, setPreview] = useState(null);
-
-  useEffect(() => {
-    if (!preview) return;
-    const handleKey = (e) => e.key === "Escape" && setPreview(null);
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, [preview]);
 
   const handleOpen = (lesson) => () => setPreview(lesson);
   const handleClose = () => setPreview(null);
@@ -49,19 +42,7 @@ const CourseCurriculum = ({ outline }) => {
         </details>
       ))}
 
-      {preview && (
-        <div role="dialog" aria-modal="true" aria-label={preview.title} className="fixed inset-0 z-[60] grid place-items-center bg-black/85 p-4 backdrop-blur-sm" onClick={handleClose}>
-          <div className="flex w-full max-w-4xl flex-col gap-3" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between gap-4 text-white">
-              <p className="truncate text-lg">{preview.title}</p>
-              <button type="button" onClick={handleClose} aria-label="Close preview" className="rounded-full p-2 hover:bg-white/10">
-                <X className="size-5" />
-              </button>
-            </div>
-            <VideoPlayer lessonId={preview.id} title={preview.title} />
-          </div>
-        </div>
-      )}
+      <PreviewModal lesson={preview} onClose={handleClose} />
     </div>
   );
 };

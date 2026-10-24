@@ -1,5 +1,5 @@
 import { Award, BookOpen, CalendarDays } from "lucide-react";
-import { formatDuration, formatPrice } from "@/lib/format";
+import { discountPercent, formatDuration, formatPrice } from "@/lib/format";
 import SectionHeading from "@/components/ui/section-heading";
 import GlowButton from "@/components/ui/glow-button";
 import RollText from "@/components/ui/roll-text";
@@ -42,6 +42,9 @@ const CourseCard = ({ slug, title, subtitle, thumbnail, price, discountPrice, cu
             <p className="my-6 text-3xl font-medium md:my-8 md:text-5xl lg:my-6">
               Price <span className="text-black">{free ? "Free" : formatPrice(discountPrice ?? price, currency)}</span>
               {!free && discountPrice != null && <span className="ml-2 text-xl line-through">{formatPrice(price, currency)}</span>}
+              {!free && discountPercent(price, discountPrice) > 0 && (
+                <span className="ml-3 inline-block rounded-md bg-black px-2 py-1 align-middle text-base font-medium text-white">{discountPercent(price, discountPrice)}% OFF</span>
+              )}
             </p>
           )}
           <Link

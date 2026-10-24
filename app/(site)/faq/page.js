@@ -9,7 +9,7 @@ const FaqPage = async () => {
   return (
     <main>
       <PageHero tag="FAQ" title="Answers to common questions" text="Everything about courses, payments, certificates, and your account." />
-      <Faq faqs={home.faqs} />
+      <Faq faqs={home.faqs} heading={false} />
     </main>
   );
 };

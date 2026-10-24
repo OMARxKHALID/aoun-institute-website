@@ -3,10 +3,12 @@ import { Play } from "lucide-react";
 import SectionHeading from "@/components/ui/section-heading";
 import Marquee from "@/components/motion/marquee";
 import { formatDuration } from "@/lib/format";
+import { imageUrl } from "@/lib/upload-rules";
 
-const PreviewCard = ({ title, durationSec, course, slug, category }) => (
+const PreviewCard = ({ title, durationSec, course, slug, category, thumbnail }) => (
   <Link href={`/courses/${slug}`} className="group mr-6 w-[19rem] shrink-0 overflow-hidden rounded-xl border border-[#4E4A48] p-5 transition-all duration-500 hover:border-accent md:mr-9 md:w-xl md:p-7">
     <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-[linear-gradient(135deg,#78350f,#1c1917_60%,#9a3412)]">
+      {thumbnail && <img src={imageUrl(thumbnail, 640)} alt="" loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-105" />}
       <div className="absolute inset-0 bg-linear-to-b from-transparent to-black/60" />
       {category && <span className="absolute left-3 top-3 rounded-full bg-black/70 px-3 py-1 text-base backdrop-blur-sm">{category}</span>}
       <span className="absolute left-1/2 top-1/2 grid size-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-2xl bg-accent transition-transform duration-300 group-hover:scale-110 md:size-16">

@@ -152,3 +152,7 @@ Our brand is already black/orange/cream — very close match. Worth adopting:
 Avoid: auto discount popup on load, and inconsistent sub-brand styles (Hire/Jobs look like different companies).
 
 Landing page deep-dive (components, motion, scroll, responsive): see `landing-comparison.md` (shots in `screenshots/responsive/`).
+
+How their landing page works internally (stack, scroll, motion), analysed with REA: see `sheryians-internals.md`.
+
+Course catalog + detail comparison with responsiveness (REA-assisted): see `course-pages-comparison.md` (shots in `screenshots/course-pages/`).

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Award, CirclePlay, ListChecks, MoveUpRight, Sparkles, TrendingUp } from "lucide-react";
@@ -47,9 +47,13 @@ const ImpactCard = ({ title, text, tag, image, tone, offset, Icon }) => (
   </article>
 );
 
+const cardsOf = (track) => [...track.querySelectorAll("[data-impact-card]")];
+
 const Impact = ({ impactCards }) => {
   const sectionRef = useRef(null);
   const trackRef = useRef(null);
+  const frameRef = useRef(0);
+  const [active, setActive] = useState(0);
 
   useEffect(() => {
     const mm = gsap.matchMedia();
@@ -59,21 +63,54 @@ const Impact = ({ impactCards }) => {
       gsap.to(track, {
         x: () => -distance(),
         ease: "none",
-        scrollTrigger: { trigger: sectionRef.current, start: "top top", end: () => `+=${distance()}`, pin: true, scrub: 0.6, invalidateOnRefresh: true },
+        scrollTrigger: { trigger: sectionRef.current, start: "top 40%", end: "bottom 30%", scrub: 0.6, invalidateOnRefresh: true },
       });
     });
     return () => mm.revert();
   }, []);
 
+  useEffect(() => () => cancelAnimationFrame(frameRef.current), []);
+
+  const handleScroll = () => {
+    if (frameRef.current) return;
+    frameRef.current = requestAnimationFrame(() => {
+      frameRef.current = 0;
+      const track = trackRef.current;
+      if (!track) return;
+      const center = track.scrollLeft + track.clientWidth / 2;
+      const distances = cardsOf(track).map((card) => Math.abs(card.offsetLeft + card.offsetWidth / 2 - center));
+      setActive(distances.indexOf(Math.min(...distances)));
+    });
+  };
+
+  const handleDotClick = (index) => {
+    const track = trackRef.current;
+    const card = cardsOf(track)[index];
+    if (!card) return;
+    track.scrollTo({ left: card.offsetLeft - (track.clientWidth - card.offsetWidth) / 2, behavior: "smooth" });
+  };
+
   return (
-    <section ref={sectionRef} className="flex w-full flex-col items-center overflow-hidden bg-black py-10 lg:min-h-screen lg:justify-center">
+    <section ref={sectionRef} className="flex w-full flex-col items-center overflow-hidden bg-black py-10 lg:py-24">
       <SectionHeading tag="Impact" title="How we help learners move faster and further" />
-      <div ref={trackRef} className="flex w-full snap-x snap-mandatory items-start gap-8 overflow-x-auto px-6 [scrollbar-width:none] lg:overflow-visible">
+      <div ref={trackRef} onScroll={handleScroll} className="flex w-full snap-x snap-mandatory items-start gap-8 overflow-x-auto px-6 [scrollbar-width:none] lg:overflow-visible">
         <div className="w-[40%] shrink-0 max-md:hidden sm:w-[25%]" />
         {impactCards.map((card, i) => (
           <ImpactCard key={card.title} {...card} tone={tones[i % tones.length]} Icon={icons[i % icons.length]} offset={i % 2 === 1} />
         ))}
         <div className="shrink-0 max-md:hidden sm:w-10 lg:w-[5vw]" />
+      </div>
+      <div className="mt-6 flex items-center justify-center gap-2 lg:hidden">
+        {impactCards.map((card, i) => (
+          <button
+            key={card.title}
+            type="button"
+            aria-label={`Show ${card.title}`}
+            aria-current={active === i}
+            onClick={() => handleDotClick(i)}
+            className={`h-2 rounded-full transition-all duration-300 ${active === i ? "w-6 bg-accent" : "w-2 bg-white/30 hover:bg-white/60"}`}
+          />
+        ))}
       </div>
     </section>
   );
