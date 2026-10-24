@@ -96,12 +96,12 @@ const Wordmark = ({ text }) => {
 };
 
 const FooterLink = ({ href, children }) => (
-  <Link href={href} className="w-fit font-normal text-white/50 transition-colors hover:text-accent">
+  <Link href={href} className="w-fit font-light text-white/60 transition-colors hover:text-accent">
     {children}
   </Link>
 );
 
-const Heading = ({ children }) => <h4 className="mb-2 text-sm font-medium uppercase tracking-[0.14em] text-white">{children}</h4>;
+const Heading = ({ children }) => <h4 className="mb-2 text-base font-medium uppercase tracking-[0.14em] text-white">{children}</h4>;
 
 const Footer = ({ settings }) => {
   const { brand, contact, socials, footer } = settings;
@@ -151,17 +151,17 @@ const Footer = ({ settings }) => {
             {contact.hours && <span className="font-normal text-white">{contact.hours}</span>}
             {contact.phone && <FooterLink href={phoneHref}>{contact.phone}</FooterLink>}
             {contact.email && (
-              <a href={`mailto:${contact.email}`} className="w-fit break-all font-normal text-white/50 transition-colors hover:text-accent">
+              <a href={`mailto:${contact.email}`} className="w-fit break-all font-light text-white/60 transition-colors hover:text-accent">
                 {contact.email}
               </a>
             )}
-            {contact.address && <span className="font-normal text-white/50">{contact.address}</span>}
+            {contact.address && <span className="font-light text-white/60">{contact.address}</span>}
           </div>
         </div>
       </div>
 
       <div className="border-t border-white/5">
-        <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-3 px-6 py-6 text-sm text-white/50 sm:flex-row sm:items-center sm:justify-between sm:px-10 lg:px-16">
+        <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-3 px-6 py-6 text-base text-white/50 sm:flex-row sm:items-center sm:justify-between sm:px-10 lg:px-16">
           <p>© {brand.name}. All rights reserved.</p>
           <div className="flex flex-wrap gap-x-5 gap-y-2">
             <Link href="/privacy-policy" className="hover:text-white">

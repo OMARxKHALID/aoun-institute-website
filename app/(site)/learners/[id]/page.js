@@ -32,7 +32,7 @@ const LearnerPage = async ({ params }) => {
                 <Award className="size-6 shrink-0 text-accent" />
                 <span className="min-w-0 flex-1">
                   <span className="block font-medium">{c.courseTitle}</span>
-                  <span className="block text-sm text-white/50">
+                  <span className="block text-base text-white/50">
                     Issued {formatDate(c.issuedAt)} · {c.code}
                   </span>
                 </span>

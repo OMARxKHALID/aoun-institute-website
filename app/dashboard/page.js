@@ -52,7 +52,7 @@ const DashboardPage = async () => {
       {header}
       <div className="grid gap-5 p-4 sm:p-5 lg:p-8 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="flex min-w-0 flex-col gap-5">
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 2xl:grid-cols-4">
             <StatCard icon={BookOpen} label="Courses enrolled" value={stats.enrolled} hint={`${stats.completedCourses} completed`} />
             <StatCard icon={CheckCircle2} label="Lessons completed" value={stats.completedLessons} />
             <StatCard icon={Clock} label="Hours learned" value={stats.hours} />

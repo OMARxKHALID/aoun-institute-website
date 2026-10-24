@@ -28,7 +28,7 @@ const CourseCurriculum = ({ outline }) => {
               <span className="text-xl font-medium md:text-2xl">{title}</span>
             </span>
             <span className="flex items-center gap-3 text-black/50">
-              <span className="hidden text-sm sm:inline">{plural(lessons.length, "lesson")}</span>
+              <span className="hidden text-base sm:inline">{plural(lessons.length, "lesson")}</span>
               <span className="text-2xl transition-transform group-open:rotate-45">+</span>
             </span>
           </summary>
@@ -38,11 +38,11 @@ const CourseCurriculum = ({ outline }) => {
                 {lesson.preview ? <PlayCircle className="size-5 shrink-0 text-accent" /> : <Lock className="size-4 shrink-0 text-black/30" />}
                 <span className="min-w-0 flex-1">{lesson.title}</span>
                 {lesson.preview && (
-                  <button type="button" onClick={handleOpen(lesson)} className="rounded-full bg-accent/10 px-3 py-1 text-sm font-medium text-accent hover:bg-accent hover:text-white">
+                  <button type="button" onClick={handleOpen(lesson)} className="rounded-full bg-accent/10 px-3 py-1 text-base font-medium text-accent hover:bg-accent hover:text-white">
                     Preview
                   </button>
                 )}
-                {lesson.durationSec > 0 && <span className="text-sm text-black/45">{formatDuration(lesson.durationSec)}</span>}
+                {lesson.durationSec > 0 && <span className="text-base text-black/45">{formatDuration(lesson.durationSec)}</span>}
               </li>
             ))}
           </ul>

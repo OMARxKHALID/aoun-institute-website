@@ -10,7 +10,7 @@ const CoursesPage = async () => {
   const [{ home }, courses] = await Promise.all([getSiteSettings(), getCatalog()]);
   return (
     <main>
-      <PageHero tag="Courses" title="Programs built around real jobs" text="Recorded courses you can watch anytime, with quizzes, progress tracking and a verifiable certificate." />
+      <PageHero tag="Courses" title="Courses built around real projects" text="Recorded courses you can watch anytime, with quizzes, progress tracking and a verifiable certificate." />
       <CourseGrid courses={courses} />
       <Faq faqs={home.faqs} />
     </main>

@@ -44,7 +44,7 @@ const Tile = ({ title, text, image, area, tone, video }) => (
 
 const Community = ({ communityTiles }) => (
   <section className="flex w-full flex-col items-center justify-center rounded-4xl bg-[#FFF3EF] py-20 text-black sm:px-6">
-    <SectionHeading light tag="Community" title="They came. They built. They got hired." />
+    <SectionHeading light tag="Community" title="See what our learners are building" />
     <GlowButton href="/courses" className="mb-10 sm:mb-20">Explore Courses</GlowButton>
     <div className="flex w-full flex-col gap-6 px-10 sm:hidden">
       {communityTiles.slice(0, 3).map((t, i) => (

@@ -36,13 +36,13 @@ const Home = async () => {
     <main className="relative isolate">
       <JsonLd data={organization} />
       <Hero hero={hero} stats={home.stats} live={stats} />
-      <LogoMarquee partners={home.partners} />
-      <Impact impactCards={home.impactCards} />
+      {home.partners?.length > 0 && <LogoMarquee partners={home.partners} />}
+      {home.impactCards?.length > 0 && <Impact impactCards={home.impactCards} />}
       <Courses courses={courses} />
-      <Testimonials testimonials={home.testimonials} />
+      {home.testimonials?.length > 0 && <Testimonials testimonials={home.testimonials} />}
       <Worldwide stats={stats} />
       <FreePreviews previews={previews} />
-      <Community communityTiles={home.communityTiles} />
+      {home.communityTiles?.length > 0 && <Community communityTiles={home.communityTiles} />}
       <Comparison brand={brand} />
       <Faq faqs={home.faqs} />
       <Cta brand={brand} />

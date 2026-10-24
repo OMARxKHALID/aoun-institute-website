@@ -32,7 +32,7 @@ const CourseCard = ({ slug, title, subtitle, thumbnail, price, discountPrice, cu
               </span>
               <div>
                 <p className="text-lg font-semibold">{value}</p>
-                <p className="text-sm opacity-70">{label}</p>
+                <p className="text-base opacity-70">{label}</p>
               </div>
             </div>
           ))}

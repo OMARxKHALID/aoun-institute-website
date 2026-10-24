@@ -17,7 +17,7 @@ const ReviewList = ({ rating, reviews }) => (
         {[5, 4, 3, 2, 1].map((n) => {
           const count = rating.distribution[n - 1];
           return (
-            <li key={n} className="flex items-center gap-3 text-sm text-white/50">
+            <li key={n} className="flex items-center gap-3 text-base text-white/50">
               <span className="w-12">{plural(n, "star")}</span>
               <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
                 <span style={{ width: `${(count / rating.count) * 100}%` }} className="block h-full rounded-full bg-linear-to-r from-[#E8602E] to-[#A8401A]" />
@@ -36,7 +36,7 @@ const ReviewList = ({ rating, reviews }) => (
               <span className="grid size-14 shrink-0 place-items-center rounded-full bg-linear-to-br from-accent to-stone-800 text-xl font-semibold text-white">{r.studentName?.[0]}</span>
               <div className="min-w-0">
                 <p className="truncate text-lg font-medium text-white">{r.studentName}</p>
-                <p className="text-sm text-white/50">{formatDate(r.createdAt)}</p>
+                <p className="text-base text-white/50">{formatDate(r.createdAt)}</p>
               </div>
             </div>
             <div className="flex items-center gap-2 text-white/50">
@@ -45,7 +45,7 @@ const ReviewList = ({ rating, reviews }) => (
             </div>
             {r.body && <p className="whitespace-pre-line break-words text-lg font-normal">{r.body}</p>}
             {r.reply?.body && (
-              <div className="mt-auto rounded-xl border border-accent/30 bg-[#4B1E0E]/30 p-4 text-sm">
+              <div className="mt-auto rounded-xl border border-accent/30 bg-[#4B1E0E]/30 p-4 text-base">
                 <p className="mb-1 font-medium text-accent">Reply from the institute</p>
                 <p className="whitespace-pre-line text-white/70">{r.reply.body}</p>
               </div>

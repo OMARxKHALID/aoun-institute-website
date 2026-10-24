@@ -19,7 +19,7 @@ const Cta = ({ brand }) => (
       ))}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.85)_30%,transparent_80%)]" />
     </div>
-    <h2 className={titleClass}>Turn your learning journey into a career breakthrough with</h2>
+    <h2 className={titleClass}>Build real skills at your own pace with</h2>
     <div className={`mt-2 ${titleClass}`}>
       <span className="relative mx-auto inline-block w-fit border-[.5px] border-[#E8602E]/20 bg-[#e8602e21] px-[.5rem] pb-[0.25rem] pt-[.5rem] font-normal leading-none text-[#fadfd5]">
         {brand.shortName || brand.name}

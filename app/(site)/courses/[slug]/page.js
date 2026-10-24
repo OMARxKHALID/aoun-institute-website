@@ -79,7 +79,7 @@ const CourseDetailPage = async ({ params }) => {
             </a>
           )}
           {flags.length > 0 && (
-            <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-white/70">
+            <div className="flex flex-wrap items-center justify-center gap-2 text-base text-white/70">
               <span className="flex -space-x-1.5">
                 {flags.map((c) => (
                   <Flag key={c.code} code={c.code} name={c.name} className="size-6 rounded-full ring-2 ring-black" />
@@ -109,7 +109,7 @@ const CourseDetailPage = async ({ params }) => {
             </span>
             <div>
               <p className="text-lg font-semibold">{value}</p>
-              <p className="text-sm text-white/50">{label}</p>
+              <p className="text-base text-white/50">{label}</p>
             </div>
           </div>
         ))}

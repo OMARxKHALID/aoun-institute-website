@@ -46,3 +46,5 @@ next-env.d.ts
 
 # local Claude Code config
 /.claude/
+
+/ref-design-website/screenshots/

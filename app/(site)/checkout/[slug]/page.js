@@ -87,7 +87,7 @@ const CheckoutPage = async ({ params }) => {
               {!free && course.discountPrice != null && <span className="ml-2 text-base font-normal text-white/50 line-through">{formatPrice(course.price, course.currency)}</span>}
             </span>
           </div>
-          <p className="text-sm text-white/50">One-time payment. Lifetime access.</p>
+          <p className="text-base text-white/50">One-time payment. Lifetime access.</p>
         </aside>
       </div>
     </main>

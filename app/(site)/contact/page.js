@@ -27,7 +27,7 @@ const ContactPage = async () => {
                   <Icon className="size-6" />
                 </span>
                 <div>
-                  <p className="text-sm text-white/50">{label}</p>
+                  <p className="text-base text-white/50">{label}</p>
                   <p className="text-lg wrap-anywhere">{value}</p>
                 </div>
               </Tag>

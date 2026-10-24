@@ -9,12 +9,12 @@ const CompactCard = ({ slug, title, category, level, thumbnail, price, discountP
   <Link href={enrolled ? `/dashboard/courses/${slug}` : `/courses/${slug}`} className="group flex min-w-0 overflow-hidden rounded-2xl border border-[#302C2A] bg-[#0C0C0C] transition-colors hover:border-accent sm:flex-col">
     <div className="relative aspect-video w-32 shrink-0 overflow-hidden bg-[linear-gradient(135deg,#f97316,#7c2d12_55%,#1c1917)] max-sm:aspect-auto sm:w-full">
       {thumbnail?.url && <img src={imageUrl(thumbnail.url, 800)} alt={title} loading="lazy" decoding="async" className="size-full object-cover transition-transform duration-500 group-hover:scale-105" />}
-      {enrolled && <span className="absolute bottom-2 left-2 rounded-full bg-green-500/90 px-2 py-0.5 text-xs font-semibold text-black">Enrolled</span>}
+      {enrolled && <span className="absolute bottom-2 left-2 rounded-full bg-green-500/90 px-2 py-0.5 text-base font-semibold text-black">Enrolled</span>}
     </div>
     <div className="flex min-w-0 flex-1 flex-col gap-1.5 p-3 sm:p-4">
-      <p className="truncate text-xs text-accent">{[category, level].filter(Boolean).join(" · ")}</p>
+      <p className="truncate text-base text-accent">{[category, level].filter(Boolean).join(" · ")}</p>
       <h3 className="line-clamp-2 font-medium leading-snug">{title}</h3>
-      <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-xs text-white/50">
+      <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-base text-white/50">
         <span>{plural(lessons, "lesson")}</span>
         {students > 0 && <span>{plural(students, "student")}</span>}
         {rating && (
@@ -22,7 +22,7 @@ const CompactCard = ({ slug, title, category, level, thumbnail, price, discountP
             <Star className="size-3.5 fill-amber-300 text-amber-300" /> {rating.average.toFixed(1)}
           </span>
         )}
-        <span className="ml-auto text-sm font-semibold text-white">{priceLabel(price, discountPrice, currency)}</span>
+        <span className="ml-auto text-base font-semibold text-white">{priceLabel(price, discountPrice, currency)}</span>
       </div>
     </div>
   </Link>
@@ -34,8 +34,8 @@ const FullCard = ({ slug, title, subtitle, category, level, thumbnail, price, di
   <Link href={enrolled ? `/dashboard/courses/${slug}` : `/courses/${slug}`} className="group flex flex-col overflow-hidden rounded-2xl border border-[#302C2A] bg-[#0C0C0C] transition-colors hover:border-accent">
     <div className="relative aspect-video overflow-hidden bg-[linear-gradient(135deg,#f97316,#7c2d12_55%,#1c1917)]">
       {thumbnail?.url && <img src={imageUrl(thumbnail.url, 800)} alt={title} loading="lazy" decoding="async" className="size-full object-cover transition-transform duration-500 group-hover:scale-105" />}
-      {category && <span className="absolute left-4 top-4 rounded-full bg-black/70 px-3 py-1 text-sm backdrop-blur-sm">{category}</span>}
-      {enrolled && <span className="absolute bottom-4 left-4 rounded-full bg-green-500/90 px-3 py-1 text-xs font-semibold text-black">Enrolled</span>}
+      {category && <span className="absolute left-4 top-4 rounded-full bg-black/70 px-3 py-1 text-base backdrop-blur-sm">{category}</span>}
+      {enrolled && <span className="absolute bottom-4 left-4 rounded-full bg-green-500/90 px-3 py-1 text-base font-semibold text-black">Enrolled</span>}
       <span className="absolute right-4 top-4 rounded-full border border-white/40 bg-[#010101] p-3 transition-transform duration-300 group-hover:rotate-45">
         <MoveUpRight className="size-5" />
       </span>
@@ -44,7 +44,7 @@ const FullCard = ({ slug, title, subtitle, category, level, thumbnail, price, di
       <h3 className="font-machina text-2xl leading-tight">{title}</h3>
       {subtitle && <p className="line-clamp-2 font-normal text-white/70">{subtitle}</p>}
       {(rating || students > 0) && (
-        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-base">
           {rating && (
             <span className="flex items-center gap-1.5">
               <Star className="size-4 fill-amber-300 text-amber-300" />
@@ -61,7 +61,7 @@ const FullCard = ({ slug, title, subtitle, category, level, thumbnail, price, di
           )}
         </p>
       )}
-      <div className="mt-auto flex flex-wrap gap-4 pt-3 text-sm text-white/70">
+      <div className="mt-auto flex flex-wrap gap-4 pt-3 text-base text-white/70">
         {estimatedDuration > 0 && (
           <span className="flex items-center gap-1.5">
             <Clock className="size-4 text-accent" />

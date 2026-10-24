@@ -103,14 +103,14 @@ const ManualForm = ({ courseId, payment, couponCode, amount }) => {
             </>
           )}
         </dl>
-        {payment.instructions && <p className="text-sm text-white/50">{payment.instructions}</p>}
+        {payment.instructions && <p className="text-base text-white/50">{payment.instructions}</p>}
       </div>
 
       <div className="flex flex-col gap-4">
         <p className="text-base text-white/70">3. Tell us about your payment</p>
         <Field label="Transaction ID / reference" autoComplete="off" error={errors.reference?.message} {...register("reference")} />
         <Controller control={control} name="receipt" render={({ field }) => <ImageUpload kind="receipt" label="Receipt screenshot (recommended)" value={field.value} onChange={field.onChange} />} />
-        {errors.receipt?.message && <p className="text-sm text-red-400">{errors.receipt.message}</p>}
+        {errors.receipt?.message && <p className="text-base text-red-400">{errors.receipt.message}</p>}
         <Field label="Note (optional)" rows={2} error={errors.note?.message} {...register("note")} />
       </div>
 
@@ -152,7 +152,7 @@ const CardForm = ({ courseId, amount, couponCode }) => {
 
   return (
     <form onSubmit={handleSubmit(handlePay)} noValidate className="flex flex-col gap-5">
-      <div className="flex flex-col gap-3 rounded-2xl border border-accent/30 bg-accent/[0.06] p-4 text-sm text-white/70 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-2xl border border-accent/30 bg-accent/[0.06] p-4 text-base text-white/70 sm:flex-row sm:items-center sm:justify-between">
         <p>
           Demo mode: no real money is charged. Use <span className="font-mono text-white">4242 4242 4242 4242</span>, any future date and any CVC.
         </p>

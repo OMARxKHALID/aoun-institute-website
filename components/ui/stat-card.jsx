@@ -5,7 +5,7 @@ const StatCard = ({ icon: Icon, label, value, hint }) => (
     </span>
     <div className="min-w-0 max-w-full">
       <p className="truncate font-machina text-xl leading-tight sm:text-2xl">{value}</p>
-      <p className="truncate text-sm text-white/50">{label}</p>
+      <p className="text-sm leading-snug text-white/50">{label}</p>
       {hint && <p className="truncate text-xs text-white/50">{hint}</p>}
     </div>
   </div>
