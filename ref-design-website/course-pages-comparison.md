@@ -75,7 +75,7 @@ Double-check of the previous round (same session): `bun test` lib + courses 10/1
 
 ## 5. Fix list (course pages)
 
-Status 2026-10-24: items 1–4, 6–8 done (split hero + sticky enroll card, hero preview video modal, mobile enroll bar, 4 CTAs, certificate preview, instructor section from `teacherIds` (hidden until teachers are assigned), centred fact tiles, sticky "Before you start" card, per-course FAQ from course data, catalog closing CTA). Item 5 (real thumbnails) and 9 (accent colours, tilt) remain.
+Status 2026-10-24: items 1–4, 6–8 done (split hero + sticky enroll card, hero preview video modal, mobile enroll bar, 4 CTAs, certificate preview, instructor section from `teacherIds` (hidden until teachers are assigned), centred fact tiles, sticky "Before you start" card, per-course FAQ from course data, catalog closing CTA). Also done: curriculum summary + expand all, unified section widths, tilt hover on catalog cards, verify page sample certificate. Item 5 (real thumbnails) and per-course accent colours remain.
 
 **P2**
 1. Detail hero → split layout on lg: course thumbnail/preview video left, **sticky enroll card** right (price, what's included, enroll, free-preview link). Stack on md/mobile.

@@ -5,6 +5,8 @@ Aoun shots: `screenshots/aoun/`. Sheryians shots: `screenshots/`.
 
 Priority: **P1** visibly broken or empty, **P2** missing section that hurts conversion/trust, **P3** polish.
 
+> Status 2026-10-24: all P1 items and the code-fixable P2/P3 items are done (landing placeholders, FAQ duplicate heading, heading widths, impact gap + dots, course page rework, verify page sample + steps, % OFF badges, catalog closing CTA, teachers on About when assigned). Still open, content only: real photos/thumbnails, partner logos, testimonials, community tiles, founder story.
+
 ## Page map
 
 | Aoun | Sheryians counterpart | Verdict |

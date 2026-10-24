@@ -41,7 +41,9 @@ const EnrollCard = ({ course, previews = 0, id, className = "" }) => {
           </li>
         ))}
       </ul>
-      <p className="text-base text-white/50">Pay by bank transfer or mobile wallet. Access opens once your payment is approved.</p>
+      <p className="text-base text-white/50">
+        {coursePriceLabel(course) === "Free" ? "Free to join. Enroll and start learning right away." : "Pay by bank transfer or mobile wallet. Access opens once your payment is approved."}
+      </p>
     </aside>
   );
 };

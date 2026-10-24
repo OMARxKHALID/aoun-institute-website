@@ -13,7 +13,7 @@ bun run seed
 bun dev
 ```
 
-- With `MONGODB_URI=mongodb://127.0.0.1:27018/aoun-institute?replicaSet=rs0`, `bun dev` starts a local MongoDB replica set (data in `.mongo-data/`) together with Next.js and restarts it if it stops. With an Atlas URI it just runs Next.js. `bun run db` starts the database on its own (needed once before `bun run seed` or `bun run demo`).
+- `MONGODB_URI` points at MongoDB Atlas. Use a separate database for demos (a name ending in `-demo`, e.g. `.../aoun-institute-demo`) so the live data is never touched.
 - `bun run seed` creates the admin and a test student from the `SEED_*` variables, the default site settings and a demo course. It is safe to run again.
 - Open http://localhost:3000. Admins land on `/admin`, students on `/dashboard`.
 
@@ -23,17 +23,18 @@ bun dev
 bun run demo
 ```
 
-Resets courses, orders, progress and students, then loads a realistic demo: 8 courses (7 published, 1 draft, 1 free) with playable sample videos, quizzes, 24 students from Pakistan, the UK, France, Italy, the UAE and 10 more countries, paid/pending/failed/refunded orders over six months, progress, quiz results (including written answers), certificates, course reviews, lesson Q&A with instructor answers, timestamped notes, study plans, an admin activity log, announcements and contact messages. The admin account is kept.
+Resets courses, orders, progress and students, then loads a realistic demo: 8 courses (7 published, 1 draft, 1 free) with playable sample videos, quizzes, 24 students from Pakistan, the UK, France, Italy, the UAE and 10 more countries, paid/pending/failed/refunded orders over six months, progress, quiz results (including written answers), certificates, course reviews, lesson Q&A with instructor answers, timestamped notes, study plans, an admin activity log, announcements, contact messages, coupons (active, course-specific and expired), assignments with graded and ungraded submissions, student notifications and home page testimonials. Every account except `SEED_ADMIN_EMAIL` and `SEED_STUDENT_EMAIL` is removed and recreated.
 
 - Admin: `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`
-- Showcase student: `SEED_STUDENT_EMAIL` / `SEED_STUDENT_PASSWORD` (one finished course with certificate, one half done, one just started, a free course and a pending payment)
+- Showcase student: `SEED_STUDENT_EMAIL` / `SEED_STUDENT_PASSWORD` (one finished course with certificate, one half done, one just started, a free course, a pending payment, a graded assignment and unread notifications)
+- Teacher: `sara.ahmed@demo.pk`, password `DEMO_STUDENT_PASSWORD` (default `demo1234`), assigned to every course
 - Other students: any `*@demo.pk` address, e.g. `ayesha.khan@demo.pk`, password `DEMO_STUDENT_PASSWORD` (default `demo1234`)
 
 Every course starts with a 1-minute intro lesson, so you can show a lesson completing and its quiz unlocking live. Sample videos are public test streams; the course artwork lives in `public/demo/`.
 
 Demo payments: set `DEMO_PAYMENTS=true` and the checkout shows a **Card** tab. Pay with `4242 4242 4242 4242`, any future expiry and any CVC to enroll instantly (`4000 0000 0000 0002` shows a declined card). No money moves. Keep it off for real customers.
 
-The script only runs against a local database. To load the demo into a hosted database, run `bun run demo -- --force` with that `MONGODB_URI`.
+The script wipes and reloads the database in `MONGODB_URI`, so it only runs when the database name ends in `-demo` (e.g. `aoun-institute-demo`). It refuses any other database unless you pass `bun run demo -- --force`.
 
 ## Environment
 
@@ -96,6 +97,6 @@ bun dev
 bun run build
 bun run start
 bun run seed
-bun run db
+bun run demo
 bun run cloudinary:presets
 ```

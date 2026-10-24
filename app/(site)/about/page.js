@@ -1,4 +1,7 @@
+import Link from "next/link";
 import { values } from "@/lib/data";
+import { getPublicTeachers } from "@/features/courses/queries";
+import { imageUrl } from "@/lib/upload-rules";
 import PageHero from "@/components/ui/page-hero";
 import SectionHeading from "@/components/ui/section-heading";
 import GlowButton from "@/components/ui/glow-button";
@@ -9,7 +12,7 @@ import { getPublicStats } from "@/features/analytics/public-stats";
 export const metadata = { title: "About Us", description: "Meet the institute behind our recorded, project-based courses: who we are, how we teach and how you can prove what you learned.", alternates: { canonical: "/about" } };
 
 const AboutPage = async () => {
-  const [{ brand }, live] = await Promise.all([getSiteSettings(), getPublicStats()]);
+  const [{ brand }, live, teachers] = await Promise.all([getSiteSettings(), getPublicStats(), getPublicTeachers()]);
   const stats = [
     { value: live.students, label: "Students learning" },
     { value: live.graduates, label: "Certificates issued" },
@@ -28,6 +31,30 @@ const AboutPage = async () => {
               <p className="mt-2 text-xl font-light text-[#D3D3D3]">{label}</p>
             </Reveal>
           ))}
+        </section>
+      )}
+
+      {teachers.length > 0 && (
+        <section className="mx-auto w-[90%] pb-12 lg:w-[85%]">
+          <SectionHeading tag="Teachers" title="The people who teach our courses" />
+          <div className="flex flex-wrap justify-center gap-6">
+            {teachers.map((t, i) => (
+              <Reveal key={t.id} delay={i * 0.08} className="flex w-full max-w-sm flex-col items-center gap-4 rounded-3xl border border-[#302C2A] bg-linear-to-b from-[#1a0b06] to-black p-8 text-center">
+                <span className="grid size-28 place-items-center overflow-hidden rounded-full border-2 border-accent/60 bg-accent/15 text-4xl font-semibold text-accent">
+                  {t.image ? <img src={imageUrl(t.image, 256)} alt={t.name} loading="lazy" className="size-full object-cover" /> : t.name.charAt(0)}
+                </span>
+                <p className="text-2xl font-medium">{t.name}</p>
+                {t.bio && <p className="text-lg text-white/70">{t.bio}</p>}
+                <div className="flex flex-wrap justify-center gap-2">
+                  {t.courses.map((c) => (
+                    <Link key={c.slug} href={`/courses/${c.slug}`} className="rounded-full border border-white/15 px-3 py-1 text-base text-white/70 transition hover:border-accent hover:text-accent">
+                      {c.title}
+                    </Link>
+                  ))}
+                </div>
+              </Reveal>
+            ))}
+          </div>
         </section>
       )}
 

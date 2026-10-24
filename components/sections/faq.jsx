@@ -5,7 +5,7 @@ import { ChevronDown } from "lucide-react";
 import SectionHeading from "@/components/ui/section-heading";
 
 const FaqItem = ({ q, a, open, onToggle }) => (
-  <div className="relative overflow-hidden rounded-2xl border-[.7px] border-[#2A2D30] bg-[#000205] max-md:pb-5 md:w-5xl">
+  <div className="relative w-full overflow-hidden rounded-2xl border-[.7px] border-[#2A2D30] bg-[#000205] max-md:pb-5">
     <button onClick={onToggle} aria-expanded={open} className="flex w-full cursor-pointer items-center justify-between gap-5 p-4 text-left md:p-6">
       <span className="text-2xl font-normal text-white max-md:text-xl">{q}</span>
       <ChevronDown className={`size-9 shrink-0 transition-all duration-300 ease-in-out ${open ? "rotate-180 text-accent" : "text-white"}`} />
@@ -18,7 +18,7 @@ const FaqItem = ({ q, a, open, onToggle }) => (
   </div>
 );
 
-const Faq = ({ faqs, heading = true }) => {
+const Faq = ({ faqs, heading = true, title = "Frequently asked questions from our learners" }) => {
   const [openIndex, setOpenIndex] = useState(0);
 
   const handleToggle = (i) => () => setOpenIndex((cur) => (cur === i ? -1 : i));
@@ -26,8 +26,8 @@ const Faq = ({ faqs, heading = true }) => {
   return (
     <section className="relative isolate flex w-full flex-col items-center justify-center gap-10 overflow-hidden bg-black px-18 pb-20 max-md:px-8">
       <div className="pointer-events-none absolute bottom-[5%] left-1/2 -z-10 h-[400px] w-[60%] -translate-x-1/2 rounded-full bg-accent opacity-10 blur-3xl" />
-      {heading && <SectionHeading tag="FAQs" title="Frequently asked questions from our learners" />}
-      <div className="flex flex-col gap-6 max-md:w-full md:gap-4">
+      {heading && <SectionHeading tag="FAQs" title={title} />}
+      <div className="flex w-full max-w-5xl flex-col gap-6 md:gap-4">
         {faqs.map((f, i) => (
           <FaqItem key={f.q} {...f} open={openIndex === i} onToggle={handleToggle(i)} />
         ))}

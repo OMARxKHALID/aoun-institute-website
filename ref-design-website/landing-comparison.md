@@ -4,6 +4,8 @@ Component by component, with motion, scroll behaviour and responsiveness. Captur
 Desktop 1440×900, tablet 768, mobile 390 (`screenshots/responsive/{sher,aoun}-home-{390,768}.png`).
 Motion data was read live from the DOM (`document.getAnimations()`, GSAP inline styles while scrolling, sticky/fixed elements).
 
+> Status 2026-10-24: fix list items 1–3 and 6 done; Impact is now unpinned with mobile dots. Items 4–5 need content (Site Settings data, real thumbnails).
+
 ## 0. Engine
 
 | | Sheryians | Aoun |

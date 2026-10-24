@@ -42,7 +42,6 @@ yarn-error.log*
 next-env.d.ts
 
 # local dev database
-/.mongo-data
 
 # local Claude Code config
 /.claude/

@@ -24,6 +24,8 @@ import { getSiteSettings } from "@/features/site-settings/queries";
 
 export const instant = false;
 
+const wrap = "mx-auto w-[90%] lg:w-[85%]";
+
 export const generateMetadata = async ({ params }) => {
   const { slug } = await params;
   const course = await getPublicCourse(slug);
@@ -68,7 +70,9 @@ const CourseDetailPage = async ({ params }) => {
     previewLessons.length > 0 && { q: "Can I watch a lesson before I enroll?", a: `Yes. ${plural(previewLessons.length, "lesson is", "lessons are")} free to preview in the curriculum above.` },
     { q: "How long do I keep access?", a: "Your enrollment does not expire. You keep access to the recordings and your progress." },
     { q: "Will I get a certificate?", a: "Yes. When you complete the course requirements a certificate is issued automatically, with a public link and QR code anyone can verify." },
-    { q: "How do I pay?", a: "Pay by bank transfer or mobile wallet at checkout and submit your transaction ID. Access opens once the payment is approved." },
+    coursePriceLabel(course) === "Free"
+      ? { q: "Is this course really free?", a: "Yes. Enroll with a free account and every lesson, quiz and the certificate are included." }
+      : { q: "How do I pay?", a: "Pay by bank transfer or mobile wallet at checkout and submit your transaction ID. Access opens once the payment is approved." },
   ].filter(Boolean);
 
   const price = course.discountPrice ?? course.price;
@@ -97,7 +101,7 @@ const CourseDetailPage = async ({ params }) => {
             <div>
               <SectionTag>{course.category || "Course"}</SectionTag>
             </div>
-            <h1 className="font-machina text-[2.5rem] font-normal capitalize leading-tight tracking-tight md:text-[3.75rem]">{course.title}</h1>
+            <h1 className="font-machina text-[2.5rem] font-normal leading-tight tracking-tight md:text-[3.75rem]">{course.title}</h1>
             {course.subtitle && <p className="text-xl font-light text-[#D7D7D7] md:text-[1.6rem]">{course.subtitle}</p>}
             <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
               {course.rating && (
@@ -127,31 +131,29 @@ const CourseDetailPage = async ({ params }) => {
         </div>
       </section>
 
-      <section className="mx-auto flex w-[90%] flex-wrap justify-center gap-4 pb-20 lg:w-[85%]">
-        {facts.map(({ icon: Icon, label, value }) => (
-          <div key={label} className="flex w-[calc(50%-0.5rem)] items-center gap-3 rounded-2xl border border-[#302C2A] p-5 md:w-[calc(33.333%-0.7rem)] lg:w-[calc(25%-0.75rem)]">
-            <span className="rounded-xl bg-[#FDEFEA] p-3 text-accent">
-              <Icon className="size-6" />
-            </span>
-            <div>
-              <p className="text-lg font-semibold">{value}</p>
+      <section className={`${wrap} pb-20`}>
+        <div className="flex flex-wrap justify-center gap-y-6 rounded-3xl border border-[#302C2A] bg-linear-to-b from-[#120806] to-black px-2 py-6">
+          {facts.map(({ icon: Icon, label, value }) => (
+            <div key={label} className="flex w-1/2 flex-col items-center gap-1.5 px-3 text-center md:w-1/4 lg:w-auto lg:flex-1 lg:border-l lg:border-white/10 lg:first:border-l-0">
+              <Icon className="size-6 text-accent" />
+              <p className="text-xl font-semibold">{value}</p>
               <p className="text-base text-white/50">{label}</p>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </section>
 
       {course.description && (
-        <section className="mx-auto w-[90%] max-w-4xl pb-20">
+        <section className={`${wrap} pb-20`}>
           <SectionHeading tag="About" title="About this course" />
-          <p className="whitespace-pre-line text-xl font-normal leading-relaxed text-white/70">{course.description}</p>
+          <p className="mx-auto max-w-4xl whitespace-pre-line text-xl font-normal leading-relaxed text-white/70">{course.description}</p>
         </section>
       )}
 
       {course.outline.length > 0 && (
         <section className="mx-2 rounded-4xl bg-[#FFF3EF] px-4 py-20 text-black sm:mx-4 sm:px-6">
           <SectionHeading light tag="Curriculum" title="What you will learn, module by module" />
-          <div className="mx-auto grid w-full max-w-6xl items-start gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
+          <div className="mx-auto grid w-full items-start gap-8 lg:w-[90%] lg:grid-cols-[minmax(0,1fr)_24rem]">
             <CourseCurriculum outline={course.outline} />
             <aside className="flex flex-col gap-5 rounded-3xl bg-[#050000] p-6 text-white shadow-[0_20px_50px_-20px_rgba(0,0,0,0.6)] lg:sticky lg:top-28">
               <p className="text-2xl font-medium">Before you start</p>
@@ -180,7 +182,7 @@ const CourseDetailPage = async ({ params }) => {
       )}
 
       {course.outcomes.length > 0 && (
-        <section className="mx-auto w-[90%] max-w-6xl py-24">
+        <section className={`${wrap} py-24`}>
           <SectionHeading tag="Outcomes" title="What you will be able to do" />
           <ul className="grid gap-4 md:grid-cols-2">
             {course.outcomes.map((item) => (
@@ -193,13 +195,13 @@ const CourseDetailPage = async ({ params }) => {
         </section>
       )}
 
-      <section className="mx-auto w-[90%] pb-24 lg:w-[85%]">
+      <section className={`${wrap} pb-24`}>
         <SectionHeading tag="Certificate" title="Finish the course, get certified" />
         <CertificatePreview brand={brand.name} courseTitle={course.title} />
       </section>
 
       {course.teachers.length > 0 && (
-        <section className="mx-auto w-[90%] max-w-6xl pb-24">
+        <section className={`${wrap} pb-24`}>
           <SectionHeading tag="Instructors" title={course.teachers.length === 1 ? "Meet your instructor" : "Meet your instructors"} />
           <div className="flex flex-wrap justify-center gap-6">
             {course.teachers.map((t) => (
@@ -216,18 +218,18 @@ const CourseDetailPage = async ({ params }) => {
       )}
 
       {course.rating && course.reviews.length > 0 && (
-        <section id="reviews" className="mx-auto w-[90%] max-w-6xl scroll-mt-32 pb-24">
+        <section id="reviews" className={`${wrap} scroll-mt-32 pb-24`}>
           <SectionHeading tag="Reviews" title="What students say" />
           <ReviewList rating={course.rating} reviews={course.reviews} />
         </section>
       )}
 
-      <Faq faqs={faqs} />
+      <Faq faqs={faqs} title="Questions about this course" />
 
-      <section className="relative isolate mx-auto my-24 flex w-[90%] flex-col items-center gap-6 overflow-hidden rounded-4xl border border-[#302C2A] px-6 py-16 text-center lg:w-[85%]">
+      <section className={`${wrap} relative isolate my-24 flex flex-col items-center gap-6 overflow-hidden rounded-4xl border border-[#302C2A] px-6 py-16 text-center`}>
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,rgba(232,96,46,0.35),transparent_65%)]" />
         <SectionTag>Start today</SectionTag>
-        <h2 className="max-w-3xl font-machina text-4xl font-normal capitalize leading-tight md:text-6xl">Ready to start {course.title}?</h2>
+        <h2 className="max-w-3xl font-machina text-4xl font-normal leading-tight md:text-6xl">Ready to start {course.title}?</h2>
         <p className="max-w-2xl text-xl text-white/70">Learn at your own pace, check what stuck with quizzes and finish with a certificate anyone can verify.</p>
         <Suspense fallback={<CourseCtaFallback course={course} />}>
           <CourseCta course={course} />
@@ -235,11 +237,13 @@ const CourseDetailPage = async ({ params }) => {
       </section>
 
       {related.length > 0 && (
-        <section className="mx-auto w-[90%] pb-24 lg:w-[85%]">
+        <section className={`${wrap} pb-24`}>
           <SectionHeading tag="More Courses" title="Keep exploring" />
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="-mx-[5.556%] flex snap-x snap-mandatory gap-4 overflow-x-auto px-[5.556%] pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:px-0 lg:grid-cols-3">
             {related.map((c) => (
-              <CourseCard key={c.id} {...c} />
+              <div key={c.id} className="w-[85%] shrink-0 snap-center sm:w-auto">
+                <CourseCard {...c} />
+              </div>
             ))}
           </div>
         </section>

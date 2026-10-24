@@ -7,8 +7,34 @@ const points = [
   { icon: Share2, text: "Download it as a PDF or share the public link on LinkedIn and your CV." },
 ];
 
+export const CertificateCard = ({ brand, courseTitle, studentName = "Your Name", code = "INST-YYYY-XXXXXXXX", revoked }) => (
+  <div className="relative w-full">
+    <div className="absolute inset-0 translate-x-3 translate-y-3 rounded-2xl bg-accent/20" />
+    <div className="relative flex aspect-[1.414] flex-col justify-between overflow-hidden rounded-2xl border border-white/10 bg-[#0C0C0C] p-5 text-left sm:p-8">
+      <div>
+        <p className="text-xs uppercase tracking-[0.3em] text-accent sm:text-sm">{brand}</p>
+        <p className="mt-3 font-machina text-xl font-bold sm:mt-5 sm:text-3xl">Certificate of Completion</p>
+        <p className="mt-3 text-xs text-white/60 sm:mt-5 sm:text-sm">This certifies that</p>
+        <p className="mt-1 text-lg font-bold sm:text-2xl">{studentName}</p>
+        <p className="mt-2 text-xs text-white/60 sm:text-sm">has successfully completed the course</p>
+        <p className="mt-1 line-clamp-2 text-sm text-[#FFF3EF] sm:text-lg">{courseTitle}</p>
+      </div>
+      <div className="flex items-end justify-between gap-4">
+        <div className="text-[10px] sm:text-xs">
+          <p className="uppercase tracking-wider text-white/40">Certificate ID</p>
+          <p className="mt-0.5 font-mono">{code}</p>
+        </div>
+        <span className="grid size-12 place-items-center rounded-md bg-white text-black sm:size-16">
+          <QrCode className="size-8 sm:size-11" />
+        </span>
+      </div>
+      {revoked && <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-12 font-machina text-5xl font-bold text-red-500/40 sm:text-7xl">REVOKED</span>}
+    </div>
+  </div>
+);
+
 const CertificatePreview = ({ brand, courseTitle }) => (
-  <div className="mx-auto grid w-full max-w-6xl items-center gap-10 rounded-3xl border border-[#302C2A] p-6 md:p-10 lg:grid-cols-[1fr_1.15fr]">
+  <div className="mx-auto grid w-full items-center gap-10 rounded-3xl border border-[#302C2A] p-6 md:p-10 lg:grid-cols-[1fr_1.15fr]">
     <div className="flex flex-col gap-6">
       <h3 className="text-4xl font-medium leading-tight md:text-5xl">
         Earn a certificate <span className="text-accent">anyone can verify</span>
@@ -25,28 +51,7 @@ const CertificatePreview = ({ brand, courseTitle }) => (
         Verify a certificate →
       </Link>
     </div>
-    <div className="relative">
-      <div className="absolute inset-0 translate-x-3 translate-y-3 rounded-2xl bg-accent/20" />
-      <div className="relative flex aspect-[1.414] flex-col justify-between overflow-hidden rounded-2xl border border-white/10 bg-[#0C0C0C] p-5 sm:p-8">
-        <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-accent sm:text-sm">{brand}</p>
-          <p className="mt-3 font-machina text-xl font-bold sm:mt-5 sm:text-3xl">Certificate of Completion</p>
-          <p className="mt-3 text-xs text-white/60 sm:mt-5 sm:text-sm">This certifies that</p>
-          <p className="mt-1 text-lg font-bold sm:text-2xl">Your Name</p>
-          <p className="mt-2 text-xs text-white/60 sm:text-sm">has successfully completed the course</p>
-          <p className="mt-1 line-clamp-2 text-sm text-[#FFF3EF] sm:text-lg">{courseTitle}</p>
-        </div>
-        <div className="flex items-end justify-between gap-4">
-          <div className="text-[10px] sm:text-xs">
-            <p className="uppercase tracking-wider text-white/40">Certificate ID</p>
-            <p className="mt-0.5 font-mono">INST-YYYY-XXXXXXXX</p>
-          </div>
-          <span className="grid size-12 place-items-center rounded-md bg-white text-black sm:size-16">
-            <QrCode className="size-8 sm:size-11" />
-          </span>
-        </div>
-      </div>
-    </div>
+    <CertificateCard brand={brand} courseTitle={courseTitle} />
   </div>
 );
 

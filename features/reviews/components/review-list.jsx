@@ -18,7 +18,7 @@ const ReviewList = ({ rating, reviews }) => (
           const count = rating.distribution[n - 1];
           return (
             <li key={n} className="flex items-center gap-3 text-base text-white/50">
-              <span className="w-12">{plural(n, "star")}</span>
+              <span className="w-16 shrink-0 whitespace-nowrap">{plural(n, "star")}</span>
               <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
                 <span style={{ width: `${(count / rating.count) * 100}%` }} className="block h-full rounded-full bg-linear-to-r from-[#E8602E] to-[#A8401A]" />
               </span>

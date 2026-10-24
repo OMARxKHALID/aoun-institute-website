@@ -6,6 +6,34 @@ import { mongodbAdapter } from "@better-auth/mongo-adapter";
 import { ac, roles } from "../lib/permissions.js";
 import { defaultSiteSettings } from "../features/site-settings/defaults.js";
 import { ANNOUNCEMENTS, CITIES, CONTACT_MESSAGES, COURSES, NOTES, QUESTIONS, REVIEWS, STREAMS, STUDENTS } from "./demo-data.js";
+import SiteSettings from "../features/site-settings/model.js";
+import Course from "../features/courses/models/course.js";
+import Section from "../features/courses/models/section.js";
+import Lesson from "../features/courses/models/lesson.js";
+import Quiz from "../features/quizzes/models/quiz.js";
+import Question from "../features/quizzes/models/question.js";
+import QuizAttempt from "../features/quizzes/models/quiz-attempt.js";
+import AttemptGrant from "../features/quizzes/models/attempt-grant.js";
+import Enrollment from "../features/enrollments/model.js";
+import Order from "../features/payments/models/order.js";
+import PaymentEvent from "../features/payments/models/payment-event.js";
+import Coupon from "../features/coupons/model.js";
+import LessonProgress from "../features/progress/models/lesson-progress.js";
+import CourseProgress from "../features/progress/models/course-progress.js";
+import ActivityLog from "../features/progress/models/activity-log.js";
+import Certificate from "../features/certificates/model.js";
+import Announcement from "../features/announcements/model.js";
+import Assignment from "../features/assignments/model.js";
+import Submission from "../features/assignments/submission-model.js";
+import Notification from "../features/notifications/model.js";
+import ContactMessage from "../features/contact/model.js";
+import Review from "../features/reviews/model.js";
+import Discussion from "../features/discussions/model.js";
+import Note from "../features/notes/model.js";
+import StudyPlan from "../features/calendar/model.js";
+import AuditLog from "../features/audit/model.js";
+
+const MODELS = [SiteSettings, Course, Section, Lesson, Quiz, Question, QuizAttempt, AttemptGrant, Enrollment, Order, PaymentEvent, Coupon, LessonProgress, CourseProgress, ActivityLog, Certificate, Announcement, Assignment, Submission, Notification, ContactMessage, Review, Discussion, Note, StudyPlan, AuditLog];
 
 const required = ["MONGODB_URI", "BETTER_AUTH_SECRET", "SEED_ADMIN_EMAIL", "SEED_ADMIN_PASSWORD", "SEED_STUDENT_EMAIL", "SEED_STUDENT_PASSWORD"];
 const missing = required.filter((key) => !process.env[key]);
@@ -14,9 +42,9 @@ if (missing.length) {
   process.exit(1);
 }
 
-const host = new URL(process.env.MONGODB_URI.replace(/^mongodb(\+srv)?:\/\//, "http://")).hostname;
-if (!["localhost", "127.0.0.1", "::1"].includes(host) && !process.argv.includes("--force")) {
-  console.error(`Refusing to reset "${host}". The demo script wipes courses, orders and students. Run with --force only on a demo database.`);
+const dbName = new URL(process.env.MONGODB_URI.replace(/^mongodb(\+srv)?:\/\//, "http://")).pathname.slice(1);
+if (!dbName.endsWith("-demo") && !process.argv.includes("--force")) {
+  console.error(`Refusing to reset "${dbName || "(default)"}". The demo script wipes courses, orders and students. Point MONGODB_URI at a database whose name ends in -demo, or pass --force.`);
   process.exit(1);
 }
 
@@ -52,12 +80,13 @@ const auth = betterAuth({
   plugins: [admin({ ac, roles, defaultRole: "STUDENT", adminRoles: ["ADMIN"] })],
 });
 
-console.log("resetting demo data…");
-const wipe = ["courses", "sections", "lessons", "quizzes", "questions", "quizattempts", "enrollments", "orders", "paymentEvents", "lessonProgress", "courseProgress", "activityLogs", "certificates", "announcements", "playbackSessions", "contactMessages", "rateLimit", "rateLimits", "reviews", "discussions", "notes", "studyPlans", "auditLogs"];
+console.log(`resetting demo data in "${dbName}"…`);
+await Promise.all(MODELS.map((m) => m.syncIndexes()));
+const wipe = ["courses", "sections", "lessons", "quizzes", "questions", "quizattempts", "attemptGrants", "enrollments", "orders", "paymentEvents", "coupons", "lessonProgress", "courseProgress", "activityLogs", "certificates", "announcements", "assignments", "submissions", "notifications", "playbackSessions", "contactMessages", "rateLimit", "rateLimits", "reviews", "discussions", "notes", "studyPlans", "auditLogs"];
 await Promise.all(wipe.map((name) => col(name).deleteMany({})));
 await col("orders").dropIndex("providerRef_1").catch(() => null);
 await col("orders").createIndex({ userId: 1, providerRef: 1 }, { unique: true, partialFilterExpression: { providerRef: { $type: "string" } } });
-const oldUsers = await col("user").find({ role: { $ne: "ADMIN" } }, { projection: { _id: 1 } }).toArray();
+const oldUsers = await col("user").find({ email: { $nin: [process.env.SEED_ADMIN_EMAIL, process.env.SEED_STUDENT_EMAIL] } }, { projection: { _id: 1 } }).toArray();
 const oldIds = oldUsers.map((u) => u._id);
 await Promise.all([col("account").deleteMany({ userId: { $in: oldIds } }), col("session").deleteMany({ userId: { $in: oldIds } }), col("user").deleteMany({ _id: { $in: oldIds } })]);
 
@@ -76,10 +105,18 @@ const testStudent = await createUser({
   joined: daysAgo(120),
   extra: { phone: "+92 300 1234567", city: "Lahore", country: "Pakistan", bio: "Aspiring full-stack developer." },
 });
+const teacher = await createUser({
+  email: "sara.ahmed@demo.pk",
+  password: DEMO_PASSWORD,
+  name: "Sara Ahmed",
+  role: "TEACHER",
+  joined: daysAgo(190),
+  extra: { city: "Lahore", country: "Pakistan", bio: "Full-stack developer who teaches the JavaScript, React and Python courses and answers your questions in Q&A." },
+});
 const studentInputs = STUDENTS.map((name, i) => ({ email: `${name.toLowerCase().replace(/[^a-z]+/g, ".")}@demo.pk`, password: DEMO_PASSWORD, name, joined: daysAgo(between(3, 175)), extra: { city: CITIES[i % CITIES.length][0], country: CITIES[i % CITIES.length][1] } }));
 const students = [];
 for (let i = 0; i < studentInputs.length; i += 6) students.push(...(await Promise.all(studentInputs.slice(i, i + 6).map(createUser))));
-console.log(`users: admin, test student, ${students.length} demo students`);
+console.log(`users: admin, test student, teacher, ${students.length} demo students`);
 
 await col("siteSettings").updateOne(
   { _id: "site" },
@@ -184,6 +221,7 @@ for (const [ci, data] of COURSES.entries()) {
     sequentialUnlock: true,
     certificateRule: { type: "all", percent: 100, requireQuizzes: true },
     contentVersion: 1,
+    teacherIds: [teacher.id],
     createdAt: created,
     updatedAt: created,
   };
@@ -501,6 +539,51 @@ log(daysAgo(2), "lesson.update", "Edited lesson details", "lesson");
 await col("auditLogs").insertMany(audits.filter((a) => a.createdAt <= new Date(NOW)));
 console.log({ reviews: reviews.length, discussions: discussions.length, notes: notes.length, studyPlans: plans.length, auditLogs: audits.length });
 
+const ymd = (date) => date.toISOString().slice(0, 10);
+const fullStack = byslug("full-stack-web-development-nextjs");
+
+await col("coupons").insertMany([
+  { code: "WELCOME10", kind: "percent", value: 10, courseId: null, expiresOn: ymd(new Date(NOW + 60 * DAY)), maxUses: null, uses: 6, active: true, createdBy: adminUser.id, createdAt: daysAgo(40), updatedAt: daysAgo(40) },
+  { code: "FULLSTACK2000", kind: "fixed", value: 2000, courseId: fullStack.course._id, expiresOn: ymd(new Date(NOW + 21 * DAY)), maxUses: 30, uses: 4, active: true, createdBy: adminUser.id, createdAt: daysAgo(18), updatedAt: daysAgo(18) },
+  { code: "SUMMER25", kind: "percent", value: 25, courseId: null, expiresOn: ymd(daysAgo(10)), maxUses: 50, uses: 12, active: false, createdBy: adminUser.id, createdAt: daysAgo(90), updatedAt: daysAgo(10) },
+]);
+
+const assignmentRows = [
+  { title: "Build a task board with the App Router", instructions: "Create a small task board with add, complete and delete. Use server actions for writes and share the GitHub link and a deployed URL.", dueOn: ymd(new Date(NOW + 7 * DAY)), status: "published", at: daysAgo(10) },
+  { title: "Design your MongoDB schema", instructions: "Model users, projects and tasks for the task board. Submit the schemas and explain one index you added and why.", dueOn: ymd(daysAgo(5)), status: "published", at: daysAgo(25) },
+  { title: "Deploy to Vercel", instructions: "Deploy your project and add environment variables safely. Draft, not visible to students yet.", dueOn: null, status: "draft", at: daysAgo(2) },
+].map(({ at, ...a }) => ({ _id: new ObjectId(), courseId: fullStack.course._id, createdBy: teacher.id, ...a, createdAt: at, updatedAt: at }));
+await col("assignments").insertMany(assignmentRows);
+const [boardTask, schemaTask] = assignmentRows;
+const fullStackLearners = [...new Set(docs.enrollments.filter((e) => String(e.courseId) === String(fullStack.course._id)).map((e) => e.userId))];
+const submissions = [
+  { assignmentId: schemaTask._id, userId: testStudent.id, text: "Users, projects and tasks in separate collections. Index on { projectId, status } so the board loads one column fast.", status: "graded", grade: 88, feedback: "Clear reasoning on the index. Add createdAt to the sort next time.", gradedBy: teacher.id, gradedAt: daysAgo(3), submittedAt: daysAgo(6) },
+  { assignmentId: boardTask._id, userId: testStudent.id, text: "Repo: github.com/test-student/task-board · Live: task-board-demo.vercel.app", status: "submitted", submittedAt: daysAgo(1) },
+  ...fullStackLearners
+    .filter((id) => id !== testStudent.id)
+    .slice(0, 4)
+    .map((userId, i) => ({ assignmentId: schemaTask._id, userId, text: "Schema and index notes attached in the text above.", status: i < 2 ? "graded" : "submitted", grade: i < 2 ? 70 + i * 12 : undefined, feedback: i < 2 ? "Good start. Think about which queries run most often." : undefined, gradedBy: i < 2 ? teacher.id : undefined, gradedAt: i < 2 ? daysAgo(2) : undefined, submittedAt: daysAgo(7 - i) })),
+].map((s) => ({ courseId: fullStack.course._id, files: [], ...s, createdAt: s.submittedAt, updatedAt: s.gradedAt ?? s.submittedAt }));
+await col("submissions").insertMany(submissions);
+
+await col("notifications").insertMany(
+  [
+    ["Payment approved", "Your payment for Full-Stack Web Development with Next.js was approved. Start learning!", "/dashboard/orders", 95, true],
+    ["Certificate issued", "You earned a certificate for Full-Stack Web Development with Next.js.", "/dashboard/certificates", 60, true],
+    ["Assignment graded", "Design your MongoDB schema was graded: 88/100.", "/dashboard/assignments", 3, false],
+    ["New announcement", "A new announcement was posted in one of your courses.", "/dashboard/announcements", 1, false],
+  ].map(([title, text, path, days, read]) => ({ userId: testStudent.id, title, text, path, readAt: read ? daysAgo(days - 1) : null, createdAt: daysAgo(days) })),
+);
+
+const testimonialSeen = new Set();
+const testimonials = reviews
+  .filter((r) => r.status === "published" && r.rating >= 4 && r.userId !== testStudent.id)
+  .filter((r) => (testimonialSeen.has(r.userId) ? false : testimonialSeen.add(r.userId)))
+  .slice(0, 8)
+  .map((r) => ({ name: r.studentName, role: `Student, ${built.find((b) => String(b.course._id) === String(r.courseId)).course.title}`, rating: String(r.rating), quote: r.body, photo: null }));
+await col("siteSettings").updateOne({ _id: "site" }, { $set: { "home.testimonials": testimonials } });
+console.log({ coupons: 3, assignments: assignmentRows.length, submissions: submissions.length, notifications: 4, testimonials: testimonials.length });
+
 const counts = Object.fromEntries(await Promise.all(["enrollments", "orders", "lessonProgress", "quizattempts", "certificates", "announcements"].map(async (name) => [name, await col(name).countDocuments()])));
 console.log(counts);
 await client.close();
@@ -508,5 +591,6 @@ console.log(`
 Demo ready.
   Admin:        ${process.env.SEED_ADMIN_EMAIL}
   Test student: ${process.env.SEED_STUDENT_EMAIL}
+  Teacher:      ${teacher.email} / password ${DEMO_PASSWORD}
   Demo students: any *@demo.pk address (e.g. ${students[0].email}) / password ${DEMO_PASSWORD}
 Restart the server (or bun dev) so cached pages pick up the new data.`);

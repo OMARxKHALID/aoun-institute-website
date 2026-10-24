@@ -3,6 +3,8 @@ import { rateLimit } from "@/lib/rate-limit";
 import { formatDate } from "@/lib/format";
 import { getCertificateByCode } from "@/features/certificates/queries";
 import VerifyForm from "@/features/certificates/components/verify-form";
+import { CertificateCard } from "@/features/certificates/components/certificate-preview";
+import { getSiteSettings } from "@/features/site-settings/queries";
 import { buttonClass } from "@/lib/ui";
 
 export const instant = false;
@@ -22,7 +24,7 @@ const Row = ({ label, value }) => (
 const VerifyCodePage = async ({ params }) => {
   const { code } = await params;
   const allowed = await rateLimit("verify");
-  const certificate = allowed ? await getCertificateByCode(decodeURIComponent(code)) : null;
+  const [certificate, { brand }] = await Promise.all([allowed ? getCertificateByCode(decodeURIComponent(code)) : null, getSiteSettings()]);
   const valid = certificate?.status === "VALID";
 
   return (
@@ -46,7 +48,10 @@ const VerifyCodePage = async ({ params }) => {
             <h1 className="font-machina text-3xl md:text-5xl">{valid ? "Valid certificate" : "Certificate revoked"}</h1>
             {!valid && certificate.reason && <p className="text-white/70">Reason: {certificate.reason}</p>}
           </div>
-          <dl className="w-full rounded-3xl border border-[#302C2A] bg-[#0C0C0C] px-6 py-2">
+          <div className="w-full max-w-2xl">
+            <CertificateCard brand={brand.name} courseTitle={certificate.courseTitle} studentName={certificate.studentName} code={certificate.code} revoked={!valid} />
+          </div>
+          <dl className="mt-4 w-full rounded-3xl border border-[#302C2A] bg-[#0C0C0C] px-6 py-2">
             <Row label="Awarded to" value={certificate.studentName} />
             <Row label="Course" value={certificate.courseTitle} />
             <Row label="Issued on" value={formatDate(certificate.issuedAt)} />

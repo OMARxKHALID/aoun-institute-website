@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
 import CourseCard from "@/components/ui/course-card";
+import Tilt from "@/components/motion/tilt";
 import TabList from "@/components/ui/tab-list";
 import { searchClass, searchLgClass } from "@/lib/ui";
 
@@ -69,7 +70,9 @@ const CourseGrid = ({ courses, embedded }) => {
       )}
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {shown.map((c) => (
-          <CourseCard key={c.id} {...c} />
+          <Tilt key={c.id} className="h-full">
+            <CourseCard {...c} />
+          </Tilt>
         ))}
       </div>
       {!shown.length && <p className="py-10 text-center text-lg text-white/50">No courses match “{query}”.</p>}

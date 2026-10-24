@@ -97,6 +97,24 @@ export const getFreePreviews = async () => {
   });
 };
 
+export const getPublicTeachers = async () => {
+  "use cache";
+  cacheTag("catalog");
+  if (noDatabase()) return [];
+  await connectDB();
+  const courses = await Course.find({ status: "published", "teacherIds.0": { $exists: true } }, "title slug teacherIds").lean();
+  const ids = [...new Set(courses.flatMap((c) => (c.teacherIds ?? []).map(String)))].filter(isValidObjectId);
+  if (!ids.length) return [];
+  const users = await db.collection("user").find({ _id: { $in: ids.map((id) => new Types.ObjectId(id)) } }, { projection: { name: 1, image: 1, bio: 1 } }).toArray();
+  return users.map((u) => ({
+    id: String(u._id),
+    name: u.name,
+    image: u.image ?? null,
+    bio: u.bio ?? "",
+    courses: courses.filter((c) => (c.teacherIds ?? []).map(String).includes(String(u._id))).map((c) => ({ title: c.title, slug: c.slug })),
+  }));
+};
+
 export const getPublicCourse = async (slug) => {
   "use cache";
   cacheTag("catalog");
