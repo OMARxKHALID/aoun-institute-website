@@ -69,7 +69,7 @@ const MobileSort = ({ table }) => {
           { value: `${c.id}:desc`, label: `${headerText(c)} (Z → A, high → low)` },
         ]),
       ]}
-      wrapperClassName="md:hidden"
+      wrapperClassName="xl:hidden"
       className="rounded-full border border-[#302C2A] bg-[#0C0C0C] py-2.5 pl-4 text-white outline-hidden focus:border-accent"
     />
   );
@@ -151,7 +151,7 @@ const DataTable = ({ columns, data, searchPlaceholder = "Search", initialSearch 
         <MobileSort table={table} />
       </div>
 
-      <div className="no-scrollbar hidden overflow-x-auto rounded-2xl border border-[#302C2A] md:block">
+      <div className="no-scrollbar hidden overflow-x-auto rounded-2xl border border-[#302C2A] xl:block">
         <table className="w-full text-left text-sm">
           <thead className="bg-white/[0.03] text-xs uppercase tracking-wider text-white/50">
             {table.getHeaderGroups().map((group) => (
@@ -196,11 +196,11 @@ const DataTable = ({ columns, data, searchPlaceholder = "Search", initialSearch 
         </table>
       </div>
 
-      <ul className="flex flex-col gap-3 md:hidden">
+      <ul className="grid items-start gap-3 md:grid-cols-2 xl:hidden">
         {rows.map((row) => (
           <RowCard key={row.id} row={row} table={table} />
         ))}
-        {rows.length === 0 && <li className="rounded-2xl border border-[#302C2A] px-4 py-10 text-center text-white/50">{empty}</li>}
+        {rows.length === 0 && <li className="rounded-2xl border border-[#302C2A] px-4 py-10 text-center text-white/50 md:col-span-2">{empty}</li>}
       </ul>
 
       <Pagination table={table} />

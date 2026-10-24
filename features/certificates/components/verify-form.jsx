@@ -1,18 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
-import { buttonClass, searchLgClass } from "@/lib/ui";
+import Button from "@/components/ui/button";
+import { searchLgClass } from "@/lib/ui";
 
 const VerifyForm = ({ initial = "" }) => {
   const router = useRouter();
   const [code, setCode] = useState(initial);
+  const [pending, startTransition] = useTransition();
+
+  const handleChange = (e) => setCode(e.target.value);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const value = code.trim().toUpperCase();
-    if (value) router.push(`/verify/${encodeURIComponent(value)}`);
+    if (!value) return;
+    startTransition(() => router.push(`/verify/${encodeURIComponent(value)}`));
   };
 
   return (
@@ -22,13 +27,16 @@ const VerifyForm = ({ initial = "" }) => {
         <Search className="pointer-events-none absolute left-5 top-1/2 size-5 -translate-y-1/2 text-white/50" />
         <input
           value={code}
-          onChange={(e) => setCode(e.target.value)}
+          onChange={handleChange}
+          required
           placeholder="INST-2026-XXXXXXXX"
           autoCapitalize="characters"
           className={`${searchLgClass} uppercase placeholder:normal-case`}
         />
       </label>
-      <button className={buttonClass("primary", "lg")}>Verify</button>
+      <Button type="submit" size="lg" loading={pending}>
+        Verify
+      </Button>
     </form>
   );
 };

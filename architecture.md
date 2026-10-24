@@ -122,7 +122,7 @@ Progress staleness: structural course edits bump `contentVersion`; an older `cou
 Dark mode only. Student `/dashboard` and admin `/admin` both follow the "Welcome back" (Eduplex-style) dashboard layout described in `docs/design-refs/README.md`, in the site's own black/orange/cream design system; the second reference only adds student content blocks. Shared shell: `components/ui/panel-shell.jsx`, `panel-nav.jsx`, `panel-header.jsx`; every panel page folder gets a `loading.js` (spinner from `panel-loader`) so per-user data stays inside a Suspense boundary.
 
 ## UI consistency
-- Every table uses `components/ui/data-table.jsx` (TanStack Table v9: search, sort, 10 rows per page; collapsible cards below `md`).
+- Every table uses `components/ui/data-table.jsx` (TanStack Table v9: search, sort, 10 rows per page; collapsible cards below `xl`).
 - Every dropdown uses `components/ui/select.jsx` (custom listbox over a hidden native select, works with RHF `register`); every row/section menu uses `components/ui/action-menu.jsx`. Both share `menuPanel`/`menuItem` from `lib/ui.js`.
 - Tabs use `components/ui/tab-list.jsx`; panel cards `panel-card.jsx`; stats `stat-card.jsx`; charts `bar-chart.jsx`; `progress-bar.jsx`, `progress-ring.jsx`, `mini-calendar.jsx`.
 - Sub-pages pass `back` to `PanelHeader`.

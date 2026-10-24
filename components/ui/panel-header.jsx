@@ -13,20 +13,20 @@ const PanelHeader = async ({ title, subtitle, back, query = "", children }) => {
   const admin = isAdmin(user);
   const role = admin ? "owner" : isTeacher(user) ? "teacher" : "student";
   return (
-    <header className="flex flex-col gap-4 border-b border-white/5 p-5 md:flex-row md:items-center md:justify-between lg:p-8">
+    <header className="flex flex-col gap-4 border-b border-white/5 p-5 lg:flex-row lg:items-center lg:justify-between lg:p-8">
       <div className="min-w-0">
         {back && (
           <Link href={back.href} className="mb-2 inline-flex items-center gap-1.5 text-sm text-white/50 transition hover:text-accent">
             <ArrowLeft className="size-4" /> {back.label}
           </Link>
         )}
-        <h1 className="font-machina text-3xl wrap-break-word md:truncate md:text-4xl">{title}</h1>
+        <h1 className="font-machina text-3xl wrap-break-word md:text-4xl lg:truncate">{title}</h1>
         {subtitle && <p className="mt-1 text-white/50">{subtitle}</p>}
       </div>
       <div className="flex items-center gap-3">
         {children}
         {role !== "teacher" && (
-          <Form action={admin ? "/admin/search" : "/dashboard/search"} role="search" className="relative flex-1 md:w-72 md:flex-none">
+          <Form action={admin ? "/admin/search" : "/dashboard/search"} role="search" className="relative flex-1 lg:w-72 lg:flex-none">
             <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-white/50" />
             <input
               key={query}
