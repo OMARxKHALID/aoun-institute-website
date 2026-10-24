@@ -1,7 +1,7 @@
 "use client";
 
 const TabList = ({ tabs, value, onChange, label, size = "md" }) => (
-  <div role="tablist" aria-label={label} className="flex gap-2 overflow-x-auto pb-1">
+  <div role="tablist" aria-label={label} className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
     {tabs.map((tab) => {
       const id = typeof tab === "string" ? tab : tab.value;
       const text = typeof tab === "string" ? tab : tab.label;

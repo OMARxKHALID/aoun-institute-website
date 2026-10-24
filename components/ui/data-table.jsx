@@ -151,7 +151,7 @@ const DataTable = ({ columns, data, searchPlaceholder = "Search", initialSearch 
         <MobileSort table={table} />
       </div>
 
-      <div className="hidden overflow-x-auto rounded-2xl border border-[#302C2A] md:block">
+      <div className="no-scrollbar hidden overflow-x-auto rounded-2xl border border-[#302C2A] md:block">
         <table className="w-full text-left text-sm">
           <thead className="bg-white/[0.03] text-xs uppercase tracking-wider text-white/50">
             {table.getHeaderGroups().map((group) => (

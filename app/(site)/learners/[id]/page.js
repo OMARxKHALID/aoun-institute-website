@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { Award, BadgeCheck } from "lucide-react";
 import { getPublicLearner } from "@/features/certificates/queries";
 import { formatDate } from "@/lib/format";
@@ -10,6 +11,7 @@ export const instant = false;
 export const metadata = { title: "Certificates", robots: { index: false } };
 
 const LearnerPage = async ({ params }) => {
+  await connection();
   const { id } = await params;
   const learner = await getPublicLearner(id);
   if (!learner) notFound();

@@ -2,6 +2,23 @@
 
 @custom-variant short (@media (max-height: 800px));
 @custom-variant tiny (@media (max-height: 660px));
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@custom-variant group-show {
+  @media (hover: hover) {
+    &:is(:where(.group):hover *) {
+      @slot;
+    }
+  }
+  &:is(:where(.group)[data-inview] *) {
+    @slot;
+  }
+}
 
 @theme inline {
   --font-manrope: var(--font-manrope-src);

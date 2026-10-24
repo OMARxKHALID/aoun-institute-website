@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { showProps } from "@/lib/ui";
 import { Sparkles, Star } from "lucide-react";
 import { formatPrice } from "@/lib/format";
 import { imageUrl } from "@/lib/upload-rules";
@@ -8,9 +9,9 @@ const RecommendedCourses = ({ courses }) =>
     <ul className="grid gap-3 md:grid-cols-3">
       {courses.map((c) => (
         <li key={c.id}>
-          <Link href={`/courses/${c.slug}`} className="group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-white/5 bg-[#070707] transition hover:border-accent/50">
+          <Link href={`/courses/${c.slug}`} {...showProps} className="group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-white/5 bg-[#070707] transition hover:border-accent/50">
             <span className="relative block aspect-video bg-[linear-gradient(135deg,#f97316,#7c2d12_55%,#1c1917)]">
-              {c.thumbnail?.url && <img src={imageUrl(c.thumbnail.url, 640)} alt={c.title} loading="lazy" className="size-full object-cover transition duration-500 group-hover:scale-105" />}
+              {c.thumbnail?.url && <img src={imageUrl(c.thumbnail.url, 640)} alt={c.title} loading="lazy" className="size-full object-cover transition duration-500 group-show:scale-105" />}
             </span>
             <span className="flex flex-1 flex-col gap-1.5 p-3">
               <span className="flex items-center gap-1.5 text-xs text-accent">

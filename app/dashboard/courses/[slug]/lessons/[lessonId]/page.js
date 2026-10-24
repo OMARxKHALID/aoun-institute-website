@@ -118,7 +118,7 @@ const LessonPage = async ({ params, searchParams }) => {
         </div>
         </PlayerProvider>
 
-        <aside className="hidden min-w-0 flex-col gap-4 xl:sticky xl:top-4 xl:flex xl:max-h-[calc(100vh-2rem)] xl:self-start xl:overflow-y-auto xl:[scrollbar-width:thin]">
+        <aside className="hidden min-w-0 flex-col gap-4 xl:sticky xl:top-4 xl:flex xl:max-h-[calc(100vh-2rem)] xl:self-start no-scrollbar xl:overflow-y-auto">
           <PanelCard>
             <div className="flex items-center gap-3">
               <ProgressBar percent={stats.percent} />

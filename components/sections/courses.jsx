@@ -1,4 +1,5 @@
 import { Award, BookOpen, CalendarDays } from "lucide-react";
+import { showProps } from "@/lib/ui";
 import { discountPercent, formatDuration, formatPrice } from "@/lib/format";
 import SectionHeading from "@/components/ui/section-heading";
 import GlowButton from "@/components/ui/glow-button";
@@ -49,6 +50,7 @@ const CourseCard = ({ slug, title, subtitle, thumbnail, price, discountPrice, cu
           )}
           <Link
             href={`/courses/${slug}`}
+            {...showProps}
             className={`group flex w-fit rounded-2xl px-8 py-3 text-xl font-medium transition-colors ${light ? "bg-black text-white hover:bg-zinc-800" : "bg-white text-black hover:bg-gray-100"}`}
           >
             <RollText>Check Course →</RollText>

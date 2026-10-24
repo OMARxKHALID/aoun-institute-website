@@ -20,7 +20,7 @@ const PanelHeader = async ({ title, subtitle, back, query = "", children }) => {
             <ArrowLeft className="size-4" /> {back.label}
           </Link>
         )}
-        <h1 className="truncate font-machina text-3xl md:text-4xl">{title}</h1>
+        <h1 className="font-machina text-3xl wrap-break-word md:truncate md:text-4xl">{title}</h1>
         {subtitle && <p className="mt-1 text-white/50">{subtitle}</p>}
       </div>
       <div className="flex items-center gap-3">

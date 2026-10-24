@@ -239,7 +239,7 @@ const CourseDetailPage = async ({ params }) => {
       {related.length > 0 && (
         <section className={`${wrap} pb-24`}>
           <SectionHeading tag="More Courses" title="Keep exploring" />
-          <div className="-mx-[5.556%] flex snap-x snap-mandatory gap-4 overflow-x-auto px-[5.556%] pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:px-0 lg:grid-cols-3">
+          <div className="-mx-[5.556%] flex snap-x snap-mandatory gap-4 overflow-x-auto px-[5.556%] no-scrollbar pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-visible sm:px-0 lg:grid-cols-3">
             {related.map((c) => (
               <div key={c.id} className="w-[85%] shrink-0 snap-center sm:w-auto">
                 <CourseCard {...c} />

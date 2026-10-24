@@ -90,8 +90,9 @@ const Navbar = ({ brand }) => {
         </div>
       </div>
 
-      {open && (
-        <nav className="flex flex-col gap-1 border-t border-white/10 bg-black/95 px-10 pb-8 pt-4 text-2xl min-[880px]:hidden">
+      <div inert={!open} className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out min-[880px]:hidden ${open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
+        <nav className="flex min-h-0 flex-col gap-1 overflow-hidden border-white/10 bg-black/95 px-10 text-2xl">
+          <span className="mt-4 border-t border-white/10" />
           {navLinks.map(({ label, href }) => (
             <Link key={label} href={href} onClick={handleToggle} className={`border-b border-white/10 py-4 ${isActive(href) ? "text-accent" : "text-white"}`}>
               {label}
@@ -103,8 +104,9 @@ const Navbar = ({ brand }) => {
           <Link href={account.href} onClick={handleToggle} className="mt-6 rounded-full border border-white/20 py-3 text-center text-xl">
             {account.label}
           </Link>
+          <span className="pb-8" />
         </nav>
-      )}
+      </div>
     </header>
   );
 };

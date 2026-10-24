@@ -1,4 +1,5 @@
 import { MoveUpRight, Play } from "lucide-react";
+import { showProps } from "@/lib/ui";
 import SectionHeading from "@/components/ui/section-heading";
 import GlowButton from "@/components/ui/glow-button";
 
@@ -16,8 +17,8 @@ const areas = [
 const tones = ["from-orange-400 to-stone-700", "from-stone-400 to-stone-700", "from-amber-300 to-orange-700", "from-rose-300 to-stone-700", "from-orange-300 to-stone-600", "from-stone-300 to-orange-800", "from-amber-200 to-stone-700", "from-orange-500 to-stone-800"];
 
 const Tile = ({ title, text, image, area, tone, video }) => (
-  <div className={`group relative overflow-hidden rounded-xl bg-black/10 text-white max-sm:h-[50vh] ${area}`}>
-    <div className={`absolute inset-0 bg-linear-to-br ${tone} transition-all duration-300 group-hover:grayscale`}>
+  <div {...showProps} className={`group relative overflow-hidden rounded-xl bg-black/10 text-white max-sm:h-[50vh] ${area}`}>
+    <div className={`absolute inset-0 bg-linear-to-br ${tone} transition-all duration-300 group-show:grayscale`}>
       {image?.url && <img src={image.url} alt="" className="size-full object-cover" />}
     </div>
     {video ? (
@@ -28,13 +29,13 @@ const Tile = ({ title, text, image, area, tone, video }) => (
       </span>
     ) : (
       <>
-        <div className="absolute bottom-0 left-0 z-20 hidden min-h-[30%] w-full translate-y-full bg-linear-to-b from-transparent to-accent pt-10 transition-all duration-500 group-hover:translate-y-0 lg:flex">
-          <div className="mt-auto h-max p-8 pt-10">
-            <h3 className="font-machina text-3xl font-bold capitalize">{title}</h3>
-            <p className="text-lg text-white">{text}</p>
+        <div className="absolute bottom-0 left-0 z-20 hidden min-h-[30%] w-full translate-y-full bg-linear-to-b from-transparent to-accent pt-10 transition-all duration-500 group-show:translate-y-0 max-sm:flex lg:flex">
+          <div className="mt-auto h-max p-6 pt-10 lg:p-8">
+            <h3 className="font-machina text-2xl font-bold capitalize lg:text-3xl">{title}</h3>
+            <p className="text-base text-white lg:text-lg">{text}</p>
           </div>
         </div>
-        <span className="absolute right-5 top-5 grid place-items-center rounded-full bg-[#010101] p-[1em] backdrop-blur-md transition-all duration-700 group-hover:rotate-45">
+        <span className="absolute right-5 top-5 grid place-items-center rounded-full bg-[#010101] p-[1em] backdrop-blur-md transition-all duration-700 group-show:rotate-45">
           <MoveUpRight className="size-6 lg:size-[2em]" />
         </span>
       </>

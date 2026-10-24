@@ -158,7 +158,7 @@ const PanelNav = ({ panel, brand }) => {
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="min-h-0 flex-1 overflow-y-auto no-scrollbar overflow-x-hidden">
           <Suspense fallback={<NavList groups={groups} root={root} activeHref={null} collapsed={collapsed} onNavigate={handleClose} />}>
             <ActiveNavList groups={groups} root={root} collapsed={collapsed} onNavigate={handleClose} />
           </Suspense>
