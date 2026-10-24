@@ -10,7 +10,7 @@ const siteSettingsSchema = new Schema(
     brand: { name: String, shortName: String, tagline: String, logo: asset },
     contact: { email: String, phone: String, address: String, hours: String },
     socials: [item({ label: String, url: String })],
-    hero: { eyebrow: String, title: String, highlight: String, titleEnd: String, subtitle: String },
+    hero: { eyebrow: String, title: String, highlight: String, titleEnd: String, subtitle: String, image: asset, videoUrl: String },
     footer: { text: String },
     seo: { title: String, description: String, ogImage: asset },
     home: {

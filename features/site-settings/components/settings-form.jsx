@@ -68,6 +68,8 @@ const SettingsForm = ({ settings }) => {
           <Field label="Headline start" error={errors.hero?.title?.message} {...register("hero.title")} />
           <Field label="Headline end" error={errors.hero?.titleEnd?.message} {...register("hero.titleEnd")} />
           <Field label="Subtitle" rows={2} className="md:col-span-2" error={errors.hero?.subtitle?.message} {...register("hero.subtitle")} />
+          {imageField("hero.image", "Start Learning tile image (falls back to a course thumbnail)", 4 / 3)}
+          <Field label="Start Learning tile video URL (MP4/WebM, plays muted on loop)" error={errors.hero?.videoUrl?.message} {...register("hero.videoUrl")} />
         </div>
         <div hidden={homeSection !== "Stats"}>
           <ArrayField {...shared} name="home.stats" label="Hero stats (shown until students enroll, then live numbers replace them)" max={2} empty={{ value: "", label: "", text: "" }} columns={[{ name: "value", label: "Value" }, { name: "label", label: "Label" }, { name: "text", label: "Description", wide: true }]} />

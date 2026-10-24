@@ -4,6 +4,7 @@ import CornerDots from "@/components/ui/corner-dots";
 import GlowButton from "@/components/ui/glow-button";
 import AvatarStack from "@/components/ui/avatar-stack";
 import HeroBackground from "@/components/ui/hero-background";
+import { imageUrl } from "@/lib/upload-rules";
 
 const StatCard = ({ icon, value, label, text }) => (
   <div className="flex flex-col justify-between rounded-2xl border-[0.54px] border-[#302C2A] p-5">
@@ -29,8 +30,9 @@ const liveCards = (live) => [
   { value: live.graduates.toLocaleString("en-US"), label: "Graduates", text: "Finished a course and earned a verifiable certificate." },
 ];
 
-const Hero = ({ hero, stats: fallback, live }) => {
+const Hero = ({ hero, stats: fallback, live, courses = [] }) => {
   const stats = live?.students ? liveCards(live) : fallback;
+  const media = hero.image?.url ?? courses.find((c) => c.thumbnail?.url)?.thumbnail.url;
   return (
 
   <section className="mt-50 flex w-full flex-col items-center justify-center gap-3 overflow-hidden px-18 max-md:mt-36 max-md:px-8 md:gap-6">
@@ -69,8 +71,14 @@ const Hero = ({ hero, stats: fallback, live }) => {
           next skill with us!
         </div>
       </div>
-      <div className="relative flex w-full overflow-hidden rounded-2xl border border-[#302C2A] bg-black max-sm:h-[40vh] lg:w-1/2">
+      <div className="relative flex w-full overflow-hidden rounded-2xl border border-[#302C2A] bg-black max-lg:h-[45vh] max-lg:min-h-80 lg:w-1/2">
         <div className="absolute inset-0 bg-[linear-gradient(135deg,#52525b,#18181b_55%,#7c2d12)] opacity-50" />
+        {hero.videoUrl ? (
+          <video src={hero.videoUrl} poster={media ? imageUrl(media, 1200) : undefined} autoPlay muted loop playsInline className="absolute inset-0 size-full object-cover" />
+        ) : (
+          media && <img src={imageUrl(media, 1200)} alt="" decoding="async" className="absolute inset-0 size-full object-cover" />
+        )}
+        <div className="absolute inset-0 bg-linear-to-b from-black/70 via-black/10 to-black/70" />
         <h3 className="absolute left-5 top-5 z-10 text-5xl font-light">
           Start
           <br />

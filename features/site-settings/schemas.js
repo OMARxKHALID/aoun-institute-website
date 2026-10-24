@@ -8,7 +8,7 @@ export const siteSettingsSchema = z.strictObject({
   brand: z.strictObject({ name: text(80).min(1, { error: "Brand name is required" }), shortName: text(30), tagline: text(160), logo: asset }),
   contact: z.strictObject({ email: z.union([z.email({ error: "Enter a valid email" }), z.literal("")]), phone: text(40), address: text(200), hours: text(80) }),
   socials: z.array(z.strictObject({ label: text(30).min(1), url: optionalUrl })).max(10),
-  hero: z.strictObject({ eyebrow: text(80), title: text(160), highlight: text(40), titleEnd: text(120), subtitle: text(300) }),
+  hero: z.strictObject({ eyebrow: text(80), title: text(160), highlight: text(40), titleEnd: text(120), subtitle: text(300), image: asset, videoUrl: optionalUrl.optional() }),
   footer: z.strictObject({ text: text(300) }),
   seo: z.strictObject({ title: text(70), description: text(160), ogImage: asset }),
   home: z.strictObject({

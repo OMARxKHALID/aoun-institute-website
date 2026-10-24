@@ -1,5 +1,6 @@
 import CornerDots from "@/components/ui/corner-dots";
 import GlowButton from "@/components/ui/glow-button";
+import { imageUrl } from "@/lib/upload-rules";
 
 const floaters = [
   "left-[8%] top-[15%] w-40 rotate-[-8deg]",
@@ -11,12 +12,15 @@ const floaters = [
 
 const titleClass = "w-[90%] text-center font-machina text-[2.7rem] font-normal capitalize tracking-tight max-sm:leading-[3.4rem] md:text-[5rem] md:leading-20 lg:w-[70%] lg:text-[4.7rem]";
 
-const Cta = ({ brand }) => (
+const Cta = ({ brand, courses = [] }) => {
+  const thumbs = courses.map((c) => c.thumbnail?.url).filter(Boolean);
+  return (
   <section className="relative isolate mb-20 flex flex-col items-center justify-center overflow-hidden py-44 text-center lg:h-screen">
     <div className="pointer-events-none absolute inset-0 -z-10">
-      {floaters.map((f) => (
-        <span key={f} className={`absolute aspect-video rounded-lg bg-linear-to-br from-stone-500 to-stone-900 opacity-40 blur-[2px] ${f}`} />
-      ))}
+      {thumbs.length > 0 &&
+        floaters.map((f, i) => (
+          <img key={f} src={imageUrl(thumbs[i % thumbs.length], 400)} alt="" loading="lazy" decoding="async" className={`absolute aspect-video rounded-lg border border-white/10 object-cover opacity-50 blur-[1.5px] max-sm:w-28 ${f}`} />
+        ))}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.85)_30%,transparent_80%)]" />
     </div>
     <h2 className={titleClass}>Build real skills at your own pace with</h2>
@@ -28,6 +32,7 @@ const Cta = ({ brand }) => (
     </div>
     <GlowButton href="/courses" className="mb-10 mt-16 sm:mb-20">Explore Courses</GlowButton>
   </section>
-);
+  );
+};
 
 export default Cta;

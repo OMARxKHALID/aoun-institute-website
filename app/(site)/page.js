@@ -35,7 +35,7 @@ const Home = async () => {
   return (
     <main className="relative isolate">
       <JsonLd data={organization} />
-      <Hero hero={hero} stats={home.stats} live={stats} />
+      <Hero hero={hero} stats={home.stats} live={stats} courses={courses} />
       {home.partners?.length > 0 && <LogoMarquee partners={home.partners} />}
       {home.impactCards?.length > 0 && <Impact impactCards={home.impactCards} />}
       <Courses courses={courses} />
@@ -45,7 +45,7 @@ const Home = async () => {
       {home.communityTiles?.length > 0 && <Community communityTiles={home.communityTiles} />}
       <Comparison brand={brand} />
       <Faq faqs={home.faqs} />
-      <Cta brand={brand} />
+      <Cta brand={brand} courses={courses} />
     </main>
   );
 };

@@ -8,6 +8,8 @@ export const defaultSiteSettings = {
     highlight: "project",
     titleEnd: "at a time.",
     subtitle: "Recorded lessons you can watch anytime, quizzes that check what stuck, and a certificate anyone can verify.",
+    image: null,
+    videoUrl: "",
   },
   footer: { text: "Recorded courses, real projects and certificates anyone can verify." },
   seo: { title: "Aoun Institute | Learn, Build, Get Certified", description: "Recorded courses with projects, quizzes and verifiable certificates.", ogImage: null },
